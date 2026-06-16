@@ -1,0 +1,231 @@
+/*
+|==============================================================================
+| APP.CSS — Tailwind 4 theme for the appointments module
+| APP.CSS — Tema Tailwind 4 del módulo de citas
+|==============================================================================
+| EN: Single entry point. Tailwind 4 reads the @theme block below and turns
+|     every token into a real utility (bg-base, text-ink, border-brand, ...).
+|     The visual identity is dark + accent, terminal-flavoured but NEUTRAL:
+|     no brand of any specific company.
+| ES: Punto de entrada único. Tailwind 4 lee el bloque @theme de abajo y
+|     convierte cada token en una utilidad real (bg-base, text-ink,
+|     border-brand, ...). La identidad visual es oscura + acento, con toque
+|     terminal pero NEUTRA: sin marca de ninguna empresa concreta.
+|
+| INDEX / ÍNDICE
+|   1. IMPORTS .............. tailwind + content sources / fuentes de contenido
+|   2. RE-THEME ............. ⭐ change the accent here / cambia el acento aquí
+|   3. SURFACES ............. 🌓 dark + light palettes / paletas oscura y clara
+|   4. THEME TOKENS ......... colors + fonts + shadows / colores, fuentes, sombra
+|   5. BASE ................. body background / fondo del body
+|   6. COMPONENTS ........... .glass + .btn-primary / clases reutilizables
+|==============================================================================
+*/
+
+/* ── 1. IMPORTS EN / ES ──────────────────────────────────────────────────── */
+@import 'tailwindcss';
+
+/* EN: Extra sources Tailwind must scan to keep the right classes alive.
+   ES: Fuentes extra que Tailwind debe escanear para no purgar clases vivas. */
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+/*
+| ─────────────────────────────────────────────────────────────────────────
+| 2. RE-THEME — ⭐ THE ONLY PLACE YOU NEED TO TOUCH TO CHANGE THE COLOR ⭐
+|    RE-TEMATIZAR — ⭐ EL ÚNICO SITIO QUE TOCAR PARA CAMBIAR EL COLOR ⭐
+| ─────────────────────────────────────────────────────────────────────────
+| EN: Pick your accent colour ONCE here. Everything else (buttons, borders,
+|     calendar selection, focus rings) is derived from these variables.
+|     Want blue? --accent: #2563eb; --accent-glow: #3b82f6;  — done.
+| ES: Elige tu color de acento UNA SOLA VEZ aquí. Todo lo demás (botones,
+|     bordes, día seleccionado del calendario, anillos de foco) se deriva de
+|     estas variables. ¿Lo quieres azul? --accent: #2563eb;
+|     --accent-glow: #3b82f6;  — listo.
+*/
+:root {
+    /* EN: Main accent (buttons, selected day, primary borders).
+       ES: Acento principal (botones, día seleccionado, bordes primarios). */
+    --accent: #9333ea;
+
+    /* EN: Brighter accent for hover / glowing text on dark backgrounds.
+       ES: Acento más vivo para hover / texto luminoso sobre fondos oscuros. */
+    --accent-glow: #a855f7;
+
+    /* EN: Very light accent, readable text ON faint accent fills.
+       ES: Acento muy claro, texto legible SOBRE rellenos de acento tenues. */
+    --accent-bright: #e9d5ff;
+
+    /* EN: "Terminal" success colour (online badge, confirm, today dot).
+          Change it too if your accent clashes with green.
+       ES: Color "terminal" de éxito (badge online, confirmar, punto de hoy).
+          Cámbialo también si choca con tu acento. */
+    --term: #22ff88;
+}
+
+/*
+| ─────────────────────────────────────────────────────────────────────────
+| 3. SURFACES — 🌓 PALETTES PER THEME (dark / light)
+|    SUPERFICIES — 🌓 PALETAS POR TEMA (oscuro / claro)
+| ─────────────────────────────────────────────────────────────────────────
+| EN: The surfaces and texts (base, surface, ink, muted, faint) are NO LONGER
+|     fixed: they become reactive CSS variables driven by the <html data-theme>
+|     attribute. The tiny anti-FOUC script in the layouts sets that attribute
+|     before paint, so utilities like bg-base / text-ink / border-brand follow
+|     the chosen theme automatically — WITHOUT touching any blade.
+|     • [data-theme="dark"]  → the original dark palette (also the default).
+|     • [data-theme="light"] → a professional, readable light palette.
+|     The accent (section 2) stays re-themable and serves BOTH themes.
+| ES: Las superficies y textos (base, surface, ink, muted, faint) YA NO son
+|     fijos: pasan a ser variables CSS reactivas gobernadas por el atributo
+|     <html data-theme>. El pequeño script anti-parpadeo de los layouts fija
+|     ese atributo antes de pintar, así las utilidades bg-base / text-ink /
+|     border-brand siguen el tema elegido solas — SIN tocar ningún blade.
+|     • [data-theme="dark"]  → la paleta oscura original (también la default).
+|     • [data-theme="light"] → una paleta clara profesional y legible.
+|     El acento (sección 2) sigue re-tematizable y sirve para AMBOS temas.
+| ─────────────────────────────────────────────────────────────────────────
+*/
+
+/* EN: DARK theme = the original look. Applied by default (:root) and when the
+       html has data-theme="dark". Edit these to tune the DARK surfaces/text.
+   ES: Tema OSCURO = el aspecto original. Se aplica por defecto (:root) y cuando
+       el html tiene data-theme="dark". Edita aquí las superficies/texto OSCUROS. */
+:root,
+[data-theme='dark'] {
+    --surface-base: #1d1d2a;    /* EN: page background / ES: fondo de página */
+    --surface-card: #282838;    /* EN: cards / ES: tarjetas */
+    --text-ink: #e4e4e7;        /* EN: main text / ES: texto principal */
+    --text-muted: #a1a1aa;      /* EN: secondary text / ES: texto secundario */
+    --text-faint: #8b8b9c;      /* EN: hints / ES: textos de ayuda */
+
+    /* EN: Glass tuning for DARK: surface tint % + accent border alpha (subtle).
+       ES: Ajuste del glass en OSCURO: % de tinte de surface + alfa del borde de acento. */
+    --glass-surface-mix: 60%;   /* EN: how opaque the card is / ES: opacidad de la tarjeta */
+    --glass-border-alpha: 15%;  /* EN: accent border alpha (rest) / ES: alfa borde acento (reposo) */
+    --glass-border-hover: 25%;  /* EN: accent border alpha (hover) / ES: alfa borde acento (hover) */
+
+    /* EN: Accent for DARK (same purple, it pops on dark backgrounds).
+       ES: Acento para OSCURO (mismo morado, resalta sobre fondos oscuros). */
+    --accent-theme: var(--accent);
+}
+
+/* EN: LIGHT theme = professional, AA-readable. Dark text on light surfaces.
+       Edit these to tune the LIGHT surfaces/text.
+   ES: Tema CLARO = profesional y legible (AA). Texto oscuro sobre superficies
+       claras. Edita aquí las superficies/texto CLAROS. */
+[data-theme='light'] {
+    --surface-base: #f7f7fb;    /* EN: page background (off-white) / ES: fondo (blanco roto) */
+    --surface-card: #ffffff;    /* EN: cards (pure white) / ES: tarjetas (blanco puro) */
+    --text-ink: #18181b;        /* EN: main text (near-black, AA) / ES: texto principal (casi negro, AA) */
+    --text-muted: #52525b;      /* EN: secondary text (AA) / ES: texto secundario (AA) */
+    --text-faint: #71717a;      /* EN: hints (still AA on white) / ES: ayuda (sigue AA sobre blanco) */
+
+    /* EN: Glass on LIGHT must be more opaque and use a darker accent border so
+          it doesn't vanish over a pale background.
+       ES: El glass en CLARO debe ser más opaco y usar un borde de acento más
+          marcado para no desaparecer sobre fondo pálido. */
+    --glass-surface-mix: 88%;   /* EN: cards almost solid / ES: tarjetas casi sólidas */
+    --glass-border-alpha: 28%;  /* EN: accent border alpha (rest) / ES: alfa borde acento (reposo) */
+    --glass-border-hover: 45%;  /* EN: accent border alpha (hover) / ES: alfa borde acento (hover) */
+
+    /* EN: Slightly deeper accent on LIGHT for better contrast on white text fills.
+       ES: Acento un pelín más profundo en CLARO para mejor contraste sobre blanco. */
+    --accent-theme: #7e22ce;
+}
+
+/*
+| ─────────────────────────────────────────────────────────────────────────
+| 4. THEME TOKENS EN / ES
+| EN: Map the variables above to Tailwind utility names. The surfaces/text are
+|     fed by the THEME-REACTIVE vars from section 3 (via var()), so every
+|     utility (bg-base, surface, text-ink, text-muted, text-faint) switches
+|     automatically with <html data-theme>. The accent comes from section 2.
+|     DO NOT edit colours here — edit section 2 (accent) or section 3 (themes).
+| ES: Mapeamos las variables de arriba a nombres de utilidad Tailwind. Las
+|     superficies/texto se alimentan de las vars REACTIVAS AL TEMA de la
+|     sección 3 (vía var()), así cada utilidad (bg-base, surface, text-ink,
+|     text-muted, text-faint) cambia sola con <html data-theme>. El acento
+|     viene de la sección 2. NO edites colores aquí — edita la sección 2
+|     (acento) o la sección 3 (temas).
+| ─────────────────────────────────────────────────────────────────────────
+*/
+@theme {
+    /* EN: Accent family, fed from the :root variables (re-themable).
+       ES: Familia de acento, alimentada por las variables :root (re-tematizable). */
+    --color-brand: var(--accent-theme);
+    --color-brand-glow: var(--accent-glow);
+    --color-brand-bright: var(--accent-bright);
+    --color-term: var(--term);
+
+    /* EN: Neutral palette mapped to the THEME-REACTIVE vars (section 3). These
+          follow the <html data-theme> attribute, so bg-base / text-ink / ...
+          change between dark and light on their own.
+       ES: Paleta neutra mapeada a las vars REACTIVAS AL TEMA (sección 3). Siguen
+          el atributo <html data-theme>, así bg-base / text-ink / ... cambian
+          solas entre oscuro y claro. */
+    --color-base: var(--surface-base);     /* EN: page background / ES: fondo de página */
+    --color-surface: var(--surface-card);  /* EN: cards / ES: tarjetas */
+    --color-ink: var(--text-ink);          /* EN: main text / ES: texto principal */
+    --color-muted: var(--text-muted);      /* EN: secondary text / ES: texto secundario */
+    --color-faint: var(--text-faint);      /* EN: hints / ES: textos de ayuda */
+
+    /* EN: Fonts. Sans = UI, Mono = the terminal flavour. Both are loaded via a
+          Bunny Fonts <link> in the layouts; the stacks fall back gracefully.
+       ES: Fuentes. Sans = UI, Mono = el toque terminal. Ambas se cargan con un
+          <link> de Bunny Fonts en los layouts; las pilas degradan con gracia. */
+    --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+
+    /* EN: Accent glow shadow (buttons / focus). Uses the theme accent at low alpha.
+       ES: Sombra de brillo de acento (botones / foco). Acento del tema a baja opacidad. */
+    --shadow-glow-brand: 0 0 24px color-mix(in srgb, var(--accent-theme) 35%, transparent);
+}
+
+/* ── 5. BASE EN / ES ─────────────────────────────────────────────────────── */
+/* EN: Document background follows the theme-reactive --color-base, so the body
+       turns dark or light with the chosen theme. A short transition softens the
+       toggle. ES: El fondo del documento sigue --color-base (reactivo al tema),
+       así el body se pone oscuro o claro con el tema elegido. Una transición
+       corta suaviza el cambio. */
+body {
+    background-color: var(--color-base);
+    color-scheme: light dark; /* EN: native form/scrollbar theming / ES: tema nativo de formularios/scroll */
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/*
+| ─────────────────────────────────────────────────────────────────────────
+| 6. COMPONENTS EN / ES — reusable classes used across the blades
+|    COMPONENTES — clases reutilizables usadas en los blades
+| ─────────────────────────────────────────────────────────────────────────
+*/
+@layer components {
+    /* EN: Translucent card with a faint accent border (the signature surface).
+          Tint % and border alphas come from the theme vars (section 3), so the
+          card stays legible on BOTH dark and light backgrounds.
+       ES: Tarjeta translúcida con borde de acento tenue (la superficie estrella).
+          El % de tinte y las alfas del borde vienen de las vars del tema
+          (sección 3), así la tarjeta es legible en AMBOS fondos, oscuro y claro. */
+    .glass {
+        background: color-mix(in srgb, var(--color-surface) var(--glass-surface-mix), transparent);
+        border: 1px solid color-mix(in srgb, var(--accent-theme) var(--glass-border-alpha), transparent);
+        backdrop-filter: blur(12px);
+        border-radius: 0.75rem;
+    }
+    .glass:hover {
+        border-color: color-mix(in srgb, var(--accent-theme) var(--glass-border-hover), transparent);
+    }
+
+    /* EN: Primary button polish (lift + glow on hover). Colour comes from the
+          bg-brand utility applied in the markup, so it stays re-themable.
+       ES: Acabado del botón primario (elevación + brillo al hover). El color
+          viene de la utilidad bg-brand del marcado, así sigue re-tematizable. */
+    .btn-primary {
+        transition: all 0.18s ease;
+    }
+    .btn-primary:hover {
+        box-shadow: var(--shadow-glow-brand);
+        transform: translateY(-1px);
+    }
+}
