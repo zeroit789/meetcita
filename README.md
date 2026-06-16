@@ -40,19 +40,13 @@
 
 ### Screenshots
 
-> Images live in `docs/img/`. Drop your own screenshots there with these exact names and they will render below.
+![Booking wizard — dark theme](docs/img/wizard.png)
+*The client booking wizard (`/citas`) — dark theme.*
 
-![Booking wizard](docs/img/wizard.png)
-*The client booking wizard (`/citas`).*
+![Booking wizard — light theme](docs/img/wizard-light.png)
+*The same wizard in light theme — switchable with the sun/moon toggle.*
 
-![Availability calendar](docs/img/calendar.png)
-*The availability calendar picking day and time.*
-
-![Admin panel](docs/img/panel.png)
-*The private admin panel (`/panel`).*
-
-![Telegram notification](docs/img/telegram.png)
-*The Telegram alert with the confirm / reject buttons.*
+> Tip: drop your own PNGs in `docs/img/` (e.g. `panel.png`, `telegram.png`) to showcase more of the system.
 
 ### Requirements
 
@@ -253,19 +247,13 @@ Sistema de **reserva de citas** open-source y self-hosted hecho con Laravel. El 
 
 ### Capturas
 
-> Las imágenes van en `docs/img/`. Deja ahí tus propias capturas con estos nombres exactos y se mostrarán abajo.
+![Asistente de reserva — tema oscuro](docs/img/wizard.png)
+*El asistente de reserva del cliente (`/citas`) — tema oscuro.*
 
-![Asistente de reserva](docs/img/wizard.png)
-*El asistente de reserva del cliente (`/citas`).*
+![Asistente de reserva — tema claro](docs/img/wizard-light.png)
+*El mismo asistente en tema claro — se cambia con el botón sol/luna.*
 
-![Calendario de disponibilidad](docs/img/calendar.png)
-*El calendario de disponibilidad eligiendo día y hora.*
-
-![Panel de administración](docs/img/panel.png)
-*El panel de administración privado (`/panel`).*
-
-![Notificación de Telegram](docs/img/telegram.png)
-*El aviso de Telegram con los botones de confirmar / rechazar.*
+> Consejo: deja tus propios PNG en `docs/img/` (p. ej. `panel.png`, `telegram.png`) para enseñar más partes del sistema.
 
 ### Requisitos
 
