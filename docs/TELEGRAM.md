@@ -32,10 +32,10 @@ Follow the steps below to get each one.
 1. In Telegram, open a chat with **[@BotFather](https://t.me/BotFather)**.
 2. Send the command **`/newbot`**.
 3. Follow the prompts: give the bot a **name** and a **username** (the username must end in `bot`).
-4. BotFather replies with a **token** that looks like `123456789:AAEx...`.
+4. BotFather replies with a **token** that looks like `<numbers>:<letters>` (e.g. starts with your bot id).
 5. Copy it into your `.env`:
    ```env
-   TELEGRAM_BOT_TOKEN=123456789:AAExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   TELEGRAM_BOT_TOKEN=<paste-the-token-botfather-gave-you>
    ```
 
 ### Step 2 — Get your own chat id (TELEGRAM_CHAT_ID)
@@ -171,7 +171,7 @@ Sigue los pasos de abajo para sacar cada uno.
 4. BotFather responde con un **token** con esta pinta: `123456789:AAEx...`.
 5. Cópialo en tu `.env`:
    ```env
-   TELEGRAM_BOT_TOKEN=123456789:AAExxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   TELEGRAM_BOT_TOKEN=<paste-the-token-botfather-gave-you>
    ```
 
 ### Paso 2 — Obtén tu propio chat id (TELEGRAM_CHAT_ID)
