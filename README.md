@@ -62,7 +62,7 @@
 ```bash
 # 1. Clone the repository / Clona el repositorio
 git clone https://github.com/zeroit789/meetcita.git meetcita
-cd laravel-appointments
+cd meetcita
 
 # 2. Install PHP dependencies / Instala las dependencias PHP
 composer install
@@ -269,7 +269,7 @@ Sistema de **reserva de citas** open-source y self-hosted hecho con Laravel. El 
 ```bash
 # 1. Clona el repositorio
 git clone https://github.com/zeroit789/meetcita.git meetcita
-cd laravel-appointments
+cd meetcita
 
 # 2. Instala las dependencias PHP
 composer install
