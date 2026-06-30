@@ -28,20 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // EN: Trust the reverse proxy (e.g. Caddy / a load balancer in front).
-        //     Without this Laravel may see the request as http (the proxy talks
-        //     http to the container) and generate http:// URLs for assets and the
-        //     Livewire script, which an https CSP would block. We trust ALL proxies
-        //     ('*') and the standard X-Forwarded-* headers (incl. X-Forwarded-Proto)
-        //     so it detects the original https scheme correctly.
-        // ES: Confiar en el proxy inverso (p. ej. Caddy / un balanceador delante).
-        //     Sin esto, Laravel puede ver la petición como http (el proxy habla
-        //     http con el contenedor) y generar URLs http:// para assets y el script
-        //     de Livewire, que un CSP https bloquearía. Confiamos en TODOS los
-        //     proxies ('*') y en las cabeceras X-Forwarded-* estándar (incl.
-        //     X-Forwarded-Proto) para que detecte bien el esquema https original.
+        // Confiar solo en el proxy inverso real (red Docker interna de Coolify:
+        // 10.0.1.0/24). Antes se usaba '*' (todos los proxies), lo que permitía
+        // falsificar X-Forwarded-For y evadir los rate limits por IP.
+        // Con el CIDR concreto, solo Caddy puede inyectar esa cabecera.
         $middleware->trustProxies(
-            at: '*',
+            at: '10.0.1.0/24',
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT
