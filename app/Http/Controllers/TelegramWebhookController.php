@@ -66,6 +66,8 @@ class TelegramWebhookController extends Controller
             return response('forbidden', 403);
         }
 
+        // ES: El update de Telegram (JSON) y el chat del dueño, único autorizado.
+        // EN: The Telegram update (JSON) and the owner's chat, the only one allowed.
         $update = $request->all();
         $ownerChatId = (string) config('services.telegram.chat_id');
 
@@ -84,6 +86,8 @@ class TelegramWebhookController extends Controller
                     return response('ok');
                 }
 
+                // ES: callback_data tiene la forma "accion:id" (ac = aceptar, ar = rechazar).
+                // EN: callback_data looks like "action:id" (ac = accept, ar = reject).
                 [$accion, $citaId] = array_pad(explode(':', $data, 2), 2, null);
                 $cita = Appointment::find((int) $citaId);
 
@@ -167,10 +171,16 @@ class TelegramWebhookController extends Controller
                 $chatId = (string) ($msg['chat']['id'] ?? '');
                 $texto = trim($msg['text']);
 
+                // ES: Mensajes de otros chats se ignoran en silencio.
+                // EN: Messages from other chats are silently ignored.
                 if ($chatId !== $ownerChatId) {
                     return response('ok');
                 }
 
+                // ES: ¿Hay una cita esperando motivo de rechazo (puesto al pulsar "ar")?
+                //     Los comandos que empiezan por "/" no cuentan como motivo.
+                // EN: Is a booking waiting for a rejection reason (set when "ar" was tapped)?
+                //     Commands starting with "/" don't count as a reason.
                 $citaIdEsperando = Cache::get("tg_motivo_{$ownerChatId}");
 
                 if ($citaIdEsperando && $texto !== '' && ! str_starts_with($texto, '/')) {
@@ -221,6 +231,8 @@ class TelegramWebhookController extends Controller
                 return response('ok');
             }
         } catch (\Throwable $e) {
+            // ES: Cualquier fallo se registra y se responde 200 igualmente (sin reintentos).
+            // EN: Any failure is logged and still answered with 200 (no retries).
             Log::error('Telegram webhook error: '.$e->getMessage());
         }
 

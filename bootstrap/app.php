@@ -28,10 +28,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // Confiar solo en el proxy inverso real (red Docker interna de Coolify:
-        // 10.0.1.0/24). Antes se usaba '*' (todos los proxies), lo que permitía
-        // falsificar X-Forwarded-For y evadir los rate limits por IP.
-        // Con el CIDR concreto, solo Caddy puede inyectar esa cabecera.
+        // ES: Confiar solo en el proxy inverso real (red Docker interna de Coolify:
+        //     10.0.1.0/24). Antes se usaba '*' (todos los proxies), lo que permitía
+        //     falsificar X-Forwarded-For y evadir los rate limits por IP.
+        //     Con el CIDR concreto, solo Caddy puede inyectar esa cabecera.
+        //     Si despliegas en otra red, cambia este CIDR por el de tu proxy.
+        // EN: Only trust the real reverse proxy (Coolify's internal Docker network:
+        //     10.0.1.0/24). It used to be '*' (every proxy), which allowed spoofing
+        //     X-Forwarded-For and bypassing the per-IP rate limits.
+        //     With the exact CIDR, only Caddy can inject that header.
+        //     If you deploy on another network, change this CIDR to your proxy's.
         $middleware->trustProxies(
             at: '10.0.1.0/24',
             headers: Request::HEADER_X_FORWARDED_FOR
@@ -69,6 +75,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'telegram/webhook',
         ]);
     })
+    // ES: Excepciones: las rutas api/* responderían con JSON (valor por defecto
+    //     del esqueleto de Laravel; este proyecto no define rutas api/*).
+    // EN: Exceptions: api/* routes would get JSON responses (Laravel skeleton
+    //     default; this project defines no api/* routes).
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),

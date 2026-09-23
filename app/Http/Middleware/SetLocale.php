@@ -49,6 +49,10 @@ class SetLocale
         return (string) config('appointments.default_locale', 'en');
     }
 
+    /**
+     * ES: Fija el idioma de la petición a partir de la cookie 'locale'.
+     * EN: Sets the request language from the 'locale' cookie.
+     */
     public function handle(Request $request, Closure $next): Response
     {
         // EN: Read the language cookie. If missing or unsupported, fall back to
