@@ -162,6 +162,14 @@ return [
     // Actions / Acciones
     'action_confirm' => 'confirmar',
     'action_cancel' => 'cancelar',
+    // ES: Cancelación desde el panel (motivo opcional) y errores de estado.
+    // EN: Cancelling from the panel (optional reason) and status errors.
+    'cancel_reason_label' => 'Motivo para el cliente (opcional)',
+    'cancel_reason_placeholder' => 'Se le enviará por email tal cual lo escribas.',
+    'cancel_submit' => 'cancelar cita y avisar',
+    'cancel_back' => 'volver',
+    'panel_err_only_pending' => 'Solo se pueden confirmar las citas pendientes.',
+    'panel_err_already_cancelled' => 'Esa cita ya estaba cancelada.',
 
     // ── 7. BLOCKED DAYS / DÍAS BLOQUEADOS ─────────────────────────────────
     'blocked_title' => 'Días no disponibles',

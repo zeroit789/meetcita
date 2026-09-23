@@ -15,6 +15,12 @@
   {{-- Appointments table inside a glass card / Tabla de citas en una card glass --}}
   <div class="glass p-4 sm:p-6 overflow-x-auto">
 
+    {{-- ES: Error controlado de una acción (p. ej. confirmar una cita que no está pendiente).
+         EN: Handled action error (e.g. confirming a booking that is not pending). --}}
+    @error('accion')
+      <div role="alert" class="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-400">{{ $message }}</div>
+    @enderror
+
     @if($citas->isEmpty())
       {{-- No appointments yet / Sin citas todavía --}}
       <div class="rounded-lg border border-brand/15 bg-base/60 p-8 text-center">
@@ -110,16 +116,17 @@
               {{-- Actions: confirm / cancel / Acciones: confirmar / cancelar --}}
               <td class="py-3 px-2 text-right whitespace-nowrap">
                 <div class="inline-flex gap-1">
-                  {{-- Confirm (hidden if already confirmed) / Confirmar (oculto si ya está) --}}
-                  @if($cita->status !== 'confirmada')
+                  {{-- ES: Confirmar (solo si está pendiente) / EN: Confirm (only if pending) --}}
+                  @if($cita->status === 'pendiente')
                     <button type="button" wire:click="confirmar({{ $cita->id }})"
                             class="rounded-md border border-term/40 px-2 py-1 font-mono text-[0.65rem] text-term hover:bg-term/10 transition-colors">
                       ✓ {{ __('citas.action_confirm') }}
                     </button>
                   @endif
-                  {{-- Cancel (hidden if already cancelled) / Cancelar (oculto si ya está) --}}
+                  {{-- ES: Cancelar (oculto si ya está): abre el formulario del motivo.
+                       EN: Cancel (hidden if already cancelled): opens the reason form. --}}
                   @if($cita->status !== 'cancelada')
-                    <button type="button" wire:click="cancelar({{ $cita->id }})"
+                    <button type="button" wire:click="pedirCancelacion({{ $cita->id }})"
                             class="rounded-md border border-red-500/40 px-2 py-1 font-mono text-[0.65rem] text-red-400 hover:bg-red-500/10 transition-colors">
                       ✕ {{ __('citas.action_cancel') }}
                     </button>
@@ -127,6 +134,33 @@
                 </div>
               </td>
             </tr>
+            {{-- ES: Formulario de cancelación con motivo opcional (se envía por email al cliente).
+                 EN: Cancellation form with an optional reason (emailed to the client). --}}
+            @if($cancelandoId === $cita->id)
+              <tr class="border-b border-brand/10 bg-red-500/5">
+                <td colspan="12" class="py-3 px-2">
+                  <form wire:submit="cancelar({{ $cita->id }})" class="flex flex-col gap-2 sm:flex-row sm:items-end">
+                    <label class="flex-1 text-xs text-muted">
+                      {{ __('citas.cancel_reason_label') }}
+                      <textarea wire:model="motivoCancelacion" rows="2" maxlength="1000"
+                                placeholder="{{ __('citas.cancel_reason_placeholder') }}"
+                                class="mt-1 w-full rounded-md border border-brand/20 bg-base/60 px-2 py-1 text-sm text-ink"></textarea>
+                      @error('motivoCancelacion') <span class="text-red-400">{{ $message }}</span> @enderror
+                    </label>
+                    <div class="inline-flex gap-1">
+                      <button type="submit"
+                              class="rounded-md border border-red-500/40 px-2 py-1 font-mono text-[0.65rem] text-red-400 hover:bg-red-500/10 transition-colors">
+                        ✕ {{ __('citas.cancel_submit') }}
+                      </button>
+                      <button type="button" wire:click="cerrarCancelacion"
+                              class="rounded-md border border-brand/30 px-2 py-1 font-mono text-[0.65rem] text-muted hover:bg-brand/10 transition-colors">
+                        {{ __('citas.cancel_back') }}
+                      </button>
+                    </div>
+                  </form>
+                </td>
+              </tr>
+            @endif
           @endforeach
         </tbody>
       </table>

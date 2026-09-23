@@ -160,6 +160,14 @@ return [
     // Actions / Acciones
     'action_confirm' => 'confirm',
     'action_cancel' => 'cancel',
+    // ES: Cancelación desde el panel (motivo opcional) y errores de estado.
+    // EN: Cancelling from the panel (optional reason) and status errors.
+    'cancel_reason_label' => 'Reason for the client (optional)',
+    'cancel_reason_placeholder' => 'It will be emailed exactly as you write it.',
+    'cancel_submit' => 'cancel and notify',
+    'cancel_back' => 'back',
+    'panel_err_only_pending' => 'Only pending appointments can be confirmed.',
+    'panel_err_already_cancelled' => 'That appointment was already cancelled.',
 
     // ── 7. BLOCKED DAYS / DÍAS BLOQUEADOS ─────────────────────────────────
     'blocked_title' => 'Off days',
