@@ -8,7 +8,8 @@ use Tests\TestCase;
 class ExampleTest extends TestCase
 {
     /**
-     * A basic test example.
+     * ES: Test de ejemplo: la home "/" responde 200.
+     * EN: Example test: the "/" home page returns 200.
      */
     public function test_the_application_returns_a_successful_response(): void
     {

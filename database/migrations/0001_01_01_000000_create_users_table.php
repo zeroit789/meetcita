@@ -4,10 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// ES: Migración base de Laravel: tablas users, password_reset_tokens y sessions.
+//     'sessions' la usa SESSION_DRIVER=database (login del panel). 'users' no la usa
+//     el panel: su acceso es una contraseña única de config.
+// EN: Laravel base migration: users, password_reset_tokens and sessions tables.
+//     'sessions' is used by SESSION_DRIVER=database (panel login). 'users' is not
+//     used by the panel: its access is a single password from config.
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * ES: Ejecuta la migración (crea las tablas).
+     * EN: Run the migrations (create the tables).
      */
     public function up(): void
     {
@@ -38,7 +45,8 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * ES: Revierte la migración (borra las tablas).
+     * EN: Reverse the migrations (drop the tables).
      */
     public function down(): void
     {

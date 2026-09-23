@@ -4,10 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// ES: Migración base de Laravel: tablas cache y cache_locks. Con CACHE_STORE=database
+//     guardan el lock anti-doble-reserva por día, los rate limits, el token y los
+//     huecos ocupados de Google y la cita que espera motivo en Telegram.
+// EN: Laravel base migration: cache and cache_locks tables. With CACHE_STORE=database
+//     they hold the per-day anti-double-booking lock, the rate limits, the Google
+//     token and busy slots, and the booking awaiting a reason in Telegram.
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * ES: Ejecuta la migración (crea las tablas).
+     * EN: Run the migrations (create the tables).
      */
     public function up(): void
     {
@@ -25,7 +32,8 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * ES: Revierte la migración (borra las tablas).
+     * EN: Reverse the migrations (drop the tables).
      */
     public function down(): void
     {

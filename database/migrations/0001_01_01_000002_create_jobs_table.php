@@ -4,10 +4,15 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
+// ES: Migración base de Laravel: tablas jobs, job_batches y failed_jobs. Con
+//     QUEUE_CONNECTION=database guardan los emails encolados (ShouldQueue).
+// EN: Laravel base migration: jobs, job_batches and failed_jobs tables. With
+//     QUEUE_CONNECTION=database they hold the queued emails (ShouldQueue).
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * ES: Ejecuta la migración (crea las tablas).
+     * EN: Run the migrations (create the tables).
      */
     public function up(): void
     {
@@ -48,7 +53,8 @@ return new class extends Migration
     }
 
     /**
-     * Reverse the migrations.
+     * ES: Revierte la migración (borra las tablas).
+     * EN: Reverse the migrations (drop the tables).
      */
     public function down(): void
     {

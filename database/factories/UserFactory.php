@@ -8,17 +8,22 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
+ * ES: Factoría del esqueleto de Laravel para crear usuarios de prueba.
+ * EN: Laravel skeleton factory to create test users.
+ *
  * @extends Factory<User>
  */
 class UserFactory extends Factory
 {
     /**
-     * The current password being used by the factory.
+     * ES: Contraseña (hasheada una sola vez) que usa la factoría.
+     * EN: The current password being used by the factory (hashed once).
      */
     protected static ?string $password;
 
     /**
-     * Define the model's default state.
+     * ES: Estado por defecto del modelo (datos falsos con Faker).
+     * EN: Define the model's default state (fake data via Faker).
      *
      * @return array<string, mixed>
      */
@@ -34,7 +39,8 @@ class UserFactory extends Factory
     }
 
     /**
-     * Indicate that the model's email address should be unverified.
+     * ES: Estado con el email sin verificar.
+     * EN: Indicate that the model's email address should be unverified.
      */
     public function unverified(): static
     {
