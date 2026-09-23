@@ -17,10 +17,16 @@ use Illuminate\Console\Command;
 */
 class TelegramTest extends Command
 {
+    // ES: Firma del comando; el argumento "mensaje" es opcional y trae un texto por defecto.
+    // EN: Command signature; the "mensaje" argument is optional and has a default text.
     protected $signature = 'telegram:test {mensaje=✅ Prueba del bot de citas — funciona correctamente.}';
 
     protected $description = 'Send a test message via Telegram to the configured chat / Envía un mensaje de prueba por Telegram al chat configurado';
 
+    /**
+     * ES: Envía el mensaje de prueba al chat del dueño y muestra el message_id.
+     * EN: Sends the test message to the owner's chat and prints the message_id.
+     */
     public function handle(TelegramNotifier $tg): int
     {
         // EN: Bail out gracefully if the bot isn't configured.
@@ -31,6 +37,8 @@ class TelegramTest extends Command
             return self::FAILURE;
         }
 
+        // ES: enviar() devuelve el message_id, o null si Telegram falla.
+        // EN: enviar() returns the message_id, or null if Telegram fails.
         $id = $tg->enviar('🔔 '.$this->argument('mensaje'));
 
         if ($id) {

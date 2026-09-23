@@ -38,10 +38,18 @@ use Illuminate\Console\Command;
 */
 class GoogleAuthCommand extends Command
 {
+    // ES: Firma del comando; --code solo se usa en el paso 2.
+    // EN: Command signature; --code is only used in step 2.
     protected $signature = 'google:auth {--code= : Authorization code returned by Google (step 2) / Código de autorización devuelto por Google (paso 2)}';
 
     protected $description = 'Authorize Google Calendar access and get the refresh_token for .env / Autoriza el acceso a Google Calendar y obtiene el refresh_token para el .env';
 
+    /**
+     * ES: Ejecuta el flujo OAuth: sin --code imprime la URL de autorización;
+     *     con --code canjea el código y muestra el refresh_token.
+     * EN: Runs the OAuth flow: without --code it prints the authorization URL;
+     *     with --code it exchanges the code and prints the refresh_token.
+     */
     public function handle(): int
     {
         // EN: Check at least client_id and client_secret exist in config.
@@ -82,12 +90,16 @@ class GoogleAuthCommand extends Command
             //     refresh_token, expires_in, etc. (o un array con 'error' si falla).
             $token = $client->fetchAccessTokenWithAuthCode($code);
 
+            // ES: Código caducado, ya usado o de otro cliente OAuth.
+            // EN: Code expired, already used, or issued for another OAuth client.
             if (isset($token['error'])) {
                 $this->error('Error al canjear el código: '.($token['error_description'] ?? $token['error']));
 
                 return self::FAILURE;
             }
 
+            // ES: Google solo da refresh_token la primera vez que se concede el acceso.
+            // EN: Google only returns a refresh_token the first time access is granted.
             if (empty($token['refresh_token'])) {
                 $this->warn('Google no devolvió refresh_token. Revoca el acceso de la app en');
                 $this->warn('https://myaccount.google.com/permissions y vuelve a ejecutar el paso 1.');
