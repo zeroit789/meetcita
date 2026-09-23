@@ -43,7 +43,13 @@ class EmailsTest extends TestCase
         $cita = Appointment::factory()->create(['date' => '2026-09-22', 'time' => '10:00']);
 
         foreach (['es' => 'martes', 'en' => 'Tuesday'] as $idioma => $diaSemana) {
-            $html = (new $clase($cita))->locale($idioma)->render();
+            $mail = (new $clase($cita))->locale($idioma);
+            $html = $mail->render();
+
+            // ES: La referencia va también en el asunto (en el idioma del cliente).
+            // EN: The reference also goes in the subject (in the client's language).
+            app()->setLocale($idioma);
+            $this->assertStringContainsString($cita->reference, $mail->envelope()->subject);
 
             $this->assertStringContainsString('<!DOCTYPE html>', $html);
             $this->assertStringContainsString($cita->reference, $html);
@@ -65,5 +71,6 @@ class EmailsTest extends TestCase
         $this->assertStringContainsString('Marca de Prueba', $html);
         $this->assertStringContainsString('Ana García', $html);
         $this->assertStringContainsString('martes 22 de septiembre', $html);
+        $this->assertStringContainsString($cita->reference, $html);
     }
 }

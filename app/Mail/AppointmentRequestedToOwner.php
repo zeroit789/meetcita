@@ -59,9 +59,10 @@ class AppointmentRequestedToOwner extends Mailable implements ShouldQueue
         $fecha = $this->appointment->date->locale($ownerLocale)->isoFormat('D MMMM');
 
         return new Envelope(
-            // ES: Asunto traducido con el nombre del cliente + fecha + hora.
-            // EN: Translated subject with the client name + date + time.
+            // ES: Asunto traducido con la referencia + nombre del cliente + fecha + hora.
+            // EN: Translated subject with the reference + client name + date + time.
             subject: __('emails.subject_appointment_owner', [
+                'reference' => $this->appointment->reference,
                 'name' => $this->appointment->name,
                 'date' => $fecha,
                 'time' => $this->appointment->time,

@@ -35,10 +35,10 @@ return [
     // ── 1. SUBJECTS / ASUNTOS (Mailable Envelope subject) ─────────────────
     // ES: :name/:date/:time los interpola el Mailable del dueño.
     // EN: :name/:date/:time are interpolated by the owner Mailable.
-    'subject_appointment_owner' => 'New appointment request — :name (:date :time)',
-    'subject_appointment_received' => "We've received your appointment request",
-    'subject_appointment_confirmed' => 'Your appointment is confirmed',
-    'subject_appointment_rejected' => 'About your appointment',
+    'subject_appointment_owner' => 'New appointment request :reference — :name (:date :time)',
+    'subject_appointment_received' => "We've received your appointment request :reference",
+    'subject_appointment_confirmed' => 'Your appointment :reference is confirmed',
+    'subject_appointment_rejected' => 'About your appointment :reference',
 
     // ── 2. SHARED / COMÚN ─────────────────────────────────────────────────
     'brand_tagline' => 'Book your appointment online',
@@ -85,6 +85,7 @@ return [
     'owner_preheader' => ':name has requested an appointment for :date at :time.',
     'owner_heading' => 'New appointment request',
     'owner_intro' => ':name has requested an appointment from the web form. Here are all the details:',
+    'owner_label_ref' => 'Appointment ref',
     'owner_label_client' => 'Client',
     'owner_label_email' => 'Email',
     'owner_label_phone' => 'Phone',

@@ -113,6 +113,24 @@ class BookAppointmentTest extends TestCase
         Mail::assertQueued(AppointmentConfirmationToClient::class, fn ($mail) => $mail->hasTo('ana@example.com'));
     }
 
+    /**
+     * ES: El aviso al dueño lleva la referencia de la cita en el asunto y en el cuerpo.
+     * EN: The owner alert carries the booking reference in the subject and the body.
+     */
+    public function test_el_aviso_al_dueno_lleva_la_referencia_en_asunto_y_cuerpo(): void
+    {
+        Mail::fake();
+
+        $this->wizardEnPaso3()->call('reserve')->assertHasNoErrors();
+
+        $referencia = Appointment::sole()->reference;
+
+        Mail::assertQueued(AppointmentRequestedToOwner::class, function (AppointmentRequestedToOwner $mail) use ($referencia) {
+            return str_contains($mail->envelope()->subject, $referencia)
+                && str_contains($mail->render(), $referencia);
+        });
+    }
+
     public function test_no_hay_doble_reserva_si_el_hueco_se_ocupa_antes_de_confirmar(): void
     {
         Mail::fake();

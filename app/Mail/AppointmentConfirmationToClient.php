@@ -53,7 +53,9 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('emails.subject_appointment_received'),
+            // ES: La referencia va en el asunto, igual que en los demás emails.
+            // EN: The reference goes in the subject, like in the other emails.
+            subject: __('emails.subject_appointment_received', ['reference' => $this->appointment->reference]),
         );
     }
 

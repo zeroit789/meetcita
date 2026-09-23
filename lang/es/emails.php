@@ -41,10 +41,10 @@ return [
     // ── 1. SUBJECTS / ASUNTOS (Envelope subject de los Mailables) ─────────
     // ES: :name/:date/:time los interpola el Mailable del dueño.
     // EN: :name/:date/:time are interpolated by the owner Mailable.
-    'subject_appointment_owner' => 'Nueva solicitud de cita — :name (:date :time)',
-    'subject_appointment_received' => 'Hemos recibido tu solicitud de cita',
-    'subject_appointment_confirmed' => 'Tu cita está confirmada',
-    'subject_appointment_rejected' => 'Sobre tu cita',
+    'subject_appointment_owner' => 'Nueva solicitud de cita :reference — :name (:date :time)',
+    'subject_appointment_received' => 'Hemos recibido tu solicitud de cita :reference',
+    'subject_appointment_confirmed' => 'Tu cita :reference está confirmada',
+    'subject_appointment_rejected' => 'Sobre tu cita :reference',
 
     // ── 2. SHARED / COMÚN ─────────────────────────────────────────────────
     // ES: Eslogan de marca + cabeceras de sección comunes a las plantillas de cliente.
@@ -92,6 +92,7 @@ return [
     'owner_preheader' => ':name ha solicitado una cita para el :date a las :time.',
     'owner_heading' => 'Nueva solicitud de cita',
     'owner_intro' => ':name ha solicitado una cita desde el formulario web. Aquí tienes todos los datos:',
+    'owner_label_ref' => 'Nº de cita',
     'owner_label_client' => 'Cliente',
     'owner_label_email' => 'Email',
     'owner_label_phone' => 'Teléfono',
@@ -138,7 +139,7 @@ return [
     // ES: El motivo y la referencia se montan en la plantilla con variables Blade.
     // EN: The reason and reference are built in the template with Blade variables.
     'rejected_intro' => 'Hola :name, gracias por tu interés. Lamentablemente no voy a poder atender la cita del :date a las :time',
-    'rejected_ref_inline' => '(referencia :reference)',
+    'rejected_ref_inline' => '(nº de cita :reference)',
     'rejected_outro' => 'Si te viene bien, podemos buscar otro hueco: solo tienes que reservar de nuevo en :link o responder a este correo. Disculpa las molestias.',
 
 ];

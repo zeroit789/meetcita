@@ -17,7 +17,7 @@
     INDEX / ÍNDICE
         1. bloque PHP ........ formatted values + branding / valores formateados + marca
         2. header ...... brand header / cabecera de marca
-        3. details ..... appointment data table / tabla de datos de la cita
+        3. details ..... appointment data table (ref first) / tabla de datos de la cita (nº de cita primero)
         4. message ..... client's message / mensaje del cliente
         5. cta ......... reply button / botón de respuesta
         6. footer ...... brand contact footer / pie de contacto de marca
@@ -127,9 +127,15 @@
                             {{-- 3. ===== DETAILS TABLE / TABLA DE DETALLES (label + value) ===== --}}
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #ece9f5; border-radius:10px; overflow:hidden;">
 
+                                {{-- ES: Nº de cita (referencia pública), primera fila para localizarla rápido.
+                                     EN: Appointment ref (public reference), first row so it is easy to find. --}}
+                                <tr>
+                                    <td width="40%" style="padding:14px 16px; background-color:#faf9fd; font-family:Arial,Helvetica,sans-serif; color:#6b7280; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid #ece9f5;">{{ __('emails.owner_label_ref', [], $loc) }}</td>
+                                    <td style="padding:14px 16px; font-family:'Courier New',monospace; color:#7c3aed; font-size:16px; font-weight:bold; border-bottom:1px solid #ece9f5;">{{ $appointment->reference }}</td>
+                                </tr>
                                 {{-- ES: Cliente / EN: Client --}}
                                 <tr>
-                                    <td width="40%" style="padding:14px 16px; background-color:#faf9fd; font-family:Arial,Helvetica,sans-serif; color:#6b7280; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid #ece9f5;">{{ __('emails.owner_label_client', [], $loc) }}</td>
+                                    <td style=" style="padding:14px 16px; background-color:#faf9fd; font-family:Arial,Helvetica,sans-serif; color:#6b7280; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid #ece9f5;">{{ __('emails.owner_label_client', [], $loc) }}</td>
                                     <td style="padding:14px 16px; font-family:Arial,Helvetica,sans-serif; color:#1f2937; font-size:15px; border-bottom:1px solid #ece9f5;">{{ $appointment->name }}</td>
                                 </tr>
                                 {{-- ES: Email / EN: Email --}}

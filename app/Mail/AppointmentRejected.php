@@ -56,7 +56,9 @@ class AppointmentRejected extends Mailable implements ShouldQueue
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: __('emails.subject_appointment_rejected'),
+            // ES: La referencia va en el asunto, igual que en los demás emails.
+            // EN: The reference goes in the subject, like in the other emails.
+            subject: __('emails.subject_appointment_rejected', ['reference' => $this->appointment->reference]),
             replyTo: [new Address(
                 config('appointments.brand.owner_email'),
                 config('appointments.brand.owner_name').' - '.config('appointments.brand.name'),
