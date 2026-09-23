@@ -43,8 +43,8 @@ return [
     //     hace nada (no rompe). Ver docs/TELEGRAM.md para obtener los valores.
     // ──────────────────────────────────────────────────────────────────────
     'telegram' => [
-        'token'          => env('TELEGRAM_BOT_TOKEN'),
-        'chat_id'        => env('TELEGRAM_CHAT_ID'),
+        'token' => env('TELEGRAM_BOT_TOKEN'),
+        'chat_id' => env('TELEGRAM_CHAT_ID'),
         'webhook_secret' => env('TELEGRAM_WEBHOOK_SECRET'),
     ],
 
@@ -58,11 +58,11 @@ return [
     //     funcionando). Ver docs/GOOGLE.md para obtener los valores.
     // ──────────────────────────────────────────────────────────────────────
     'google' => [
-        'client_id'     => env('GOOGLE_CLIENT_ID'),
+        'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'refresh_token' => env('GOOGLE_REFRESH_TOKEN'),
-        'calendar_id'   => env('GOOGLE_CALENDAR_ID', 'primary'),
-        'redirect_uri'  => env('GOOGLE_REDIRECT_URI', 'http://localhost'),
+        'calendar_id' => env('GOOGLE_CALENDAR_ID', 'primary'),
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI', 'http://localhost'),
     ],
 
 ];

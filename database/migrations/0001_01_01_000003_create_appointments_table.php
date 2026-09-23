@@ -82,7 +82,7 @@ return new class extends Migration
             // EN: Status: pendiente / confirmada / cancelada. Default 'pendiente'.
             // ES: Estado: pendiente / confirmada / cancelada. Por defecto 'pendiente'.
             $table->enum('status', ['pendiente', 'confirmada', 'cancelada'])
-                  ->default('pendiente');
+                ->default('pendiente');
 
             $table->timestamps();
         });

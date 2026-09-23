@@ -89,7 +89,7 @@ class Appointment extends Model
      * ES: La duración por defecto cae a la primera configurada (o 30).
      */
     protected $attributes = [
-        'status'   => 'pendiente',
+        'status' => 'pendiente',
         'duration' => 30,
         'modality' => 'online',   // EN: online (videocall) by default · ES: online por defecto
     ];
@@ -105,7 +105,7 @@ class Appointment extends Model
     protected function casts(): array
     {
         return [
-            'date'     => 'date:Y-m-d',
+            'date' => 'date:Y-m-d',
             'duration' => 'integer',
         ];
     }
@@ -148,14 +148,14 @@ class Appointment extends Model
         $alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
         // EN: Configurable brand prefix (e.g. "APT"). ES: Prefijo de marca configurable.
-        $prefijo = config('appointments.reference_prefix', 'APT') . '-';
+        $prefijo = config('appointments.reference_prefix', 'APT').'-';
 
         do {
             $codigo = '';
             for ($i = 0; $i < 5; $i++) {
                 $codigo .= $alfabeto[random_int(0, strlen($alfabeto) - 1)];
             }
-            $referencia = $prefijo . $codigo;
+            $referencia = $prefijo.$codigo;
         } while (self::where('reference', $referencia)->exists()); // EN: guarantees uniqueness · ES: garantiza unicidad
 
         return $referencia;
@@ -171,7 +171,7 @@ class Appointment extends Model
      */
     public function inicioUtc(): Carbon
     {
-        return Carbon::parse($this->date->toDateString() . ' ' . $this->time, $this->zona())
+        return Carbon::parse($this->date->toDateString().' '.$this->time, $this->zona())
             ->setTimezone('UTC');
     }
 
@@ -238,14 +238,14 @@ class Appointment extends Model
         $fmt = 'Ymd\THis\Z'; // EN: UTC date-time format Google expects · ES: formato fecha-hora UTC
 
         $params = http_build_query([
-            'action'   => 'TEMPLATE',
-            'text'     => $this->tituloCalendario(),
-            'dates'    => $this->inicioUtc()->format($fmt) . '/' . $this->finUtc()->format($fmt),
-            'details'  => $this->descripcionCalendario(),
+            'action' => 'TEMPLATE',
+            'text' => $this->tituloCalendario(),
+            'dates' => $this->inicioUtc()->format($fmt).'/'.$this->finUtc()->format($fmt),
+            'details' => $this->descripcionCalendario(),
             'location' => $this->ubicacionCalendario(),
         ]);
 
-        return 'https://calendar.google.com/calendar/render?' . $params;
+        return 'https://calendar.google.com/calendar/render?'.$params;
     }
 
     // ── 5. Attendees — emails de los asistentes extra ───────────────────────

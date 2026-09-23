@@ -66,7 +66,7 @@ class PanelCitas extends Component
         try {
             app(GoogleCalendarService::class)->crearEvento($cita);
         } catch (\Throwable $e) {
-            Log::error('Could not create the Google Calendar event on confirm: ' . $e->getMessage());
+            Log::error('Could not create the Google Calendar event on confirm: '.$e->getMessage());
         }
 
         // EN: Tell the client their appointment is confirmed (client in To +
@@ -79,7 +79,7 @@ class PanelCitas extends Component
                 ->locale($cita->locale ?? config('appointments.default_locale', 'es'))
                 ->send(new AppointmentConfirmed($cita));
         } catch (\Throwable $e) {
-            Log::error('Could not send the confirmed-appointment email: ' . $e->getMessage());
+            Log::error('Could not send the confirmed-appointment email: '.$e->getMessage());
         }
     }
 

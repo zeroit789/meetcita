@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -54,7 +55,7 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
             subject: __('emails.subject_appointment_confirmed'),
             replyTo: [new Address(
                 config('appointments.brand.owner_email'),
-                config('appointments.brand.owner_name') . ' - ' . config('appointments.brand.name'),
+                config('appointments.brand.owner_name').' - '.config('appointments.brand.name'),
             )],
         );
     }
@@ -73,13 +74,13 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
             view: 'emails.appointments.confirmed',
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
-                'icsUrl'            => url('/cita/' . $this->appointment->reference . '/calendario.ics'),
+                'icsUrl' => url('/cita/'.$this->appointment->reference.'/calendario.ics'),
             ],
         );
     }
 
     // 4. EN: No attachments. / ES: Sin adjuntos.
-    /** @return array<int, \Illuminate\Mail\Mailables\Attachment> */
+    /** @return array<int, Attachment> */
     public function attachments(): array
     {
         return [];

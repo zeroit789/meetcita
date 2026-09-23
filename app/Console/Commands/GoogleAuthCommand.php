@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use Google\Client;
+use Google\Service\Calendar;
 use Illuminate\Console\Command;
 
 /*
@@ -55,7 +57,7 @@ class GoogleAuthCommand extends Command
 
         // EN: Build the Google client with the .env config.
         // ES: Construimos el cliente de Google con la config del .env.
-        $client = new \Google\Client();
+        $client = new Client;
         $client->setClientId($clientId);
         $client->setClientSecret($clientSecret);
         $client->setRedirectUri(config('services.google.redirect_uri', 'http://localhost'));
@@ -67,7 +69,7 @@ class GoogleAuthCommand extends Command
         $client->setPrompt('consent');
         // EN: We only request permission to manage calendar events.
         // ES: Solo pedimos permiso para gestionar eventos del calendario.
-        $client->addScope(\Google\Service\Calendar::CALENDAR_EVENTS);
+        $client->addScope(Calendar::CALENDAR_EVENTS);
 
         $code = $this->option('code');
 
@@ -81,7 +83,7 @@ class GoogleAuthCommand extends Command
             $token = $client->fetchAccessTokenWithAuthCode($code);
 
             if (isset($token['error'])) {
-                $this->error('Error al canjear el código: ' . ($token['error_description'] ?? $token['error']));
+                $this->error('Error al canjear el código: '.($token['error_description'] ?? $token['error']));
 
                 return self::FAILURE;
             }
@@ -97,7 +99,7 @@ class GoogleAuthCommand extends Command
             // ES: Mostramos el refresh_token para pegarlo en el .env.
             $this->info('¡Listo! Copia esta línea en tu .env:');
             $this->newLine();
-            $this->line('GOOGLE_REFRESH_TOKEN=' . $token['refresh_token']);
+            $this->line('GOOGLE_REFRESH_TOKEN='.$token['refresh_token']);
             $this->newLine();
 
             return self::SUCCESS;

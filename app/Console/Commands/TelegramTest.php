@@ -31,7 +31,7 @@ class TelegramTest extends Command
             return self::FAILURE;
         }
 
-        $id = $tg->enviar('🔔 ' . $this->argument('mensaje'));
+        $id = $tg->enviar('🔔 '.$this->argument('mensaje'));
 
         if ($id) {
             $this->info("Mensaje enviado (message_id={$id}).");

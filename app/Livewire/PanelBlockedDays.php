@@ -53,14 +53,14 @@ class PanelBlockedDays extends Component
         // ES: Reglas inline + mensajes traducidos (Livewire exige reglas
         //     explícitas aquí, si no lanza MissingRulesException).
         $this->validate([
-            'newDate'   => 'required|date|after_or_equal:today|unique:blocked_days,date',
+            'newDate' => 'required|date|after_or_equal:today|unique:blocked_days,date',
             'newReason' => 'nullable|string|max:120',
         ], [
-            'newDate.required'       => __('citas.blocked_err_required'),
-            'newDate.date'           => __('citas.blocked_err_invalid'),
+            'newDate.required' => __('citas.blocked_err_required'),
+            'newDate.date' => __('citas.blocked_err_invalid'),
             'newDate.after_or_equal' => __('citas.blocked_err_past'),
-            'newDate.unique'         => __('citas.blocked_err_duplicate'),
-            'newReason.max'          => __('citas.blocked_err_reason_long'),
+            'newDate.unique' => __('citas.blocked_err_duplicate'),
+            'newReason.max' => __('citas.blocked_err_reason_long'),
         ]);
 
         // EN: Before blocking, ensure the day has no active appointments. If it
@@ -80,7 +80,7 @@ class PanelBlockedDays extends Component
         }
 
         BlockedDay::create([
-            'date'   => $this->newDate,
+            'date' => $this->newDate,
             'reason' => $this->newReason ?: null,
         ]);
 

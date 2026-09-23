@@ -30,6 +30,7 @@ class TelegramNotifier
     // ── 1. Config — token/chat y comprobación de configuración ──────────────
 
     protected ?string $token;
+
     protected ?string $chatId;
 
     public function __construct()
@@ -65,8 +66,8 @@ class TelegramNotifier
      * ES: Envía un mensaje al dueño. $buttons = filas de botones inline:
      *       [ [ ['text'=>'✅ Confirmar','callback_data'=>'...'], ... ], ... ]
      *
-     * @return int|null  EN: message_id of the sent message (to edit later), or null.
-     *                    ES: message_id del mensaje enviado (para editarlo luego), o null.
+     * @return int|null EN: message_id of the sent message (to edit later), or null.
+     *                  ES: message_id del mensaje enviado (para editarlo luego), o null.
      */
     public function enviar(string $textoHtml, ?array $buttons = null): ?int
     {
@@ -75,8 +76,8 @@ class TelegramNotifier
         }
 
         $payload = [
-            'chat_id'    => $this->chatId,
-            'text'       => $textoHtml,
+            'chat_id' => $this->chatId,
+            'text' => $textoHtml,
             'parse_mode' => 'HTML',
             'disable_web_page_preview' => true,
         ];
@@ -90,7 +91,7 @@ class TelegramNotifier
 
             return $res->json('result.message_id');
         } catch (\Throwable $e) {
-            Log::error('Telegram enviar() falló: ' . $e->getMessage());
+            Log::error('Telegram enviar() falló: '.$e->getMessage());
 
             return null;
         }
@@ -111,10 +112,10 @@ class TelegramNotifier
         try {
             Http::asForm()->post($this->apiUrl('answerCallbackQuery'), array_filter([
                 'callback_query_id' => $callbackQueryId,
-                'text'              => $aviso,
+                'text' => $aviso,
             ]));
         } catch (\Throwable $e) {
-            Log::error('Telegram responderCallback() falló: ' . $e->getMessage());
+            Log::error('Telegram responderCallback() falló: '.$e->getMessage());
         }
     }
 
@@ -134,14 +135,14 @@ class TelegramNotifier
 
         try {
             Http::asForm()->post($this->apiUrl('editMessageText'), [
-                'chat_id'    => $this->chatId,
+                'chat_id' => $this->chatId,
                 'message_id' => $messageId,
-                'text'       => $textoHtml,
+                'text' => $textoHtml,
                 'parse_mode' => 'HTML',
                 'disable_web_page_preview' => true,
             ]);
         } catch (\Throwable $e) {
-            Log::error('Telegram editarMensaje() falló: ' . $e->getMessage());
+            Log::error('Telegram editarMensaje() falló: '.$e->getMessage());
         }
     }
 }

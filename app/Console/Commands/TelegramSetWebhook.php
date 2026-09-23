@@ -35,13 +35,13 @@ class TelegramSetWebhook extends Command
         }
 
         // EN: Default URL: the app URL + /telegram/webhook. ES: URL por defecto: APP_URL + /telegram/webhook.
-        $url = $this->option('url') ?: rtrim(config('app.url'), '/') . '/telegram/webhook';
+        $url = $this->option('url') ?: rtrim(config('app.url'), '/').'/telegram/webhook';
 
         // EN: Register the webhook with the secret token for header validation.
         // ES: Registramos el webhook con el secret token para validar la cabecera.
         $res = Http::asForm()->post("https://api.telegram.org/bot{$token}/setWebhook", [
-            'url'             => $url,
-            'secret_token'    => $secret,
+            'url' => $url,
+            'secret_token' => $secret,
             'allowed_updates' => json_encode(['message', 'callback_query']),
         ]);
 
@@ -51,7 +51,7 @@ class TelegramSetWebhook extends Command
             return self::SUCCESS;
         }
 
-        $this->error('Error: ' . $res->json('description', 'desconocido'));
+        $this->error('Error: '.$res->json('description', 'desconocido'));
 
         return self::FAILURE;
     }

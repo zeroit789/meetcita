@@ -4,6 +4,12 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use Carbon\Carbon;
+use Google\Client;
+use Google\Service\Calendar;
+use Google\Service\Calendar\ConferenceData;
+use Google\Service\Calendar\ConferenceSolutionKey;
+use Google\Service\Calendar\CreateConferenceRequest;
+use Google\Service\Calendar\Event;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -73,16 +79,16 @@ class GoogleCalendarService
      * ES: Construye y autentica el cliente de Google usando el refresh_token.
      *     Devuelve el cliente listo para instanciar el servicio de Calendar.
      */
-    protected function cliente(): \Google\Client
+    protected function cliente(): Client
     {
-        $client = new \Google\Client();
+        $client = new Client;
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
         // EN: offline access type → allows refreshing the token without re-auth.
         // ES: accessType offline → permite refrescar el token sin reautorizar.
         $client->setAccessType('offline');
         // EN: We only need to manage calendar events. ES: Solo gestionamos eventos.
-        $client->addScope(\Google\Service\Calendar::CALENDAR_EVENTS);
+        $client->addScope(Calendar::CALENDAR_EVENTS);
 
         // ── 2. Token cache — token de acceso cacheado ─────────────────────────
         // EN: PERF: cache the access_token (lives ~1h in Google). Before, we asked
@@ -162,19 +168,19 @@ class GoogleCalendarService
         // EN: No credentials → silent no-op (graceful degradation).
         // ES: Sin credenciales → no-op silencioso (degradación con gracia).
         if (! $this->estaConfigurado()) {
-            Log::warning('GoogleCalendar: integración no configurada; no se crea evento para la cita ' . $cita->reference);
+            Log::warning('GoogleCalendar: integración no configurada; no se crea evento para la cita '.$cita->reference);
 
             return;
         }
 
         try {
-            $service = new \Google\Service\Calendar($this->cliente());
+            $service = new Calendar($this->cliente());
 
             // EN: Event start/end (local business time). $cita->date is a Carbon
             //     (cast 'date'); we add the time and the duration in minutes.
             // ES: Inicio/fin del evento (hora local del negocio). $cita->date es
             //     un Carbon (cast 'date'); le incrustamos la hora y la duración.
-            $inicio = Carbon::parse($cita->date->toDateString() . ' ' . $cita->time, $this->zona());
+            $inicio = Carbon::parse($cita->date->toDateString().' '.$cita->time, $this->zona());
             $fin = $inicio->copy()->addMinutes((int) $cita->duration);
 
             // EN: Brand name + public site host for the event text (decoupled).
@@ -188,30 +194,30 @@ class GoogleCalendarService
             // EN: Event description text. ES: Texto descriptivo del evento.
             $modalidadTxt = $cita->modality === 'online' ? 'Online (videollamada)' : 'Presencial';
             $descripcion = "Cita solicitada desde {$host}\n\n"
-                . "Asunto: {$cita->message}\n"
-                . "Asistentes: {$cita->attendees}\n"
-                . "Modalidad: {$modalidadTxt}\n"
-                . "Referencia: {$cita->reference}";
+                ."Asunto: {$cita->message}\n"
+                ."Asistentes: {$cita->attendees}\n"
+                ."Modalidad: {$modalidadTxt}\n"
+                ."Referencia: {$cita->reference}";
 
             // EN: Invitee list — always the client; plus extra valid emails.
             // ES: Lista de invitados — siempre el cliente; más los emails extra válidos.
             $invitados = $this->construirInvitados($cita);
 
             // EN: Build the event. ES: Construimos el evento.
-            $event = new \Google\Service\Calendar\Event([
-                'summary'     => "{$marca} — {$cita->name} [{$cita->reference}]",
+            $event = new Event([
+                'summary' => "{$marca} — {$cita->name} [{$cita->reference}]",
                 'description' => $descripcion,
-                'start'       => [
+                'start' => [
                     'dateTime' => $inicio->toRfc3339String(),
                     'timeZone' => $this->zona(),
                 ],
-                'end'         => [
+                'end' => [
                     'dateTime' => $fin->toRfc3339String(),
                     'timeZone' => $this->zona(),
                 ],
                 // EN: Invite client + extra attendees (each as {email}).
                 // ES: Invitamos al cliente + asistentes extra (cada uno como {email}).
-                'attendees'   => array_map(fn (string $correo) => ['email' => $correo], $invitados),
+                'attendees' => array_map(fn (string $correo) => ['email' => $correo], $invitados),
             ]);
 
             // EN: Common insert options: notify invitees by email.
@@ -221,12 +227,12 @@ class GoogleCalendarService
             // EN: Only online bookings generate a Meet link.
             // ES: Solo las citas online generan enlace de Meet.
             if ($cita->modality === 'online') {
-                $event->setConferenceData(new \Google\Service\Calendar\ConferenceData([
-                    'createRequest' => new \Google\Service\Calendar\CreateConferenceRequest([
+                $event->setConferenceData(new ConferenceData([
+                    'createRequest' => new CreateConferenceRequest([
                         // EN: unique requestId per booking → use its reference.
                         // ES: requestId único por cita → usamos su referencia.
-                        'requestId'             => $cita->reference,
-                        'conferenceSolutionKey' => new \Google\Service\Calendar\ConferenceSolutionKey([
+                        'requestId' => $cita->reference,
+                        'conferenceSolutionKey' => new ConferenceSolutionKey([
                             'type' => 'hangoutsMeet',
                         ]),
                     ]),
@@ -262,7 +268,7 @@ class GoogleCalendarService
             $this->olvidarTokenSiNoAutorizado($e);
             // EN: Never break the booking confirmation due to a Google failure.
             // ES: Nunca rompemos la confirmación de la cita por un fallo de Google.
-            Log::error('GoogleCalendar: error creando evento para la cita ' . $cita->reference . ': ' . $e->getMessage());
+            Log::error('GoogleCalendar: error creando evento para la cita '.$cita->reference.': '.$e->getMessage());
         }
     }
 
@@ -282,7 +288,7 @@ class GoogleCalendarService
      *     Degradación con gracia: lo inválido/vacío simplemente no se añade.
      *     Segunda barrera de seguridad: como mucho cliente + 10 invitados = 11.
      *
-     * @return array<int, string>  EN: unique emails to invite · ES: emails únicos a invitar
+     * @return array<int, string> EN: unique emails to invite · ES: emails únicos a invitar
      */
     protected function construirInvitados(Appointment $cita): array
     {
@@ -349,7 +355,7 @@ class GoogleCalendarService
         }
 
         try {
-            $service = new \Google\Service\Calendar($this->cliente());
+            $service = new Calendar($this->cliente());
 
             // EN: Delete the event and notify invitees of the cancellation.
             // ES: Borramos el evento y avisamos a los invitados de la cancelación.
@@ -370,7 +376,7 @@ class GoogleCalendarService
             $this->olvidarTokenSiNoAutorizado($e);
             // EN: A delete failure must not break the booking cancellation.
             // ES: Un fallo al borrar no debe romper la cancelación de la cita.
-            Log::error('GoogleCalendar: error borrando evento de la cita ' . $cita->reference . ': ' . $e->getMessage());
+            Log::error('GoogleCalendar: error borrando evento de la cita '.$cita->reference.': '.$e->getMessage());
         }
     }
 
@@ -388,8 +394,8 @@ class GoogleCalendarService
      *     configurado o si hay error. Ignora los eventos de día completo.
      *     Cachea todo el rango 10 minutos (ver ocupadosDelRango()).
      *
-     * @param  string $fecha  EN: day "YYYY-MM-DD" · ES: día "YYYY-MM-DD"
-     * @return array<int, string>  EN: occupied half-slots · ES: medios-slots ocupados
+     * @param  string  $fecha  EN: day "YYYY-MM-DD" · ES: día "YYYY-MM-DD"
+     * @return array<int, string> EN: occupied half-slots · ES: medios-slots ocupados
      */
     public function eventosOcupados(string $fecha): array
     {
@@ -418,13 +424,13 @@ class GoogleCalendarService
      *     se hacía una llamada por día (retardo perceptible); con una sola llamada
      *     de rango el primer render paga la latencia una vez y el resto va de caché.
      *
-     * @return array<string, array<int, string>>  EN/ES: ["YYYY-MM-DD" => ["HH:MM", ...]]
+     * @return array<string, array<int, string>> EN/ES: ["YYYY-MM-DD" => ["HH:MM", ...]]
      */
     protected function ocupadosDelRango(): array
     {
         return Cache::remember('gcal_ocupados_rango', 600, function () {
             try {
-                $service = new \Google\Service\Calendar($this->cliente());
+                $service = new Calendar($this->cliente());
 
                 // EN: Range: from the start of today to 16 days later (covers the
                 //     14 the module offers, with margin).
@@ -436,11 +442,11 @@ class GoogleCalendarService
                 // EN: Already-expanded events (singleEvents), ordered by start.
                 // ES: Eventos ya expandidos (singleEvents), ordenados por inicio.
                 $eventos = $service->events->listEvents($this->calendarId(), [
-                    'timeMin'      => $inicio->toRfc3339String(),
-                    'timeMax'      => $fin->toRfc3339String(),
+                    'timeMin' => $inicio->toRfc3339String(),
+                    'timeMax' => $fin->toRfc3339String(),
                     'singleEvents' => true,
-                    'orderBy'      => 'startTime',
-                    'timeZone'     => $this->zona(),
+                    'orderBy' => 'startTime',
+                    'timeZone' => $this->zona(),
                 ]);
 
                 $porFecha = [];
@@ -485,7 +491,7 @@ class GoogleCalendarService
                 $this->olvidarTokenSiNoAutorizado($e);
                 // EN: Any Google error → no occupancy contributed.
                 // ES: Cualquier error de Google → el calendario no aporta ocupación.
-                Log::error('GoogleCalendar: error listando eventos del rango: ' . $e->getMessage());
+                Log::error('GoogleCalendar: error listando eventos del rango: '.$e->getMessage());
 
                 return [];
             }

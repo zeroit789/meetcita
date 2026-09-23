@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -56,7 +57,7 @@ class AppointmentRejected extends Mailable implements ShouldQueue
             subject: __('emails.subject_appointment_rejected'),
             replyTo: [new Address(
                 config('appointments.brand.owner_email'),
-                config('appointments.brand.owner_name') . ' - ' . config('appointments.brand.name'),
+                config('appointments.brand.owner_name').' - '.config('appointments.brand.name'),
             )],
         );
     }
@@ -71,7 +72,7 @@ class AppointmentRejected extends Mailable implements ShouldQueue
     }
 
     // 4. EN: No attachments. / ES: Sin adjuntos.
-    /** @return array<int, \Illuminate\Mail\Mailables\Attachment> */
+    /** @return array<int, Attachment> */
     public function attachments(): array
     {
         return [];

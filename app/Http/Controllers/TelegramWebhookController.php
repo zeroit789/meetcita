@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
+use App\Services\GoogleCalendarService;
 use App\Services\TelegramNotifier;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 /*
 |==============================================================================
@@ -98,7 +100,7 @@ class TelegramWebhookController extends Controller
                 if ($cita->status !== 'pendiente') {
                     $tg->responderCallback($cb['id'], "Esa cita ya está {$cita->status}.");
                     if ($messageId) {
-                        $tg->editarMensaje((int) $messageId, $this->resumen($cita, "ℹ️ Ya estaba <b>" . mb_strtoupper($cita->status) . "</b>"));
+                        $tg->editarMensaje((int) $messageId, $this->resumen($cita, 'ℹ️ Ya estaba <b>'.mb_strtoupper($cita->status).'</b>'));
                     }
 
                     return response('ok');
@@ -135,7 +137,7 @@ class TelegramWebhookController extends Controller
                     //     service degrades gracefully if Google isn't configured.
                     // ES: Crear el evento en Google Calendar (+ Meet si es online).
                     //     El servicio degrada con gracia si Google no está configurado.
-                    app(\App\Services\GoogleCalendarService::class)->crearEvento($cita);
+                    app(GoogleCalendarService::class)->crearEvento($cita);
 
                     $this->enviarMail($cita->email, new AppointmentConfirmed($cita), $cita->emailsAsistentesExtra(), $cita->locale ?? config('appointments.default_locale'));
 
@@ -150,9 +152,9 @@ class TelegramWebhookController extends Controller
 
                     $tg->responderCallback($cb['id'], 'Escribe el motivo…');
                     $tg->enviar(
-                        "✍️ Escribe el <b>motivo</b> por el que no puedes atender la cita "
-                        . "<code>{$cita->reference}</code> de " . e($cita->name) . ".\n"
-                        . "<i>Se le enviará por email tal cual lo escribas.</i>"
+                        '✍️ Escribe el <b>motivo</b> por el que no puedes atender la cita '
+                        ."<code>{$cita->reference}</code> de ".e($cita->name).".\n"
+                        .'<i>Se le enviará por email tal cual lo escribas.</i>'
                     );
                 }
 
@@ -177,7 +179,7 @@ class TelegramWebhookController extends Controller
 
                     if ($cita) {
                         // EN: Limit the reason length (fix I3). ES: Limitamos el motivo (fix I3).
-                        $motivo = \Illuminate\Support\Str::limit($texto, 1000);
+                        $motivo = Str::limit($texto, 1000);
 
                         // EN: CANCEL (idempotent, fix C3): ATOMIC transition
                         //     'pendiente' -> 'cancelada' via conditional UPDATE. If
@@ -200,13 +202,13 @@ class TelegramWebhookController extends Controller
                             //     Google and notifies the client). No-op if no event.
                             // ES: Borrar el evento de Google Calendar (libera el hueco
                             //     y avisa al cliente). No-op si no hay evento.
-                            app(\App\Services\GoogleCalendarService::class)->borrarEvento($cita);
+                            app(GoogleCalendarService::class)->borrarEvento($cita);
 
                             $this->enviarMail($cita->email, new AppointmentRejected($cita, $motivo), $cita->emailsAsistentesExtra(), $cita->locale ?? config('appointments.default_locale'));
 
                             $tg->enviar(
-                                "❌ Cita <code>{$cita->reference}</code> de " . e($cita->name)
-                                . " cancelada. Le he enviado tu motivo por email."
+                                "❌ Cita <code>{$cita->reference}</code> de ".e($cita->name)
+                                .' cancelada. Le he enviado tu motivo por email.'
                             );
                         } else {
                             // EN: The booking changed state meanwhile (fix C3).
@@ -219,7 +221,7 @@ class TelegramWebhookController extends Controller
                 return response('ok');
             }
         } catch (\Throwable $e) {
-            Log::error('Telegram webhook error: ' . $e->getMessage());
+            Log::error('Telegram webhook error: '.$e->getMessage());
         }
 
         return response('ok');
@@ -246,7 +248,7 @@ class TelegramWebhookController extends Controller
             }
             $mail->send($mailable);
         } catch (\Throwable $e) {
-            Log::error('Telegram webhook: fallo al enviar email: ' . $e->getMessage());
+            Log::error('Telegram webhook: fallo al enviar email: '.$e->getMessage());
         }
     }
 
@@ -264,8 +266,8 @@ class TelegramWebhookController extends Controller
         $fecha = $cita->date->locale($locale)->isoFormat('dddd D [de] MMMM');
 
         return "🗓 <b>Cita</b> · <code>{$cita->reference}</code>\n\n"
-            . "👤 <b>" . e($cita->name) . "</b>\n"
-            . "📅 {$fecha} a las <b>{$cita->time}</b>\n\n"
-            . $estado;
+            .'👤 <b>'.e($cita->name)."</b>\n"
+            ."📅 {$fecha} a las <b>{$cita->time}</b>\n\n"
+            .$estado;
     }
 }

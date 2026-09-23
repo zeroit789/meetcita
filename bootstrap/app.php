@@ -56,7 +56,7 @@ return Application::configure(basePath: dirname(__DIR__))
         //     (config appointments.panel.password).
         $middleware->alias([
             'appointments.panel' => AdminPanelPassword::class,
-            'setlocale'          => SetLocale::class,
+            'setlocale' => SetLocale::class,
         ]);
 
         // EN: The Telegram webhook is an external POST (no session nor CSRF token):

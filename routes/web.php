@@ -3,6 +3,7 @@
 use App\Http\Controllers\AppointmentIcsController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\TelegramWebhookController;
+use App\Http\Middleware\SetLocale;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -48,9 +49,9 @@ Route::get('/citas', function () {
 Route::get('/lang/{locale}', function (string $locale) {
     // EN: Only accept supported languages; otherwise the default one.
     // ES: Solo aceptamos idiomas soportados; si no, el de por defecto.
-    $locale = in_array($locale, \App\Http\Middleware\SetLocale::soportados(), true)
+    $locale = in_array($locale, SetLocale::soportados(), true)
         ? $locale
-        : \App\Http\Middleware\SetLocale::porDefecto();
+        : SetLocale::porDefecto();
 
     // EN: 1-year cookie (525600 min). redirect()->back() keeps the user in place.
     // ES: Cookie de 1 año (525600 min). redirect()->back() deja al usuario donde estaba.

@@ -75,7 +75,7 @@ class AppointmentIcsController extends Controller
         //     address-like unique identifier).
         // ES: UID estable y globalmente único: referencia + host (RFC 5545 pide un
         //     identificador único tipo dirección).
-        $uid = $this->escapar($cita->reference) . '@' . $host;
+        $uid = $this->escapar($cita->reference).'@'.$host;
 
         // EN: Map the booking status to the VEVENT STATUS.
         // ES: Mapeamos el estado de la cita al STATUS del VEVENT.
@@ -87,29 +87,29 @@ class AppointmentIcsController extends Controller
         $lineas = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
-            'PRODID:-//' . $this->escapar($marca) . '//Appointments//EN',
+            'PRODID:-//'.$this->escapar($marca).'//Appointments//EN',
             'CALSCALE:GREGORIAN',
             'METHOD:PUBLISH',
             'BEGIN:VEVENT',
-            'UID:' . $uid,
-            'DTSTAMP:' . $dtStamp,
-            'DTSTART:' . $dtStart,
-            'DTEND:' . $dtEnd,
-            'SUMMARY:' . $this->escapar($resumen),
-            'DESCRIPTION:' . $this->escapar($descripcion),
-            'LOCATION:' . $this->escapar($ubicacion),
-            'STATUS:' . $status,
+            'UID:'.$uid,
+            'DTSTAMP:'.$dtStamp,
+            'DTSTART:'.$dtStart,
+            'DTEND:'.$dtEnd,
+            'SUMMARY:'.$this->escapar($resumen),
+            'DESCRIPTION:'.$this->escapar($descripcion),
+            'LOCATION:'.$this->escapar($ubicacion),
+            'STATUS:'.$status,
             'END:VEVENT',
             'END:VCALENDAR',
         ];
 
         // EN: RFC 5545 requires CRLF line terminators. ES: El RFC 5545 exige terminadores CRLF.
-        $ics = implode("\r\n", $lineas) . "\r\n";
+        $ics = implode("\r\n", $lineas)."\r\n";
 
         // EN: Respond as a calendar download. ES: Respuesta como descarga de calendario.
         return response($ics, 200)
             ->header('Content-Type', 'text/calendar; charset=utf-8')
-            ->header('Content-Disposition', 'attachment; filename="cita-' . $reference . '.ics"');
+            ->header('Content-Disposition', 'attachment; filename="cita-'.$reference.'.ics"');
     }
 
     // ── 2. Helpers — host de la marca + escape RFC 5545 ─────────────────────

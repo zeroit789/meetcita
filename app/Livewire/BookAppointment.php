@@ -8,10 +8,12 @@ use App\Models\Appointment;
 use App\Services\AvailabilityService;
 use App\Services\TelegramNotifier;
 use Carbon\Carbon;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -54,7 +56,9 @@ class BookAppointment extends Component
 
     // EN: User selection. / ES: Selección del usuario.
     public string $selectedDate = '';  // EN: chosen day "YYYY-MM-DD" / ES: día elegido
+
     public string $selectedTime = '';  // EN: chosen start "HH:MM" / ES: hora de inicio
+
     public int $duration = 30;         // EN: minutes / ES: minutos
 
     // EN: Appointment modality: 'online' (Meet) or 'presencial' (in person).
@@ -96,14 +100,18 @@ class BookAppointment extends Component
 
     // ── Confirmed-appointment data (for the final screen) / Datos confirmados ──
     public ?string $confirmedDate = null;
+
     public ?string $confirmedTime = null;
+
     public ?int $confirmedDuration = null;
+
     public ?string $confirmedRef = null;   // EN: public ref / ES: código público
 
     // ── CALENDAR state (step 1) / Estado del CALENDARIO (paso 1) ──
     // EN: Month currently shown (1-12) and its year. Set in mount().
     // ES: Mes mostrado (1-12) y su año. Se inicializan en mount().
     public int $viewMonth = 0;
+
     public int $viewYear = 0;
 
     // ── 2. MOUNT / SERVICE EN / ES ───────────────────────────────────────
@@ -214,11 +222,11 @@ class BookAppointment extends Component
         while ($cursor->lte($end)) {
             $date = $cursor->toDateString();
             $week[] = [
-                'date'       => $date,
-                'day'        => (int) $cursor->day,
-                'isCurrent'  => (int) $cursor->month === $this->viewMonth, // EN: shown month / ES: del mes mostrado
-                'isToday'    => $cursor->isToday(),
-                'isWeekend'  => ! $cursor->isWeekday(),
+                'date' => $date,
+                'day' => (int) $cursor->day,
+                'isCurrent' => (int) $cursor->month === $this->viewMonth, // EN: shown month / ES: del mes mostrado
+                'isToday' => $cursor->isToday(),
+                'isWeekend' => ! $cursor->isWeekday(),
                 'reservable' => $service->esFechaReservable($date),         // EN: clickable? / ES: ¿clicable?
                 'isSelected' => $this->selectedDate === $date,
             ];
@@ -328,6 +336,7 @@ class BookAppointment extends Component
         // ES: El inicio debe seguir siendo válido para la duración elegida.
         if (! $this->availability()->slotSigueLibre($this->selectedDate, $time, $this->duration)) {
             $this->selectedTime = '';   // EN: just got taken / ES: justo se ocupó
+
             return;
         }
 
@@ -362,8 +371,8 @@ class BookAppointment extends Component
         //     solo COMPROBAMOS el límite; el hit() que consume un intento se
         //     hace más abajo, tras validar, para no gastar intentos en errores
         //     honestos del usuario.
-        $rlKey = 'reserva:' . request()->ip();
-        if (\Illuminate\Support\Facades\RateLimiter::tooManyAttempts($rlKey, 5)) {
+        $rlKey = 'reserva:'.request()->ip();
+        if (RateLimiter::tooManyAttempts($rlKey, 5)) {
             $this->addError('selectedTime', __('citas.err_too_many_attempts'));
 
             return;
@@ -405,7 +414,7 @@ class BookAppointment extends Component
         //     validations and before touching the DB.
         // ES: 1c) Consumimos AHORA un intento del rate limit (ventana de 1 hora),
         //     ya pasadas las validaciones y antes de tocar la BD.
-        \Illuminate\Support\Facades\RateLimiter::hit($rlKey, 3600);
+        RateLimiter::hit($rlKey, 3600);
 
         // EN: 2-3) Create the appointment ATOMICALLY (anti-double-booking):
         //   - Take an app lock per day ('reserva-dia:DATE'): it truly serializes
@@ -419,7 +428,7 @@ class BookAppointment extends Component
         //     1h sobre dos medios-slots que el índice único no detecta solo).
         //   - Dentro del lock: tx, re-verificamos el hueco, solo entonces
         //     creamos. El finally libera el lock pase lo que pase.
-        $lock = Cache::lock('reserva-dia:' . $this->selectedDate, 10);
+        $lock = Cache::lock('reserva-dia:'.$this->selectedDate, 10);
 
         // EN: If we can't get the lock in 5s, ask the user to retry shortly.
         // ES: Si en 5s no conseguimos el lock, pedimos reintentar en un momento.
@@ -446,33 +455,33 @@ class BookAppointment extends Component
                     }
 
                     return Appointment::create([
-                        'name'            => $this->name,
-                        'email'           => $this->email,
-                        'phone'           => $this->phone ?: null,
-                        'date'            => $this->selectedDate,
-                        'time'            => $this->selectedTime,
-                        'duration'        => $this->duration,
-                        'modality'        => $this->modality,        // 'online' | 'presencial'
-                        'locale'          => app()->getLocale(),     // EN: client language / ES: idioma del cliente
-                        'attendees'       => $this->attendees,
+                        'name' => $this->name,
+                        'email' => $this->email,
+                        'phone' => $this->phone ?: null,
+                        'date' => $this->selectedDate,
+                        'time' => $this->selectedTime,
+                        'duration' => $this->duration,
+                        'modality' => $this->modality,        // 'online' | 'presencial'
+                        'locale' => app()->getLocale(),     // EN: client language / ES: idioma del cliente
+                        'attendees' => $this->attendees,
                         'attendee_emails' => trim($this->attendeeEmails) ?: null,
-                        'message'         => $this->message,
-                        'reason'          => $this->message,         // EN: legacy column / ES: columna antigua
+                        'message' => $this->message,
+                        'reason' => $this->message,         // EN: legacy column / ES: columna antigua
                     ]);
                 });
-            } catch (\Illuminate\Database\QueryException $e) {
+            } catch (QueryException $e) {
                 // EN: The partial unique (date, time) index fired: a real race
                 //     took the slot at the same time. Warn without breaking.
                 // ES: El índice único parcial (date, time) saltó: una carrera
                 //     real ocupó el hueco a la vez. Avisamos sin romper.
-                Log::warning('Booking rejected by slot collision (unique index): ' . $e->getMessage());
+                Log::warning('Booking rejected by slot collision (unique index): '.$e->getMessage());
                 $this->selectedTime = '';
                 $this->step = 2;
                 $this->addError('time', __('citas.err_slot_taken'));
 
                 return;
             } catch (\Throwable $e) {
-                Log::error('Error creating the appointment: ' . $e->getMessage());
+                Log::error('Error creating the appointment: '.$e->getMessage());
                 $appointment = null;
             }
         } finally {
@@ -510,7 +519,7 @@ class BookAppointment extends Component
                 ->locale($appointment->locale)
                 ->send(new AppointmentConfirmationToClient($appointment));
         } catch (\Throwable $e) {
-            Log::error('Appointment ' . $appointment->reference . ' created, but the email failed: ' . $e->getMessage());
+            Log::error('Appointment '.$appointment->reference.' created, but the email failed: '.$e->getMessage());
         }
 
         // EN: 4b) Optional Telegram heads-up with confirm/reject buttons.
@@ -520,7 +529,7 @@ class BookAppointment extends Component
         try {
             $this->notifyTelegram($appointment);
         } catch (\Throwable $e) {
-            Log::error('Appointment ' . $appointment->reference . ' created, but Telegram failed: ' . $e->getMessage());
+            Log::error('Appointment '.$appointment->reference.' created, but Telegram failed: '.$e->getMessage());
         }
 
         // EN: 5) Save data for the confirmation screen and advance. The date is
@@ -547,16 +556,16 @@ class BookAppointment extends Component
     protected function notifyTelegram(Appointment $cita): void
     {
         $date = $cita->date->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM');
-        $dur = $cita->duration == 60 ? '1h' : $cita->duration . ' min';
+        $dur = $cita->duration == 60 ? '1h' : $cita->duration.' min';
 
         // EN: Notice text (HTML). e() escapes whatever the client typed.
         // ES: Texto del aviso (HTML). e() escapa lo que escribe el cliente.
         $text = "🗓 <b>New appointment</b> · <code>{$cita->reference}</code>\n\n"
-            . "👤 <b>" . e($cita->name) . "</b>\n"
-            . "📅 {$date} · <b>{$cita->time}</b> ({$dur})\n"
-            . "✉️ " . e($cita->email) . "\n"
-            . "👥 " . e($cita->attendees) . "\n\n"
-            . "💬 " . e($cita->message);
+            .'👤 <b>'.e($cita->name)."</b>\n"
+            ."📅 {$date} · <b>{$cita->time}</b> ({$dur})\n"
+            .'✉️ '.e($cita->email)."\n"
+            .'👥 '.e($cita->attendees)."\n\n"
+            .'💬 '.e($cita->message);
 
         // EN: Buttons: confirm (ac:ID) / reject (ar:ID).
         // ES: Botones: confirmar (ac:ID) / rechazar (ar:ID).
@@ -607,10 +616,10 @@ class BookAppointment extends Component
         return view('livewire.book-appointment', [
             // EN: Step 1 calendar: weeks of the shown month + header + arrows.
             // ES: Calendario del paso 1: semanas del mes mostrado + cabecera + flechas.
-            'weeks'      => $this->calendarWeeks(),
+            'weeks' => $this->calendarWeeks(),
             'monthLabel' => $this->monthLabel(),
-            'canPrev'    => $this->canPrev(),
-            'canNext'    => $this->canNext(),
+            'canPrev' => $this->canPrev(),
+            'canNext' => $this->canNext(),
             // EN: Valid starts of the chosen day for the chosen duration. NOTE:
             //     don't name it 'slots' — in Livewire 4 'slots' is reserved
             //     (SlotProxy) and collides. We use 'freeSlots'.

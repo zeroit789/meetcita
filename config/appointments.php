@@ -31,13 +31,13 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'brand' => [
         // EN: Company / brand name. ES: Nombre de empresa / marca.
-        'name'        => env('APPOINTMENTS_BRAND', 'Acme Inc.'),
+        'name' => env('APPOINTMENTS_BRAND', 'Acme Inc.'),
 
         // EN: Person who attends the meetings. ES: Persona que atiende las citas.
-        'owner_name'  => env('APPOINTMENTS_OWNER_NAME', 'Jane Doe'),
+        'owner_name' => env('APPOINTMENTS_OWNER_NAME', 'Jane Doe'),
 
         // EN: Role/title shown in the email signature. ES: Cargo en la firma.
-        'owner_role'  => env('APPOINTMENTS_OWNER_ROLE', 'Founder'),
+        'owner_role' => env('APPOINTMENTS_OWNER_ROLE', 'Founder'),
 
         // EN: Email that RECEIVES the "new appointment" notifications and is used
         //     as Reply-To in the emails sent to clients.
@@ -47,11 +47,11 @@ return [
 
         // EN: Public website (used in emails/calendar description).
         // ES: Web pública (se usa en los emails y la descripción del calendario).
-        'website'     => env('APPOINTMENTS_WEBSITE', 'https://example.com'),
+        'website' => env('APPOINTMENTS_WEBSITE', 'https://example.com'),
 
         // EN: Optional LinkedIn (or any) URL for the email signature. Empty = hidden.
         // ES: LinkedIn (o cualquier) URL opcional para la firma. Vacío = oculto.
-        'linkedin'    => env('APPOINTMENTS_LINKEDIN', ''),
+        'linkedin' => env('APPOINTMENTS_LINKEDIN', ''),
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -79,25 +79,25 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'schedule' => [
         // EN: How many working days ahead to offer. ES: Días laborables a ofrecer.
-        'days_ahead'    => (int) env('APPOINTMENTS_DAYS_AHEAD', 14),
+        'days_ahead' => (int) env('APPOINTMENTS_DAYS_AHEAD', 14),
 
         // EN: Slot granularity in minutes (base unit). ES: Granularidad del hueco.
-        'slot_minutes'  => 30,
+        'slot_minutes' => 30,
 
         // EN: Opening time (first possible start). ES: Hora de apertura (1er inicio).
-        'open'          => env('APPOINTMENTS_OPEN', '09:30'),
+        'open' => env('APPOINTMENTS_OPEN', '09:30'),
 
         // EN: Closing time (EXCLUSIVE — no meeting ends after this).
         // ES: Hora de cierre (EXCLUSIVA — ninguna cita termina después).
-        'close'         => env('APPOINTMENTS_CLOSE', '18:00'),
+        'close' => env('APPOINTMENTS_CLOSE', '18:00'),
 
         // EN: Meeting durations (minutes) the client can pick. Multiples of slot.
         // ES: Duraciones (minutos) que puede elegir el cliente. Múltiplos del hueco.
-        'durations'     => [30, 60],
+        'durations' => [30, 60],
 
         // EN: Working weekdays, ISO format (1 = Mon … 7 = Sun). Default Mon-Fri.
         // ES: Días laborables, formato ISO (1 = lun … 7 = dom). Por defecto L-V.
-        'weekdays'      => [1, 2, 3, 4, 5],
+        'weekdays' => [1, 2, 3, 4, 5],
 
         // EN: Max extra attendees a client may invite. ES: Máx. asistentes extra.
         'max_attendees' => (int) env('APPOINTMENTS_MAX_ATTENDEES', 10),
@@ -113,7 +113,7 @@ return [
     //     funciona igual pero sin enlace de Meet automático.
     // ──────────────────────────────────────────────────────────────────────
     'modalities' => [
-        'online'    => (bool) env('APPOINTMENTS_MODALITY_ONLINE', true),
+        'online' => (bool) env('APPOINTMENTS_MODALITY_ONLINE', true),
         'in_person' => (bool) env('APPOINTMENTS_MODALITY_IN_PERSON', true),
     ],
 
@@ -135,7 +135,7 @@ return [
     // ES: Idiomas que soportan la UI y los emails. El idioma del cliente se
     //     autodetecta y se guarda por cita. El primero es el de por defecto.
     // ──────────────────────────────────────────────────────────────────────
-    'locales'        => ['es', 'en'],
+    'locales' => ['es', 'en'],
     'default_locale' => 'es',
 
     // ──────────────────────────────────────────────────────────────────────

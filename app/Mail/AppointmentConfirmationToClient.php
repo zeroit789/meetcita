@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -70,13 +71,13 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
             view: 'emails.appointments.client',
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
-                'icsUrl'            => url('/cita/' . $this->appointment->reference . '/calendario.ics'),
+                'icsUrl' => url('/cita/'.$this->appointment->reference.'/calendario.ics'),
             ],
         );
     }
 
     // 4. EN: No attachments. / ES: Sin adjuntos.
-    /** @return array<int, \Illuminate\Mail\Mailables\Attachment> */
+    /** @return array<int, Attachment> */
     public function attachments(): array
     {
         return [];

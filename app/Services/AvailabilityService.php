@@ -212,11 +212,11 @@ class AvailabilityService
                 $dias[] = [
                     // EN: Labels the CLIENT sees in the wizard: in the active locale.
                     // ES: Etiquetas que VE EL CLIENTE en el wizard: en el idioma activo.
-                    'value'   => $cursor->toDateString(),                                      // "2026-06-15"
-                    'label'   => $cursor->locale(app()->getLocale())->isoFormat('ddd D MMM'),  // "lun 15 jun" / "Mon Jun 15"
+                    'value' => $cursor->toDateString(),                                      // "2026-06-15"
+                    'label' => $cursor->locale(app()->getLocale())->isoFormat('ddd D MMM'),  // "lun 15 jun" / "Mon Jun 15"
                     'weekday' => $cursor->locale(app()->getLocale())->isoFormat('ddd'),        // "lun" / "Mon"
-                    'day'     => $cursor->format('d'),                                          // "15"
-                    'month'   => $cursor->locale(app()->getLocale())->isoFormat('MMM'),        // "jun" / "Jun"
+                    'day' => $cursor->format('d'),                                          // "15"
+                    'month' => $cursor->locale(app()->getLocale())->isoFormat('MMM'),        // "jun" / "Jun"
                 ];
             }
             $cursor->addDay();
@@ -232,7 +232,7 @@ class AvailabilityService
      * ES: Rango de fechas reservables (primera y última) según diasDisponibles().
      *     Lo usa el calendario para saber hasta qué mes navegar y qué días activar.
      *
-     * @return array{min:string, max:string}  EN: "YYYY-MM-DD" dates · ES: fechas "YYYY-MM-DD"
+     * @return array{min:string, max:string} EN: "YYYY-MM-DD" dates · ES: fechas "YYYY-MM-DD"
      */
     public function rangoReservable(): array
     {
@@ -268,7 +268,7 @@ class AvailabilityService
         // ES: CarbonPeriod genera marcas cada slot_minutos entre apertura y cierre.
         $periodo = CarbonPeriod::create(
             Carbon::parse($this->horaApertura()),
-            $this->slotMinutos() . ' minutes',
+            $this->slotMinutos().' minutes',
             Carbon::parse($this->horaCierre())
         );
 
@@ -294,8 +294,8 @@ class AvailabilityService
      *     los ya pasados (si el día es hoy). Una cita de 1h ocupa DOS medios-slots,
      *     por eso expandimos cada cita a todos los medios-slots que cubre.
      *
-     * @param  string $fecha  EN: day "YYYY-MM-DD" · ES: día "YYYY-MM-DD"
-     * @return array<int, string>  EN: free half-slots "HH:MM" · ES: medios-slots libres
+     * @param  string  $fecha  EN: day "YYYY-MM-DD" · ES: día "YYYY-MM-DD"
+     * @return array<int, string> EN: free half-slots "HH:MM" · ES: medios-slots libres
      */
     public function huecosLibres(string $fecha): array
     {
@@ -341,8 +341,8 @@ class AvailabilityService
      *         pasarse del cierre). Así nunca ofrecemos un inicio de 1h que choque
      *         o termine después del cierre.
      *
-     * @param  string $fecha    EN: day "YYYY-MM-DD" · ES: día "YYYY-MM-DD"
-     * @param  int    $duracion EN: minutes · ES: minutos
+     * @param  string  $fecha  EN: day "YYYY-MM-DD" · ES: día "YYYY-MM-DD"
+     * @param  int  $duracion  EN: minutes · ES: minutos
      * @return array<int, string> EN: valid start times "HH:MM" · ES: inicios válidos
      */
     public function huecosParaDuracion(string $fecha, int $duracion): array
@@ -492,7 +492,7 @@ class AvailabilityService
 
         // EN: Merge with half-slots occupied by the owner's own Google Calendar.
         // ES: Fusionamos con los medios-slots ocupados por el propio Google Calendar.
-        $ocupadosGoogle = app(\App\Services\GoogleCalendarService::class)->eventosOcupados($fecha);
+        $ocupadosGoogle = app(GoogleCalendarService::class)->eventosOcupados($fecha);
 
         // EN: array_unique to avoid duplicating slots present in both sources.
         // ES: array_unique para no duplicar medios-slots que estén en ambas fuentes.
