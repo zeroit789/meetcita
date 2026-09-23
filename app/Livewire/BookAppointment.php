@@ -187,6 +187,8 @@ class BookAppointment extends Component
         $current = Carbon::create($this->viewYear, $this->viewMonth, 1, 0, 0, 0, $this->tz());
         $maxMonth = Carbon::parse($this->availability()->rangoReservable()['max'])->startOfMonth();
 
+        // ES: Solo avanza si el mes siguiente aún tiene días reservables.
+        // EN: Only move forward if next month still has bookable days.
         if ($current->copy()->addMonth()->lte($maxMonth)) {
             $new = $current->addMonth();
             $this->viewMonth = (int) $new->month;
@@ -438,6 +440,10 @@ class BookAppointment extends Component
             return;
         }
 
+        // ES: try externo = liberar siempre el lock (finally); try interno =
+        //     capturar el choque con el índice único (QueryException).
+        // EN: Outer try = always release the lock (finally); inner try =
+        //     catch the unique-index clash (QueryException).
         try {
             try {
                 $appointment = DB::transaction(function () {
@@ -450,10 +456,14 @@ class BookAppointment extends Component
                         ->lockForUpdate()
                         ->get();
 
+                    // ES: Revalidamos el hueco DENTRO de la transacción (otra reserva pudo entrar antes).
+                    // EN: Re-check the slot INSIDE the transaction (another booking may have landed first).
                     if (! $this->availability()->slotSigueLibre($this->selectedDate, $this->selectedTime, $this->duration)) {
                         return null; // EN: slot got taken / ES: el hueco se ocupó
                     }
 
+                    // ES: Hueco libre: creamos la cita (estado 'pendiente' por defecto).
+                    // EN: Slot free: create the booking ('pendiente' status by default).
                     return Appointment::create([
                         'name' => $this->name,
                         'email' => $this->email,

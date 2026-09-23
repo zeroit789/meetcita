@@ -29,10 +29,18 @@ class TelegramNotifier
 {
     // ── 1. Config — token/chat y comprobación de configuración ──────────────
 
+    // ES: Token del bot (de @BotFather). null = bot sin configurar.
+    // EN: Bot token (from @BotFather). null = bot not configured.
     protected ?string $token;
 
+    // ES: Chat del dueño, destino de todos los avisos.
+    // EN: Owner's chat, target of every alert.
     protected ?string $chatId;
 
+    /**
+     * ES: Carga la configuración del bot desde config/services.php.
+     * EN: Loads the bot configuration from config/services.php.
+     */
     public function __construct()
     {
         // EN: Read bot token + owner chat id from config. ES: Token + chat del dueño desde config.
@@ -71,10 +79,14 @@ class TelegramNotifier
      */
     public function enviar(string $textoHtml, ?array $buttons = null): ?int
     {
+        // ES: Sin bot configurado no se hace nada (degradación con gracia).
+        // EN: Without a configured bot, do nothing (graceful degradation).
         if (! $this->configurado()) {
             return null;
         }
 
+        // ES: Mensaje en HTML y sin vista previa de enlaces.
+        // EN: HTML message with link previews disabled.
         $payload = [
             'chat_id' => $this->chatId,
             'text' => $textoHtml,
@@ -82,10 +94,14 @@ class TelegramNotifier
             'disable_web_page_preview' => true,
         ];
 
+        // ES: Los botones inline viajan como JSON en reply_markup.
+        // EN: Inline buttons travel as JSON inside reply_markup.
         if ($buttons) {
             $payload['reply_markup'] = json_encode(['inline_keyboard' => $buttons]);
         }
 
+        // ES: Un fallo de red no debe romper la reserva: se registra y se devuelve null.
+        // EN: A network failure must not break the booking: log it and return null.
         try {
             $res = Http::asForm()->post($this->apiUrl('sendMessage'), $payload);
 
@@ -105,10 +121,14 @@ class TelegramNotifier
      */
     public function responderCallback(string $callbackQueryId, ?string $aviso = null): void
     {
+        // ES: No-op si el bot no está configurado.
+        // EN: No-op if the bot isn't configured.
         if (! $this->configurado()) {
             return;
         }
 
+        // ES: array_filter quita 'text' si no hay aviso (Telegram no muestra nada).
+        // EN: array_filter drops 'text' when there's no notice (Telegram shows nothing).
         try {
             Http::asForm()->post($this->apiUrl('answerCallbackQuery'), array_filter([
                 'callback_query_id' => $callbackQueryId,
@@ -129,10 +149,14 @@ class TelegramNotifier
      */
     public function editarMensaje(int $messageId, string $textoHtml): void
     {
+        // ES: No-op si el bot no está configurado.
+        // EN: No-op if the bot isn't configured.
         if (! $this->configurado()) {
             return;
         }
 
+        // ES: Al editar sin reply_markup, Telegram quita los botones del mensaje.
+        // EN: Editing without reply_markup makes Telegram remove the message buttons.
         try {
             Http::asForm()->post($this->apiUrl('editMessageText'), [
                 'chat_id' => $this->chatId,

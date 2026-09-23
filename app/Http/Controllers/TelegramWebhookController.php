@@ -184,6 +184,8 @@ class TelegramWebhookController extends Controller
                 $citaIdEsperando = Cache::get("tg_motivo_{$ownerChatId}");
 
                 if ($citaIdEsperando && $texto !== '' && ! str_starts_with($texto, '/')) {
+                    // ES: Consumimos la espera: el motivo solo vale para una cita.
+                    // EN: Consume the wait: the reason only applies to one booking.
                     $cita = Appointment::find((int) $citaIdEsperando);
                     Cache::forget("tg_motivo_{$ownerChatId}");
 

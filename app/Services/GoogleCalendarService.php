@@ -133,6 +133,8 @@ class GoogleCalendarService
             || str_contains($mensaje, 'invalid_grant')
             || str_contains($mensaje, 'invalid credentials');
 
+        // ES: Credencial rechazada: se borra el token cacheado para pedir uno nuevo.
+        // EN: Credential rejected: drop the cached token so a fresh one is requested.
         if ($noAutorizado) {
             Cache::forget('gcal_access_token');
         }
@@ -173,6 +175,8 @@ class GoogleCalendarService
             return;
         }
 
+        // ES: Cualquier error de Google se registra y no rompe la confirmación.
+        // EN: Any Google error is logged and does not break the confirmation.
         try {
             $service = new Calendar($this->cliente());
 
@@ -354,6 +358,8 @@ class GoogleCalendarService
             return;
         }
 
+        // ES: Si el borrado falla se registra; la cancelación sigue adelante.
+        // EN: If deletion fails it is logged; the cancellation still goes ahead.
         try {
             $service = new Calendar($this->cliente());
 
@@ -449,6 +455,8 @@ class GoogleCalendarService
                     'timeZone' => $this->zona(),
                 ]);
 
+                // ES: Horas ocupadas agrupadas por fecha "Y-m-d".
+                // EN: Busy times grouped by "Y-m-d" date.
                 $porFecha = [];
 
                 foreach ($eventos->getItems() as $evento) {

@@ -79,6 +79,8 @@ class PanelBlockedDays extends Component
             return;
         }
 
+        // ES: Día libre de citas: lo guardamos como bloqueado.
+        // EN: Day has no bookings: store it as blocked.
         BlockedDay::create([
             'date' => $this->newDate,
             'reason' => $this->newReason ?: null,
