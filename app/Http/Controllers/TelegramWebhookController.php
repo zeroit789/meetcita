@@ -19,14 +19,14 @@ use Illuminate\Support\Str;
 |==============================================================================
 | EN: Telegram bot webhook. Handles managing bookings from the owner's phone:
 |       - "✅ Confirm" button (callback ac:ID)  -> booking confirmed + email to client.
-|       - "❌ Not possible" button (ar:ID)       -> ask for the reason via chat.
+|       - "❌ Reject" button (ar:ID)             -> ask for the reason via chat.
 |       - Owner's next text message              -> that reason cancels + email.
 |     Security: Telegram sends the secret in the X-Telegram-Bot-Api-Secret-Token
 |     header (validated) and only actions from the owner's chat_id are handled
 |     (config services.telegram.chat_id).
 | ES: Webhook del bot de Telegram. Gestiona las citas desde el móvil del dueño:
-|       - Botón "✅ Confirmar" (callback ac:ID)  -> cita confirmada + email al cliente.
-|       - Botón "❌ No me es posible" (ar:ID)     -> pide el motivo por chat.
+|       - Botón "✅ Confirm" (callback ac:ID)    -> cita confirmada + email al cliente.
+|       - Botón "❌ Reject" (ar:ID)              -> pide el motivo por chat.
 |       - Siguiente mensaje de texto del dueño   -> ese motivo cancela la cita + email.
 |     Seguridad: Telegram envía el secreto en la cabecera
 |     X-Telegram-Bot-Api-Secret-Token (se valida) y solo se atienden acciones del

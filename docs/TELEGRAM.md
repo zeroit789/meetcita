@@ -13,7 +13,9 @@
 When configured, every new booking sends you a Telegram message with two buttons:
 
 - **✅ Confirm** → marks the booking as confirmed, sends the confirmation email to the client and creates the Google Calendar event (if Google is configured).
-- **❌ Not possible** → asks you to type a **reason**; your next message becomes the cancellation reason, which is emailed to the client.
+- **❌ Reject** → asks you to type a **reason**; your next message (within 15 minutes) becomes the cancellation reason, which is emailed to the client.
+
+> The button labels are always in English (`✅ Confirm` / `❌ Reject`); the bot's own messages are in Spanish.
 
 You'll end up filling **three** values in your `.env`:
 
@@ -109,7 +111,7 @@ php artisan telegram:test
 
 ### Done
 
-From now on, each new booking pings your Telegram with the **Confirm** / **Not possible** buttons.
+From now on, each new booking pings your Telegram with the **✅ Confirm** / **❌ Reject** buttons.
 
 ---
 
@@ -117,8 +119,8 @@ From now on, each new booking pings your Telegram with the **Confirm** / **Not p
 
 1. A new booking arrives → the bot sends you a message with the booking details and two inline buttons.
 2. **✅ Confirm** → the booking is confirmed (atomically, so a double tap can't duplicate anything), the confirmation email is sent to the client, and the Google Calendar event is created.
-3. **❌ Not possible** → the bot replies *"Write the reason…"*. Your **next text message** is taken as the cancellation reason: the booking is cancelled, any calendar event is removed, and the reason is emailed to the client.
-4. The original message is edited in place to show the final status (e.g. *"✅ CONFIRMED · email sent to client"*).
+3. **❌ Reject** → the bot replies *"Escribe el motivo…"* ("Write the reason…"). Your **next text message** (within 15 minutes) is taken as the cancellation reason: the booking is cancelled, any calendar event is removed, and the reason is emailed to the client.
+4. The original message is edited in place to show the final status (e.g. *"✅ CONFIRMADA · email enviado al cliente"*).
 
 ### Security note
 
@@ -148,8 +150,10 @@ Cómo configurar un bot de Telegram para recibir un aviso al instante por cada n
 
 Una vez configurado, cada nueva cita te envía un mensaje de Telegram con dos botones:
 
-- **✅ Confirmar** → marca la cita como confirmada, envía el email de confirmación al cliente y crea el evento de Google Calendar (si Google está configurado).
-- **❌ No me es posible** → te pide que escribas un **motivo**; tu siguiente mensaje se convierte en el motivo de cancelación, que se le envía por email al cliente.
+- **✅ Confirm** → marca la cita como confirmada, envía el email de confirmación al cliente y crea el evento de Google Calendar (si Google está configurado).
+- **❌ Reject** → te pide que escribas un **motivo**; tu siguiente mensaje (en menos de 15 minutos) se convierte en el motivo de cancelación, que se le envía por email al cliente.
+
+> Las etiquetas de los botones van siempre en inglés (`✅ Confirm` / `❌ Reject`); los mensajes del bot, en español.
 
 Acabarás rellenando **tres** valores en tu `.env`:
 
@@ -245,15 +249,15 @@ php artisan telegram:test
 
 ### Listo
 
-A partir de ahora, cada nueva cita te avisa por Telegram con los botones **Confirmar** / **No me es posible**.
+A partir de ahora, cada nueva cita te avisa por Telegram con los botones **✅ Confirm** / **❌ Reject**.
 
 ---
 
 ### Cómo funciona el flujo
 
 1. Llega una nueva cita → el bot te envía un mensaje con los datos de la cita y dos botones inline.
-2. **✅ Confirmar** → la cita se confirma (de forma atómica, para que un doble clic no duplique nada), se envía el email de confirmación al cliente y se crea el evento de Google Calendar.
-3. **❌ No me es posible** → el bot responde *"Escribe el motivo…"*. Tu **siguiente mensaje de texto** se toma como motivo de cancelación: la cita se cancela, se elimina cualquier evento de calendario y el motivo se le envía por email al cliente.
+2. **✅ Confirm** → la cita se confirma (de forma atómica, para que un doble clic no duplique nada), se envía el email de confirmación al cliente y se crea el evento de Google Calendar.
+3. **❌ Reject** → el bot responde *"Escribe el motivo…"*. Tu **siguiente mensaje de texto** (en menos de 15 minutos) se toma como motivo de cancelación: la cita se cancela, se elimina cualquier evento de calendario y el motivo se le envía por email al cliente.
 4. El mensaje original se edita en el sitio para mostrar el estado final (p. ej. *"✅ CONFIRMADA · email enviado al cliente"*).
 
 ### Nota de seguridad
