@@ -12,6 +12,12 @@ return [
     | location for this type of information, allowing packages to have
     | a conventional file to locate the various service credentials.
     |
+    | ES: Credenciales de servicios externos. Las entradas postmark, resend, ses
+    |     y slack vienen del esqueleto de Laravel; las propias de este proyecto
+    |     son telegram y google (abajo).
+    | EN: The postmark, resend, ses and slack entries come from the Laravel
+    |     skeleton; this project's own ones are telegram and google (below).
+    |
     */
 
     'postmark' => [

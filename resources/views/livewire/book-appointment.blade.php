@@ -164,7 +164,8 @@
       <h2 class="font-sans font-bold text-2xl text-ink mb-2">{{ __('citas.step2_title') }}</h2>
       <p class="text-muted text-sm mb-5">
         {{ __('citas.step2_subtitle_pre') }}
-        {{-- Date in the active locale (natural pattern per language) --}}
+        {{-- Fecha en el idioma activo (patrón natural de cada idioma)
+             Date in the active locale (natural pattern per language) --}}
         <span class="text-brand-glow font-medium">{{ app()->getLocale() === 'en'
             ? \Carbon\Carbon::parse($selectedDate)->locale('en')->isoFormat('dddd, MMMM D')
             : \Carbon\Carbon::parse($selectedDate)->locale('es')->isoFormat('dddd D [de] MMMM') }}</span>

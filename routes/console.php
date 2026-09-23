@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Schedule;
 |==============================================================================
 */
 
+// ES: Comando de ejemplo del esqueleto de Laravel (php artisan inspire).
+// EN: Laravel skeleton example command (php artisan inspire).
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');

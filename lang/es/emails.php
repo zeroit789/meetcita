@@ -57,7 +57,7 @@ return [
     // ES: Patrón isoFormat de fecha larga (Carbon). ES lleva "de" entre las partes.
     'date_format' => 'dddd D [de] MMMM [de] YYYY',
 
-    // ── Etiquetas del resumen de la cita (reutilizadas) ──────────────────
+    // ── Etiquetas del resumen de la cita (reutilizadas) / Appointment summary labels (reused) ──
     'label_date' => 'Fecha',
     'label_time' => 'Hora',
     'label_duration' => 'Duración',
@@ -69,12 +69,12 @@ return [
     'duration_one_hour' => '1 hora',
     'duration_minutes' => ':min min',
 
-    // ── Calendario (común a client + confirmed) ──────────────────────────
+    // ── Calendario (común a client + confirmed) / Calendar (shared by client + confirmed) ──
     'calendar_title' => '🗓️ Añádela a tu calendario',
     'calendar_google' => 'Google Calendar',
     'calendar_outlook' => 'Outlook / Apple',
 
-    // ── Pie de contacto (común a client) ─────────────────────────────────
+    // ── Pie de contacto (común a client) / Contact footer (shared by client) ──
     'footer_role' => 'Reservas online',
 
     // ── 3. SIGNATURE / FIRMA (partials/signature) ─────────────────────────
