@@ -130,10 +130,14 @@ return [
 
     // ──────────────────────────────────────────────────────────────────────
     // 7. LOCALES / IDIOMAS
-    // EN: Languages the booking UI and emails support. The client's language is
-    //     auto-detected and stored per booking. First one is the default.
-    // ES: Idiomas que soportan la UI y los emails. El idioma del cliente se
-    //     autodetecta y se guarda por cita. El primero es el de por defecto.
+    // ES: Idiomas que soportan la UI y los emails. El de cada visita sale de la
+    //     cookie del selector; sin cookie, del navegador (Accept-Language); y si
+    //     ninguno encaja, de 'default_locale'. Se guarda por cita para sus emails.
+    //     Ver App\Http\Middleware\SetLocale.
+    // EN: Languages the booking UI and emails support. Each visit's language
+    //     comes from the switcher cookie; without it, from the browser
+    //     (Accept-Language); if nothing matches, from 'default_locale'. It is
+    //     stored per booking for its emails. See App\Http\Middleware\SetLocale.
     // ──────────────────────────────────────────────────────────────────────
     'locales' => ['es', 'en'],
     'default_locale' => 'es',
