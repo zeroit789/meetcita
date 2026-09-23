@@ -58,6 +58,7 @@ return new class extends Migration
 
             // EN: Client language (es|en) for the booking emails. Default from intent.
             // ES: Idioma del cliente (es|en) para los emails de la cita.
+            // EN: Client language (es|en) used for the booking emails.
             $table->string('locale', 5)->default('es');
 
             // EN: Google Calendar references (filled when the event is created).
@@ -84,6 +85,8 @@ return new class extends Migration
             $table->enum('status', ['pendiente', 'confirmada', 'cancelada'])
                 ->default('pendiente');
 
+            // ES: created_at / updated_at.
+            // EN: created_at / updated_at.
             $table->timestamps();
         });
 
