@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use Database\Factories\AppointmentFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /*
@@ -46,6 +48,11 @@ use Illuminate\Database\Eloquent\Model;
 */
 class Appointment extends Model
 {
+    // ES: Factoría para los tests (database/factories/AppointmentFactory.php).
+    // EN: Factory for the tests (database/factories/AppointmentFactory.php).
+    /** @use HasFactory<AppointmentFactory> */
+    use HasFactory;
+
     // ── 1. Fillable / Defaults / Casts — asignación masiva, defaults y tipos ──
 
     /**

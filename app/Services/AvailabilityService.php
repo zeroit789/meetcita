@@ -93,12 +93,14 @@ class AvailabilityService
     }
 
     /**
-     * EN: Durations (minutes) the client can pick.
-     * ES: Duraciones (en minutos) que puede elegir el cliente.
+     * ES: Duraciones (en minutos) que puede elegir el cliente. Pública: el
+     *     wizard la usa para validar la duración elegida.
+     * EN: Durations (minutes) the client can pick. Public: the wizard uses it
+     *     to validate the chosen duration.
      *
      * @return array<int, int>
      */
-    protected function duraciones(): array
+    public function duraciones(): array
     {
         return (array) config('appointments.schedule.durations', [30, 60]);
     }

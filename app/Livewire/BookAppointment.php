@@ -304,8 +304,9 @@ class BookAppointment extends Component
      */
     public function setDuration(int $duration): void
     {
-        // EN: Only accept supported durations. / ES: Solo duraciones soportadas.
-        if (! in_array($duration, AvailabilityService::DURACIONES, true)) {
+        // ES: Solo duraciones soportadas (las de config, vía el servicio).
+        // EN: Only supported durations (the configured ones, via the service).
+        if (! in_array($duration, $this->availability()->duraciones(), true)) {
             return;
         }
 
