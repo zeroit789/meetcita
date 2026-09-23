@@ -38,11 +38,13 @@ class AppointmentRejected extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    // 1. EN: $motivo = the owner's explanation of why they cannot take it.
-    //    ES: $motivo = explicación del dueño de por qué no puede atenderla.
+    // 1. ES: $motivo = explicación del dueño de por qué no puede atenderla.
+    //       Opcional: desde el panel se puede cancelar sin motivo ('' = sin bloque).
+    //    EN: $motivo = the owner's explanation of why they cannot take it.
+    //       Optional: the panel can cancel without a reason ('' = no block).
     public function __construct(
         public Appointment $appointment,
-        public string $motivo,
+        public string $motivo = '',
     ) {
         //
     }

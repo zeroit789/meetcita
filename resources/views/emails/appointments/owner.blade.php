@@ -15,7 +15,7 @@
         dueño (config 'appointments.default_locale') vía __('emails.owner_*', ..., $loc).
 
     INDEX / ÍNDICE
-        1. @php ........ formatted values + branding / valores formateados + marca
+        1. bloque PHP ........ formatted values + branding / valores formateados + marca
         2. header ...... brand header / cabecera de marca
         3. details ..... appointment data table / tabla de datos de la cita
         4. message ..... client's message / mensaje del cliente

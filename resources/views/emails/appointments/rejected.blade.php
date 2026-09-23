@@ -11,7 +11,7 @@
         Se renderiza en el idioma del CLIENTE (locale activo fijado con ->locale($appointment->locale)).
 
     INDEX / ÍNDICE
-        1. @php ....... formatted values + branding / valores formateados + marca
+        1. bloque PHP ....... formatted values + branding / valores formateados + marca
         2. header ..... brand header / cabecera de marca
         3. intro ...... greeting + date/time + reference / saludo + fecha/hora + referencia
         4. reason ..... rejection reason / motivo del rechazo
@@ -80,7 +80,10 @@
                             ]) !!}@if($appointment->reference) {!! __('emails.rejected_ref_inline', ['reference' => '<strong style="font-family:\'Courier New\',monospace; color:#7c3aed;">' . e($appointment->reference) . '</strong>']) !!}@endif.
                         </p>
 
-                        {{-- 4. ===== REJECTION REASON / MOTIVO ===== --}}
+                        {{-- 4. ===== REJECTION REASON / MOTIVO =====
+                             ES: Solo si hay motivo (desde el panel es opcional).
+                             EN: Only when there is a reason (optional from the panel). --}}
+                        @if(trim($motivo) !== '')
                         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px 0;">
                             <tr>
                                 <td style="padding:16px 18px; background-color:#faf9fd; border-left:4px solid #7c3aed; border-radius:0 8px 8px 0; font-family:Arial,sans-serif; color:#374151; font-size:15px; line-height:1.65;">
@@ -88,6 +91,7 @@
                                 </td>
                             </tr>
                         </table>
+                        @endif
 
                         {{-- 5. ===== RE-BOOK LINK / ENLACE PARA VOLVER A RESERVAR =====
                              EN: The booking link is injected already built as the :link variable.

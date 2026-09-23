@@ -11,7 +11,7 @@
         del CLIENTE (locale activo fijado con ->locale($appointment->locale)).
 
     INDEX / ÍNDICE
-        1. @php ....... formatted values + branding / valores formateados + marca
+        1. bloque PHP ....... formatted values + branding / valores formateados + marca
         2. header ..... brand header / cabecera de marca
         3. ref ........ booking reference / nº de cita
         4. summary .... appointment summary / resumen de la cita
