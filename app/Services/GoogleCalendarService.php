@@ -111,6 +111,17 @@ class GoogleCalendarService
     }
 
     /**
+     * ES: Servicio de Calendar ya autenticado. Aislado en un método para que los
+     *     tests puedan sustituirlo por uno simulado sin red.
+     * EN: Authenticated Calendar service. Isolated in a method so tests can
+     *     swap it for a mocked one without network access.
+     */
+    protected function servicioCalendar(): Calendar
+    {
+        return new Calendar($this->cliente());
+    }
+
+    /**
      * EN: If the exception looks like an auth failure (401 / expired or revoked
      *     token), invalidate the cached access_token so the next call fetches a
      *     fresh one with the refresh_token. Other errors don't touch the cache.
@@ -178,7 +189,7 @@ class GoogleCalendarService
         // ES: Cualquier error de Google se registra y no rompe la confirmación.
         // EN: Any Google error is logged and does not break the confirmation.
         try {
-            $service = new Calendar($this->cliente());
+            $service = $this->servicioCalendar();
 
             // EN: Event start/end (local business time). $cita->date is a Carbon
             //     (cast 'date'); we add the time and the duration in minutes.
@@ -361,7 +372,7 @@ class GoogleCalendarService
         // ES: Si el borrado falla se registra; la cancelación sigue adelante.
         // EN: If deletion fails it is logged; the cancellation still goes ahead.
         try {
-            $service = new Calendar($this->cliente());
+            $service = $this->servicioCalendar();
 
             // EN: Delete the event and notify invitees of the cancellation.
             // ES: Borramos el evento y avisamos a los invitados de la cancelación.
@@ -421,14 +432,20 @@ class GoogleCalendarService
     }
 
     /**
-     * EN: Loads the next ~16 days of events in ONE call and groups them by date
-     *     into occupied half-slots "HH:MM". Caches 10 min. Before, one API call
-     *     per consulted day added a perceptible delay; with a single range call
-     *     the first render pays the latency once and the rest are served from cache.
-     * ES: Carga en UNA sola llamada los eventos de los próximos ~16 días y los
-     *     agrupa por fecha en medios-slots ocupados "HH:MM". Cachea 10 min. Antes
-     *     se hacía una llamada por día (retardo perceptible); con una sola llamada
-     *     de rango el primer render paga la latencia una vez y el resto va de caché.
+     * ES: Carga en UNA sola llamada los eventos de TODOS los días que ofrece el
+     *     calendario de reservas y los agrupa por fecha en medios-slots ocupados
+     *     "HH:MM". Cachea 10 min. La ventana sale de
+     *     AvailabilityService::rangoReservable(), la misma función que genera los
+     *     días: 14 laborables son unos 20 naturales (más si hay días bloqueados),
+     *     y con una ventana fija de 16 días los últimos días ofrecidos se quedaban
+     *     sin la ocupación de Google.
+     * EN: Loads in ONE call the events of ALL the days the booking calendar
+     *     offers and groups them by date into occupied half-slots "HH:MM".
+     *     Caches 10 min. The window comes from
+     *     AvailabilityService::rangoReservable(), the same function that builds
+     *     the days: 14 working days are about 20 calendar days (more with
+     *     blocked days), and a fixed 16-day window left the last offered days
+     *     without their Google occupancy.
      *
      * @return array<string, array<int, string>> EN/ES: ["YYYY-MM-DD" => ["HH:MM", ...]]
      */
@@ -436,14 +453,13 @@ class GoogleCalendarService
     {
         return Cache::remember('gcal_ocupados_rango', 600, function () {
             try {
-                $service = new Calendar($this->cliente());
+                $service = $this->servicioCalendar();
 
-                // EN: Range: from the start of today to 16 days later (covers the
-                //     14 the module offers, with margin).
-                // ES: Rango: desde el inicio de hoy hasta 16 días después (cubre
-                //     los 14 que ofrece el módulo, con margen).
-                $inicio = Carbon::now($this->zona())->startOfDay();
-                $fin = Carbon::now($this->zona())->addDays(16)->endOfDay();
+                // ES: Rango: del inicio del primer día ofrecido al final del último.
+                // EN: Range: from the start of the first offered day to the end of the last.
+                $rango = app(AvailabilityService::class)->rangoReservable();
+                $inicio = Carbon::parse($rango['min'], $this->zona())->startOfDay();
+                $fin = Carbon::parse($rango['max'], $this->zona())->endOfDay();
 
                 // EN: Already-expanded events (singleEvents), ordered by start.
                 // ES: Eventos ya expandidos (singleEvents), ordenados por inicio.
