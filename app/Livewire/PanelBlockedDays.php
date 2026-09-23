@@ -53,15 +53,26 @@ class PanelBlockedDays extends Component
         // ES: Reglas inline + mensajes traducidos (Livewire exige reglas
         //     explícitas aquí, si no lanza MissingRulesException).
         $this->validate([
-            'newDate' => 'required|date|after_or_equal:today|unique:blocked_days,date',
+            'newDate' => 'required|date|after_or_equal:today',
             'newReason' => 'nullable|string|max:120',
         ], [
             'newDate.required' => __('citas.blocked_err_required'),
             'newDate.date' => __('citas.blocked_err_invalid'),
             'newDate.after_or_equal' => __('citas.blocked_err_past'),
-            'newDate.unique' => __('citas.blocked_err_duplicate'),
             'newReason.max' => __('citas.blocked_err_reason_long'),
         ]);
+
+        // ES: ¿Ya está bloqueado? La regla unique comparaba "2026-09-24" con el
+        //     valor guardado "2026-09-24 00:00:00", no lo detectaba y el índice
+        //     único de la tabla acababa en un 500. whereDate compara solo la fecha.
+        // EN: Already blocked? The unique rule compared "2026-09-24" with the
+        //     stored "2026-09-24 00:00:00", missed it and the table's unique
+        //     index ended in a 500. whereDate compares the date only.
+        if (BlockedDay::whereDate('date', $this->newDate)->exists()) {
+            $this->addError('newDate', __('citas.blocked_err_duplicate'));
+
+            return;
+        }
 
         // EN: Before blocking, ensure the day has no active appointments. If it
         //     does, blocking would orphan those bookings: warn and DON'T block.
