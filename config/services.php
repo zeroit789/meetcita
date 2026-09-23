@@ -42,11 +42,11 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
-    // EN: Telegram bot — instant alerts + confirm/reject bookings from chat.
-    //     Optional: if 'token'/'chat_id' are empty, the notifier is a no-op.
     // ES: Bot de Telegram — avisos al instante + confirmar/rechazar desde el
     //     chat. Opcional: si 'token'/'chat_id' van vacíos, el notificador no
     //     hace nada (no rompe). Ver docs/TELEGRAM.md para obtener los valores.
+    // EN: Telegram bot — instant alerts + confirm/reject bookings from chat.
+    //     Optional: if 'token'/'chat_id' are empty, the notifier is a no-op.
     // ──────────────────────────────────────────────────────────────────────
     'telegram' => [
         'token' => env('TELEGRAM_BOT_TOKEN'),
@@ -55,13 +55,13 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
-    // EN: Google Calendar + Meet — creates the event for each confirmed booking
-    //     and, if online, an auto Meet link. Optional: if client_id/secret/
-    //     refresh_token are empty the service is a no-op (bookings still work).
     // ES: Google Calendar + Meet — crea el evento de cada cita confirmada y, si
     //     es online, un enlace de Meet automático. Opcional: si client_id/secret/
     //     refresh_token van vacíos, el servicio no hace nada (las citas siguen
     //     funcionando). Ver docs/GOOGLE.md para obtener los valores.
+    // EN: Google Calendar + Meet — creates the event for each confirmed booking
+    //     and, if online, an auto Meet link. Optional: if client_id/secret/
+    //     refresh_token are empty the service is a no-op (bookings still work).
     // ──────────────────────────────────────────────────────────────────────
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),

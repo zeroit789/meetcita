@@ -4,12 +4,12 @@
 |==============================================================================
 | ES — UI translations for the appointments module / Traducciones ES del módulo
 |==============================================================================
-| EN: Every visible string in the booking wizard, the panel, the login and the
-|     landing lives here. Neutral wording (no personal brand). The English
-|     mirror is lang/en/citas.php — keep both in sync.
 | ES: Aquí viven todos los textos visibles del wizard de reserva, el panel, el
 |     login y la landing. Redacción neutra (sin marca personal). El espejo en
 |     inglés es lang/en/citas.php — mantén ambos sincronizados.
+| EN: Every visible string in the booking wizard, the panel, the login and the
+|     landing lives here. Neutral wording (no personal brand). The English
+|     mirror is lang/en/citas.php — keep both in sync.
 |
 | INDEX / ÍNDICE
 |   1. PAGE WRAPPER ........ /citas header / cabecera de /citas
@@ -57,8 +57,8 @@ return [
     'step2_duration_label' => '// duración de la reunión',
     'btn_30min' => '30 min',
     'btn_1hour' => '1 hora',
-    // EN: generic label for non-standard durations (:min minutes).
     // ES: etiqueta genérica para duraciones no estándar (:min minutos).
+    // EN: generic label for non-standard durations (:min minutes).
     'btn_minutes' => ':min min',
     'step2_no_slots' => '// no quedan huecos libres este día',
     'step2_no_slots_hint' => 'Prueba con otro día.',
@@ -108,7 +108,7 @@ return [
     // Duration labels (used across steps) / Etiquetas de duración (varios pasos)
     'dur_1hour' => '1 hora',
     'dur_30min' => '30 min',
-    'dur_min_unit' => 'min', // EN: minutes unit in the panel / ES: unidad de minutos en el panel
+    'dur_min_unit' => 'min', // ES: unidad de minutos en el panel / EN: minutes unit in the panel
 
     // ── 3. CLIENT ERRORS / ERRORES PARA EL CLIENTE ────────────────────────
     'err_too_many_attempts' => 'Demasiados intentos. Inténtalo de nuevo dentro de un rato.',
@@ -120,8 +120,8 @@ return [
 
     // ── 4. LAYOUT / SELECTOR DE IDIOMA + FOOTER ───────────────────────────
     'lang_aria' => 'Seleccionar idioma',
-    // EN: aria-label for the sun/moon theme toggle button.
     // ES: aria-label del botón sol/luna para cambiar de tema.
+    // EN: aria-label for the sun/moon theme toggle button.
     'theme_toggle' => 'Cambiar tema',
     'footer_website' => 'Web',
     'footer_repo' => 'Código',

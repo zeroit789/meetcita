@@ -2,13 +2,13 @@
     ============================================================================
     CONFIRMED EMAIL / EMAIL CONFIRMADO — Appointment confirmed / Cita confirmada
     ============================================================================
-    EN: Email to the client: their appointment has been CONFIRMED. Branding from
-        config('appointments.brand.*') + brand signature. Rendered in the CLIENT's
-        language (active locale set with ->locale($appointment->locale)).
-
     ES: Email al cliente: su cita ha sido CONFIRMADA. Marca desde
         config('appointments.brand.*') + firma de marca. Se renderiza en el idioma
         del CLIENTE (locale activo fijado con ->locale($appointment->locale)).
+
+    EN: Email to the client: their appointment has been CONFIRMED. Branding from
+        config('appointments.brand.*') + brand signature. Rendered in the CLIENT's
+        language (active locale set with ->locale($appointment->locale)).
 
     INDEX / ÍNDICE
         1. bloque PHP ....... formatted values + branding / valores formateados + marca
@@ -21,22 +21,22 @@
     ============================================================================
 --}}
 @php
-    // 1. EN: Branding from config (no personal data hardcoded).
-    //    ES: Marca desde config (sin datos personales hardcodeados).
+    // 1. ES: Marca desde config (sin datos personales hardcodeados).
+    //    EN: Branding from config (no personal data hardcoded).
     $brandName = config('appointments.brand.name');
     $ownerName = config('appointments.brand.owner_name');
 
-    // EN: Date in the active email locale (set by the sender with ->locale()).
     // ES: Fecha en el idioma activo del email (lo fija quien envía con ->locale()).
+    // EN: Date in the active email locale (set by the sender with ->locale()).
     $fechaCita = $appointment->date->locale(app()->getLocale())->isoFormat(__('emails.date_format'));
 
-    // EN: Readable duration (translated). ES: Duración legible (traducida).
+    // ES: Duración legible (traducida). EN: Readable duration (translated).
     $duracion = $appointment->duration == 60
         ? __('emails.duration_one_hour')
         : __('emails.duration_minutes', ['min' => $appointment->duration]);
 
-    // EN: Modality text translated (online = video call, presencial = in person).
     // ES: Texto de la modalidad traducido (online = videollamada, presencial = en persona).
+    // EN: Modality text translated (online = video call, presencial = in person).
     $modalidadTxt = $appointment->modality === 'presencial'
         ? __('emails.modality_presencial')
         : __('emails.modality_online');
@@ -49,7 +49,7 @@
     <title>{{ __('emails.confirmed_title_tag') }}</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f5f5f7;">
-    {{-- EN: Hidden preheader. ES: Preheader oculto. --}}
+    {{-- ES: Preheader oculto. EN: Hidden preheader. --}}
     <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f5f5f7;">
         {{ __('emails.confirmed_preheader', ['date' => $fechaCita, 'time' => $appointment->time]) }}
     </div>
@@ -72,8 +72,8 @@
                 <tr>
                     <td style="padding:32px;">
                         <h1 style="margin:0 0 12px 0; font-family:Arial,sans-serif; color:#15803d; font-size:22px; font-weight:bold;">{{ __('emails.confirmed_heading') }}</h1>
-                        {{-- EN: The name is inserted bold-purple inside the translated greeting.
-                             ES: El nombre se inserta en negrita morada dentro del saludo traducido. --}}
+                        {{-- ES: El nombre se inserta en negrita morada dentro del saludo traducido.
+                             EN: The name is inserted bold-purple inside the translated greeting. --}}
                         <p style="margin:0 0 20px 0; font-family:Arial,sans-serif; color:#374151; font-size:15px; line-height:1.65;">
                             {!! __('emails.confirmed_intro', ['name' => '<strong style="color:#7c3aed;">' . e($appointment->name) . '</strong>']) !!}
                         </p>
@@ -102,7 +102,7 @@
                                 <td style="padding:14px 16px; background-color:#faf9fd; font-family:Arial,sans-serif; color:#6b7280; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid #ece9f5;">{{ __('emails.label_duration') }}</td>
                                 <td style="padding:14px 16px; font-family:Arial,sans-serif; color:#1f2937; font-size:15px; border-bottom:1px solid #ece9f5;">{{ $duracion }}</td>
                             </tr>
-                            {{-- EN: Modality (online video call or in person). ES: Modalidad (online videollamada o presencial). --}}
+                            {{-- ES: Modalidad (online videollamada o presencial). EN: Modality (online video call or in person). --}}
                             <tr>
                                 <td style="padding:14px 16px; background-color:#faf9fd; font-family:Arial,sans-serif; color:#6b7280; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px;">{{ __('emails.label_modality') }}</td>
                                 <td style="padding:14px 16px; font-family:Arial,sans-serif; color:#1f2937; font-size:15px;">{{ $modalidadTxt }}</td>
@@ -110,8 +110,8 @@
                         </table>
 
                         {{-- 5. ===== GOOGLE MEET LINK / ENLACE DE GOOGLE MEET =====
-                             EN: Only if the appointment is online and the link is already generated.
-                             ES: Solo si la cita es online y el enlace ya se ha generado. --}}
+                             ES: Solo si la cita es online y el enlace ya se ha generado.
+                             EN: Only if the appointment is online and the link is already generated. --}}
                         @if($appointment->modality === 'online' && $appointment->google_meet_url)
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:20px 0 0 0;">
                                 <tr>
@@ -125,23 +125,23 @@
                         @endif
 
                         {{-- 6. ===== ADD TO CALENDAR / AÑADIR A CALENDARIO =====
-                             EN: Two buttons (Google + Outlook/Apple .ics). $googleCalendarUrl and $icsUrl
-                                 are passed by the AppointmentConfirmed mailable. Email-safe inline styles.
                              ES: Dos botones (Google + Outlook/Apple .ics). $googleCalendarUrl y $icsUrl los
-                                 pasa el Mailable AppointmentConfirmed. Estilos inline email-safe. --}}
+                                 pasa el Mailable AppointmentConfirmed. Estilos inline email-safe.
+                             EN: Two buttons (Google + Outlook/Apple .ics). $googleCalendarUrl and $icsUrl
+                                 are passed by the AppointmentConfirmed mailable. Email-safe inline styles. --}}
                         @isset($googleCalendarUrl)
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 0 0;">
                                 <tr>
                                     <td style="padding:18px 20px; background-color:#faf9fd; border:1px solid #ece9f5; border-radius:10px; font-family:Arial,sans-serif;">
                                         <p style="margin:0 0 12px 0; color:#1f2937; font-size:15px; font-weight:bold;">{{ __('emails.calendar_title') }}</p>
-                                        {{-- EN: Buttons side by side. ES: Botones uno al lado del otro. --}}
+                                        {{-- ES: Botones uno al lado del otro. EN: Buttons side by side. --}}
                                         <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                                             <tr>
-                                                {{-- EN: Google Calendar / ES: Google Calendar --}}
+                                                {{-- ES: Google Calendar / EN: Google Calendar --}}
                                                 <td style="padding-right:10px;">
                                                     <a href="{{ $googleCalendarUrl }}" style="display:inline-block; background-color:#7c3aed; color:#ffffff; font-size:14px; font-weight:bold; text-decoration:none; padding:10px 16px; border-radius:8px;">{{ __('emails.calendar_google') }}</a>
                                                 </td>
-                                                {{-- EN: Outlook / Apple (.ics download) / ES: Outlook / Apple (descarga .ics) --}}
+                                                {{-- ES: Outlook / Apple (descarga .ics) / EN: Outlook / Apple (.ics download) --}}
                                                 <td>
                                                     <a href="{{ $icsUrl }}" style="display:inline-block; background-color:#ffffff; color:#7c3aed; font-size:14px; font-weight:bold; text-decoration:none; padding:10px 16px; border:1px solid #ddd6fe; border-radius:8px;">{{ __('emails.calendar_outlook') }}</a>
                                                 </td>

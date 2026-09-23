@@ -4,12 +4,12 @@
 |==============================================================================
 | EN — UI translations for the appointments module / Traducciones EN del módulo
 |==============================================================================
-| EN: Every visible string in the booking wizard, the panel, the login and the
-|     landing lives here. Neutral wording (no personal brand). The Spanish
-|     mirror is lang/es/citas.php — keep both in sync.
 | ES: Aquí viven todos los textos visibles del wizard de reserva, el panel, el
 |     login y la landing. Redacción neutra (sin marca personal). El espejo en
 |     español es lang/es/citas.php — mantén ambos sincronizados.
+| EN: Every visible string in the booking wizard, the panel, the login and the
+|     landing lives here. Neutral wording (no personal brand). The Spanish
+|     mirror is lang/es/citas.php — keep both in sync.
 |
 | INDEX / ÍNDICE
 |   1. PAGE WRAPPER ........ /citas header / cabecera de /citas
@@ -118,8 +118,8 @@ return [
 
     // ── 4. LAYOUT / SELECTOR DE IDIOMA + FOOTER ───────────────────────────
     'lang_aria' => 'Select language',
-    // EN: aria-label for the sun/moon theme toggle button.
     // ES: aria-label del botón sol/luna para cambiar de tema.
+    // EN: aria-label for the sun/moon theme toggle button.
     'theme_toggle' => 'Toggle theme',
     'footer_website' => 'Website',
     'footer_repo' => 'Source',

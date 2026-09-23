@@ -11,14 +11,14 @@ use Illuminate\Http\Request;
 |==============================================================================
 | Application bootstrap / Arranque de la aplicación
 |==============================================================================
-| EN: Wires up routing, middleware and exception handling for the appointments
-|     module. Highlights: trust the reverse proxy, set the locale on every web
-|     request, alias the panel password middleware, and exempt the Telegram
-|     webhook from CSRF (its security is its secret header).
 | ES: Conecta el enrutado, el middleware y el manejo de excepciones del módulo de
 |     citas. Claves: confiar en el proxy inverso, fijar el idioma en cada petición
 |     web, dar alias al middleware de contraseña del panel, y eximir el webhook de
 |     Telegram del CSRF (su seguridad es su cabecera secreta).
+| EN: Wires up routing, middleware and exception handling for the appointments
+|     module. Highlights: trust the reverse proxy, set the locale on every web
+|     request, alias the panel password middleware, and exempt the Telegram
+|     webhook from CSRF (its security is its secret header).
 |==============================================================================
 */
 return Application::configure(basePath: dirname(__DIR__))
@@ -46,31 +46,31 @@ return Application::configure(basePath: dirname(__DIR__))
                 | Request::HEADER_X_FORWARDED_PROTO
         );
 
-        // EN: i18n: set the locale on every web request from the 'locale' cookie,
-        //     so each page is served already in the chosen language and the
-        //     preference persists while browsing the whole site.
         // ES: i18n: fija el idioma (locale) en cada petición web según la cookie
         //     'locale', así cada página se sirve ya en el idioma elegido y la
         //     preferencia se mantiene al navegar por toda la web.
+        // EN: i18n: set the locale on every web request from the 'locale' cookie,
+        //     so each page is served already in the chosen language and the
+        //     preference persists while browsing the whole site.
         $middleware->web(append: [
             SetLocale::class,
         ]);
 
-        // EN: Alias to protect the bookings panel with a password
-        //     (config appointments.panel.password).
         // ES: Alias para proteger el panel de citas con contraseña
+        //     (config appointments.panel.password).
+        // EN: Alias to protect the bookings panel with a password
         //     (config appointments.panel.password).
         $middleware->alias([
             'appointments.panel' => AdminPanelPassword::class,
             'setlocale' => SetLocale::class,
         ]);
 
-        // EN: The Telegram webhook is an external POST (no session nor CSRF token):
-        //     exempt it from CSRF verification. Its security is the secret in the
-        //     X-Telegram-Bot-Api-Secret-Token header (validated in the controller).
         // ES: El webhook de Telegram es un POST externo (sin sesión ni token CSRF):
         //     se excluye de la verificación CSRF. Su seguridad la da el secreto de
         //     la cabecera X-Telegram-Bot-Api-Secret-Token (validado en el controlador).
+        // EN: The Telegram webhook is an external POST (no session nor CSRF token):
+        //     exempt it from CSRF verification. Its security is the secret in the
+        //     X-Telegram-Bot-Api-Secret-Token header (validated in the controller).
         $middleware->validateCsrfTokens(except: [
             'telegram/webhook',
         ]);

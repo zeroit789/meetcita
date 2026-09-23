@@ -10,18 +10,6 @@ use Illuminate\Console\Command;
 |==============================================================================
 | GoogleAuthCommand / Comando de autorización OAuth de Google
 |==============================================================================
-| EN: Google OAuth authorization command. Two-step flow (done once to obtain the
-|     refresh_token):
-|
-|       1) php artisan google:auth
-|          -> Prints a URL. Open it, sign in with the Google account and authorize
-|             calendar access. Google returns a "code" (authorization code).
-|
-|       2) php artisan google:auth --code=THE_CODE_GOOGLE_GAVE_YOU
-|          -> Exchanges that code for the tokens and prints the refresh_token.
-|             Copy that refresh_token into .env as GOOGLE_REFRESH_TOKEN.
-|
-|     Once in .env, GoogleCalendarService can create/delete events on its own.
 | ES: Comando de autorización OAuth de Google. Flujo en DOS pasos (solo se hace
 |     una vez para obtener el refresh_token):
 |
@@ -34,6 +22,18 @@ use Illuminate\Console\Command;
 |             en el .env como GOOGLE_REFRESH_TOKEN.
 |
 |     Una vez en el .env, GoogleCalendarService ya puede crear/borrar eventos solo.
+| EN: Google OAuth authorization command. Two-step flow (done once to obtain the
+|     refresh_token):
+|
+|       1) php artisan google:auth
+|          -> Prints a URL. Open it, sign in with the Google account and authorize
+|             calendar access. Google returns a "code" (authorization code).
+|
+|       2) php artisan google:auth --code=THE_CODE_GOOGLE_GAVE_YOU
+|          -> Exchanges that code for the tokens and prints the refresh_token.
+|             Copy that refresh_token into .env as GOOGLE_REFRESH_TOKEN.
+|
+|     Once in .env, GoogleCalendarService can create/delete events on its own.
 |==============================================================================
 */
 class GoogleAuthCommand extends Command
@@ -52,8 +52,8 @@ class GoogleAuthCommand extends Command
      */
     public function handle(): int
     {
-        // EN: Check at least client_id and client_secret exist in config.
         // ES: Comprobamos que existan al menos client_id y client_secret en config.
+        // EN: Check at least client_id and client_secret exist in config.
         $clientId = config('services.google.client_id');
         $clientSecret = config('services.google.client_secret');
 
@@ -63,31 +63,31 @@ class GoogleAuthCommand extends Command
             return self::FAILURE;
         }
 
-        // EN: Build the Google client with the .env config.
         // ES: Construimos el cliente de Google con la config del .env.
+        // EN: Build the Google client with the .env config.
         $client = new Client;
         $client->setClientId($clientId);
         $client->setClientSecret($clientSecret);
         $client->setRedirectUri(config('services.google.redirect_uri', 'http://localhost'));
-        // EN: offline access type + consent prompt -> guarantees Google returns a
-        //     refresh_token (without this it sometimes only gives an access_token).
         // ES: accessType offline + prompt consent -> garantiza que Google devuelva
         //     un refresh_token (sin esto, a veces solo da access_token).
+        // EN: offline access type + consent prompt -> guarantees Google returns a
+        //     refresh_token (without this it sometimes only gives an access_token).
         $client->setAccessType('offline');
         $client->setPrompt('consent');
-        // EN: We only request permission to manage calendar events.
         // ES: Solo pedimos permiso para gestionar eventos del calendario.
+        // EN: We only request permission to manage calendar events.
         $client->addScope(Calendar::CALENDAR_EVENTS);
 
         $code = $this->option('code');
 
-        // EN: STEP 2: we have the code -> exchange it for the tokens.
         // ES: PASO 2: ya tenemos el código -> lo cambiamos por los tokens.
+        // EN: STEP 2: we have the code -> exchange it for the tokens.
         if ($code) {
-            // EN: fetchAccessTokenWithAuthCode returns an array with access_token,
-            //     refresh_token, expires_in, etc. (or an array with 'error' on failure).
             // ES: fetchAccessTokenWithAuthCode devuelve un array con access_token,
             //     refresh_token, expires_in, etc. (o un array con 'error' si falla).
+            // EN: fetchAccessTokenWithAuthCode returns an array with access_token,
+            //     refresh_token, expires_in, etc. (or an array with 'error' on failure).
             $token = $client->fetchAccessTokenWithAuthCode($code);
 
             // ES: Código caducado, ya usado o de otro cliente OAuth.
@@ -107,8 +107,8 @@ class GoogleAuthCommand extends Command
                 return self::FAILURE;
             }
 
-            // EN: Print the refresh_token to paste into .env.
             // ES: Mostramos el refresh_token para pegarlo en el .env.
+            // EN: Print the refresh_token to paste into .env.
             $this->info('¡Listo! Copia esta línea en tu .env:');
             $this->newLine();
             $this->line('GOOGLE_REFRESH_TOKEN='.$token['refresh_token']);
@@ -117,8 +117,8 @@ class GoogleAuthCommand extends Command
             return self::SUCCESS;
         }
 
-        // EN: STEP 1: no code -> generate and print the authorization URL.
         // ES: PASO 1: sin código -> generamos e imprimimos la URL de autorización.
+        // EN: STEP 1: no code -> generate and print the authorization URL.
         $authUrl = $client->createAuthUrl();
 
         $this->info('1) Abre esta URL en el navegador y autoriza con la cuenta de Google:');

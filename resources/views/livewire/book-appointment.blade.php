@@ -3,14 +3,14 @@
   BookAppointment view — public 4-step booking wizard
   Vista BookAppointment — wizard público de reserva en 4 pasos
   ============================================================================
-  EN: Neutral dark + accent theme (resources/css/app.css). Reactive steps
-      without page reloads (wire:click / wire:submit). The single root div is
-      mandatory in Livewire. Durations come from config; modalities are shown
-      only if enabled in config('appointments.modalities').
   ES: Tema oscuro neutro + acento (resources/css/app.css). Pasos reactivos sin
       recargar la página (wire:click / wire:submit). El div raíz único es
       obligatorio en Livewire. Las duraciones vienen de config; las modalidades
       se muestran solo si están activas en config('appointments.modalities').
+  EN: Neutral dark + accent theme (resources/css/app.css). Reactive steps
+      without page reloads (wire:click / wire:submit). The single root div is
+      mandatory in Livewire. Durations come from config; modalities are shown
+      only if enabled in config('appointments.modalities').
 
   INDEX / ÍNDICE
     A. Breadcrumb ........ step indicator / indicador de pasos
@@ -23,11 +23,11 @@
 <div class="w-full max-w-3xl mx-auto">
 
   @php
-    // EN: Read the enabled modalities once (config contract). / ES: Leemos las
+    // ES: Leemos las / EN: Read the enabled modalities once (config contract).
     //     modalidades activas una vez (contrato de config).
     $modOnline   = (bool) config('appointments.modalities.online', true);
     $modInPerson = (bool) config('appointments.modalities.in_person', true);
-    // EN: Durations the client can pick (config). / ES: Duraciones elegibles (config).
+    // ES: Duraciones elegibles (config). / EN: Durations the client can pick (config).
     $durations   = config('appointments.schedule.durations', [30, 60]);
   @endphp
 
@@ -44,8 +44,8 @@
        1. STEP 1 EN / ES — PICK DAY / ELEGIR DÍA
        ══════════════════════════════════════════════════════════════════════ --}}
   @if($step === 1)
-    {{-- EN: Smaller padding on mobile so calendar cells stay tappable.
-         ES: Menos padding en móvil para que las celdas sigan siendo pulsables. --}}
+    {{-- ES: Menos padding en móvil para que las celdas sigan siendo pulsables.
+         EN: Smaller padding on mobile so calendar cells stay tappable. --}}
     <div class="glass p-3 sm:p-8">
       <p class="font-mono text-sm text-term/70 mb-1">{{ __('citas.step1_cmd') }}</p>
       <h2 class="font-sans font-bold text-2xl text-ink mb-6">{{ __('citas.step1_title') }}</h2>
@@ -110,8 +110,8 @@
                           aria-label="{{ $readableDate }}{{ $cell['isToday'] ? __('citas.cal_today_suffix') : '' }}{{ __('citas.cal_available') }}{{ $cell['isSelected'] ? __('citas.cal_selected') : '' }}"
                           @if($cell['isSelected']) aria-pressed="true" @endif
                           @class([
-                            // EN: min-h keeps cells finger-friendly on mobile.
                             // ES: min-h mantiene las celdas usables con el dedo.
+                            // EN: min-h keeps cells finger-friendly on mobile.
                             'aspect-square min-h-[40px] flex flex-col items-center justify-center rounded-lg border text-sm font-sans transition-all focus:outline-none',
                             // Selected day: accent fill / Día seleccionado: relleno acento
                             'border-brand bg-brand text-white font-bold' => $cell['isSelected'],
@@ -179,8 +179,8 @@
         <p class="font-mono text-xs text-muted mb-2">{{ __('citas.step2_duration_label') }}</p>
         <div class="inline-flex rounded-lg border border-brand/20 bg-base/60 p-1 gap-1">
           @foreach($durations as $dur)
-            {{-- EN: Label: dedicated keys for 30/60, generic for others.
-                 ES: Etiqueta: claves dedicadas para 30/60, genérica para otras. --}}
+            {{-- ES: Etiqueta: claves dedicadas para 30/60, genérica para otras.
+                 EN: Label: dedicated keys for 30/60, generic for others. --}}
             @php
               $durLabel = match((int) $dur) {
                 30      => __('citas.btn_30min'),
@@ -260,14 +260,14 @@
         </div>
 
         {{-- ── MODALITY: online (video call) / in person ─────────────────────
-             EN: Two toggle buttons. Shown only if enabled in config. If only
-                 one modality is enabled, the toggle is hidden entirely (the
-                 component default already matches). Online = term accent (Meet),
-                 In person = brand accent.
              ES: Dos botones toggle. Se muestran solo si están activos en config.
                  Si solo hay una modalidad activa, el toggle se oculta entero (el
                  valor por defecto del componente ya encaja). Online = acento
-                 term (Meet), Presencial = acento de marca. --}}
+                 term (Meet), Presencial = acento de marca.
+             EN: Two toggle buttons. Shown only if enabled in config. If only
+                 one modality is enabled, the toggle is hidden entirely (the
+                 component default already matches). Online = term accent (Meet),
+                 In person = brand accent. --}}
         @if($modOnline && $modInPerson)
           <div>
             <label class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_modality') }}</label>

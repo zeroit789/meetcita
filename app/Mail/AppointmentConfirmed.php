@@ -16,10 +16,10 @@ use Illuminate\Queue\SerializesModels;
 |==============================================================================
 | AppointmentConfirmed — Cita CONFIRMADA al CLIENTE
 |==============================================================================
-| EN: Sent to the CLIENT when the owner CONFIRMS the appointment (from the panel
-|     or another channel). Includes the booking reference and the brand signature.
 | ES: Se envía al CLIENTE cuando el dueño CONFIRMA la cita (desde el panel u otro
 |     canal). Incluye el identificador de la cita y la firma de marca.
+| EN: Sent to the CLIENT when the owner CONFIRMS the appointment (from the panel
+|     or another channel). Includes the booking reference and the brand signature.
 |
 | INDEX / ÍNDICE
 |   1. __construct() ... receives the Appointment / recibe la cita
@@ -28,27 +28,27 @@ use Illuminate\Queue\SerializesModels;
 |   4. attachments() ... none / ninguno
 |
 | NOTE / NOTA:
-|   EN: ShouldQueue → the send is queued automatically. Reply-To and branding come
-|       from config; no personal data is hardcoded.
 |   ES: ShouldQueue → el envío se encola automáticamente. El Reply-To y la marca
 |       salen de config; no se hardcodea ningún dato personal.
+|   EN: ShouldQueue → the send is queued automatically. Reply-To and branding come
+|       from config; no personal data is hardcoded.
 |==============================================================================
 */
 class AppointmentConfirmed extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
-    // 1. EN: Receives the appointment to render its details.
-    //    ES: Recibe la cita para mostrar sus detalles.
+    // 1. ES: Recibe la cita para mostrar sus detalles.
+    //    EN: Receives the appointment to render its details.
     public function __construct(public Appointment $appointment)
     {
         //
     }
 
-    // 2. EN: Subject translated by the active locale (client's language). Reply-To
-    //    points to the brand owner so the client can answer directly.
-    //    ES: Asunto traducido según el locale activo (idioma del cliente). El
+    // 2. ES: Asunto traducido según el locale activo (idioma del cliente). El
     //    Reply-To apunta al dueño de la marca para que el cliente pueda responder.
+    //    EN: Subject translated by the active locale (client's language). Reply-To
+    //    points to the brand owner so the client can answer directly.
     public function envelope(): Envelope
     {
         return new Envelope(
@@ -60,14 +60,14 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
         );
     }
 
-    // 3. EN: We pass the "Add to calendar" URLs to the view. The build logic lives
-    //    in the model (reused by both client emails):
-    //      - $googleCalendarUrl → opens Google Calendar with the booking preloaded.
-    //      - $icsUrl            → downloads the .ics (Outlook / Apple Calendar).
-    //    ES: Pasamos a la vista las URLs para "Añadir al calendario". La lógica de
+    // 3. ES: Pasamos a la vista las URLs para "Añadir al calendario". La lógica de
     //    construcción vive en el modelo (reutilizada por ambos emails de cliente):
     //      - $googleCalendarUrl → abre Google Calendar con la cita precargada.
     //      - $icsUrl            → descarga el .ics (Outlook / Apple Calendar).
+    //    EN: We pass the "Add to calendar" URLs to the view. The build logic lives
+    //    in the model (reused by both client emails):
+    //      - $googleCalendarUrl → opens Google Calendar with the booking preloaded.
+    //      - $icsUrl            → downloads the .ics (Outlook / Apple Calendar).
     public function content(): Content
     {
         return new Content(
@@ -79,7 +79,7 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
         );
     }
 
-    // 4. EN: No attachments. / ES: Sin adjuntos.
+    // 4. ES: Sin adjuntos. / EN: No attachments.
     /** @return array<int, Attachment> */
     public function attachments(): array
     {

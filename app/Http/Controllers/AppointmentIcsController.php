@@ -9,16 +9,6 @@ use Carbon\Carbon;
 |==============================================================================
 | AppointmentIcsController / Controlador del .ics de una cita
 |==============================================================================
-| EN: Serves an .ics (iCalendar) file for a booking.
-|       - Lets the client download their booking as a standard calendar event
-|         (.ics), compatible with Outlook, Apple Calendar, etc.
-|       - Linked from the confirmation email. The route is public but requires
-|         the exact booking 'reference' (APT-XXXXX), which only the client knows.
-|     Generates a valid VCALENDAR/VEVENT per RFC 5545:
-|       - Dates in UTC ('Ymd\THis\Z'); computed by the model.
-|       - Text escaped (commas, semicolons, line breaks) as the RFC requires.
-|     PRODID and UID are derived from the brand name and the website host
-|     (config('appointments.brand.*')) so nothing is hardcoded.
 | ES: Sirve un fichero .ics (iCalendar) para una cita.
 |       - Permite al cliente descargar su cita como evento de calendario estándar
 |         (.ics), compatible con Outlook, Apple Calendar, etc.
@@ -29,6 +19,16 @@ use Carbon\Carbon;
 |       - Texto escapado (comas, puntos y coma, saltos) como exige el RFC.
 |     PRODID y UID se derivan de la marca y del host de la web
 |     (config('appointments.brand.*')) para no hardcodear nada.
+| EN: Serves an .ics (iCalendar) file for a booking.
+|       - Lets the client download their booking as a standard calendar event
+|         (.ics), compatible with Outlook, Apple Calendar, etc.
+|       - Linked from the confirmation email. The route is public but requires
+|         the exact booking 'reference' (APT-XXXXX), which only the client knows.
+|     Generates a valid VCALENDAR/VEVENT per RFC 5545:
+|       - Dates in UTC ('Ymd\THis\Z'); computed by the model.
+|       - Text escaped (commas, semicolons, line breaks) as the RFC requires.
+|     PRODID and UID are derived from the brand name and the website host
+|     (config('appointments.brand.*')) so nothing is hardcoded.
 |
 | INDEX / ÍNDICE
 |   1. SHOW ......... build + return the .ics download / construir y devolver
@@ -40,50 +40,50 @@ class AppointmentIcsController extends Controller
     // ── 1. Show — construir y devolver el .ics ──────────────────────────────
 
     /**
-     * EN: Returns the .ics of the booking identified by its 'reference'.
-     *     404 if the reference matches no booking.
      * ES: Devuelve el .ics de la cita identificada por su 'reference'.
      *     404 si la referencia no corresponde a ninguna cita.
+     * EN: Returns the .ics of the booking identified by its 'reference'.
+     *     404 if the reference matches no booking.
      */
     public function show(string $reference)
     {
-        // EN: Look the booking up by its public reference. 404 if missing.
         // ES: Buscamos la cita por su referencia pública. 404 si no existe.
+        // EN: Look the booking up by its public reference. 404 if missing.
         $cita = Appointment::where('reference', $reference)->firstOrFail();
 
-        // EN: Event dates in UTC (computed by the model). iCalendar format: 20260615T133000Z
         // ES: Fechas del evento en UTC (las calcula el modelo). Formato iCalendar: 20260615T133000Z
+        // EN: Event dates in UTC (computed by the model). iCalendar format: 20260615T133000Z
         $fmt = 'Ymd\THis\Z';
         $dtStart = $cita->inicioUtc()->format($fmt);
         $dtEnd = $cita->finUtc()->format($fmt);
-        $dtStamp = Carbon::now('UTC')->format($fmt); // EN: .ics creation stamp · ES: sello de creación
+        $dtStamp = Carbon::now('UTC')->format($fmt); // ES: sello de creación · EN: .ics creation stamp
 
-        // EN: Event texts (reuse the model helpers). ES: Textos del evento (helpers del modelo).
+        // ES: Textos del evento (helpers del modelo). EN: Event texts (reuse the model helpers).
         $resumen = $cita->tituloCalendario();
         $descripcion = $cita->descripcionCalendario();
         $ubicacion = $cita->ubicacionCalendario();
 
-        // EN: Website host (e.g. "example.com") for the PRODID and UID domain.
         // ES: Host de la web (p.ej. "example.com") para el PRODID y el dominio del UID.
+        // EN: Website host (e.g. "example.com") for the PRODID and UID domain.
         $host = $this->hostMarca();
 
-        // EN: Brand name, sanitized for the PRODID token (no slashes/spaces issues).
         // ES: Marca, saneada para el token del PRODID (sin problemas de barras/espacios).
+        // EN: Brand name, sanitized for the PRODID token (no slashes/spaces issues).
         $marca = (string) config('appointments.brand.name');
 
-        // EN: Stable, globally unique UID: reference + host (RFC 5545 wants an
-        //     address-like unique identifier).
         // ES: UID estable y globalmente único: referencia + host (RFC 5545 pide un
         //     identificador único tipo dirección).
+        // EN: Stable, globally unique UID: reference + host (RFC 5545 wants an
+        //     address-like unique identifier).
         $uid = $this->escapar($cita->reference).'@'.$host;
 
-        // EN: Map the booking status to the VEVENT STATUS.
         // ES: Mapeamos el estado de la cita al STATUS del VEVENT.
+        // EN: Map the booking status to the VEVENT STATUS.
         $status = $cita->status === 'cancelada' ? 'CANCELLED' : 'CONFIRMED';
 
-        // EN: Build the VCALENDAR (CRLF-separated lines as the RFC requires).
         // ES: Montamos el VCALENDAR (líneas separadas por CRLF como pide el RFC).
-        // EN: PRODID derived from the brand name (decoupled). ES: PRODID derivado de la marca (desacoplado).
+        // EN: Build the VCALENDAR (CRLF-separated lines as the RFC requires).
+        // ES: PRODID derivado de la marca (desacoplado). EN: PRODID derived from the brand name (decoupled).
         $lineas = [
             'BEGIN:VCALENDAR',
             'VERSION:2.0',
@@ -103,10 +103,10 @@ class AppointmentIcsController extends Controller
             'END:VCALENDAR',
         ];
 
-        // EN: RFC 5545 requires CRLF line terminators. ES: El RFC 5545 exige terminadores CRLF.
+        // ES: El RFC 5545 exige terminadores CRLF. EN: RFC 5545 requires CRLF line terminators.
         $ics = implode("\r\n", $lineas)."\r\n";
 
-        // EN: Respond as a calendar download. ES: Respuesta como descarga de calendario.
+        // ES: Respuesta como descarga de calendario. EN: Respond as a calendar download.
         return response($ics, 200)
             ->header('Content-Type', 'text/calendar; charset=utf-8')
             ->header('Content-Disposition', 'attachment; filename="cita-'.$reference.'.ics"');
@@ -115,10 +115,10 @@ class AppointmentIcsController extends Controller
     // ── 2. Helpers — host de la marca + escape RFC 5545 ─────────────────────
 
     /**
-     * EN: Returns the website host from config('appointments.brand.website')
-     *     (e.g. "example.com"). Falls back to the app's request host if missing.
      * ES: Devuelve el host de la web de config('appointments.brand.website')
      *     (p.ej. "example.com"). Cae al host de la petición si falta.
+     * EN: Returns the website host from config('appointments.brand.website')
+     *     (e.g. "example.com"). Falls back to the app's request host if missing.
      */
     protected function hostMarca(): string
     {
@@ -128,21 +128,21 @@ class AppointmentIcsController extends Controller
     }
 
     /**
-     * EN: Escapes a text for an iCalendar property value (RFC 5545):
-     *       - Backslashes, commas and semicolons are prefixed with '\'.
-     *       - Line breaks become the literal sequence '\n'.
      * ES: Escapa un texto para un valor de propiedad iCalendar (RFC 5545):
      *       - Las contrabarras, comas y puntos y coma se prefijan con '\'.
      *       - Los saltos de línea se convierten en la secuencia literal '\n'.
+     * EN: Escapes a text for an iCalendar property value (RFC 5545):
+     *       - Backslashes, commas and semicolons are prefixed with '\'.
+     *       - Line breaks become the literal sequence '\n'.
      */
     protected function escapar(string $texto): string
     {
-        // EN: Order matters: backslash first so we don't re-escape it later.
         // ES: Orden importante: primero la contrabarra para no re-escaparla luego.
+        // EN: Order matters: backslash first so we don't re-escape it later.
         $texto = str_replace('\\', '\\\\', $texto);
         $texto = str_replace([',', ';'], ['\\,', '\\;'], $texto);
-        // EN: Normalize real line breaks to the escaped \n sequence.
         // ES: Normalizamos saltos de línea reales a la secuencia escapada \n.
+        // EN: Normalize real line breaks to the escaped \n sequence.
         $texto = str_replace(["\r\n", "\r", "\n"], '\\n', $texto);
 
         return $texto;

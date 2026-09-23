@@ -3,12 +3,12 @@
   PANEL INDEX — appointments dashboard (password protected)
   PANEL INDEX — panel de citas (protegido por contraseña)
   ============================================================================
-  EN: Renders the blocked-days manager + the appointments table. NOTE: the
-      contact-messages component is intentionally NOT included (out of scope
-      for the standalone appointments module). Labels via __('citas.*').
   ES: Renderiza el gestor de días bloqueados + la tabla de citas. NOTA: el
       componente de mensajes de contacto NO se incluye a propósito (fuera del
       alcance del módulo de citas standalone). Etiquetas vía __('citas.*').
+  EN: Renders the blocked-days manager + the appointments table. NOTE: the
+      contact-messages component is intentionally NOT included (out of scope
+      for the standalone appointments module). Labels via __('citas.*').
   ============================================================================
 --}}
 @extends('layouts.panel')
@@ -27,7 +27,7 @@
       {{-- Header controls: theme toggle + log out / Controles: toggle de tema + logout --}}
       <div class="flex items-center gap-3">
 
-        {{-- EN: Sun/moon theme toggle (shared partial). ES: Toggle de tema sol/luna (partial compartido). --}}
+        {{-- ES: Toggle de tema sol/luna (partial compartido). EN: Sun/moon theme toggle (shared partial). --}}
         @include('partials.theme-toggle')
 
         {{-- Log out of the panel / Cerrar sesión del panel --}}

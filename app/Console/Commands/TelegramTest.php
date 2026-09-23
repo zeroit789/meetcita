@@ -9,10 +9,10 @@ use Illuminate\Console\Command;
 |==============================================================================
 | TelegramTest / Mensaje de prueba por Telegram
 |==============================================================================
-| EN: Sends a test message to the owner's chat to verify the bot works.
-|     Usage: php artisan telegram:test
 | ES: Envía un mensaje de prueba al chat del dueño para verificar que el bot
 |     funciona. Uso: php artisan telegram:test
+| EN: Sends a test message to the owner's chat to verify the bot works.
+|     Usage: php artisan telegram:test
 |==============================================================================
 */
 class TelegramTest extends Command
@@ -29,8 +29,8 @@ class TelegramTest extends Command
      */
     public function handle(TelegramNotifier $tg): int
     {
-        // EN: Bail out gracefully if the bot isn't configured.
         // ES: Salida limpia si el bot no está configurado.
+        // EN: Bail out gracefully if the bot isn't configured.
         if (! $tg->configurado()) {
             $this->error('Telegram no configurado (faltan TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID en .env)');
 

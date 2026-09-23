@@ -9,12 +9,12 @@ use Illuminate\Support\Facades\Http;
 |==============================================================================
 | TelegramSetWebhook / Registrar el webhook del bot de Telegram
 |==============================================================================
-| EN: Registers (or reconfigures) the Telegram bot webhook pointing to the app.
-|     Usage: php artisan telegram:set-webhook [--url=https://example.com/telegram/webhook]
-|     If --url is omitted it defaults to APP_URL/telegram/webhook.
 | ES: Registra (o reconfigura) el webhook del bot de Telegram apuntando a la app.
 |     Uso: php artisan telegram:set-webhook [--url=https://example.com/telegram/webhook]
 |     Si se omite --url, por defecto usa APP_URL/telegram/webhook.
+| EN: Registers (or reconfigures) the Telegram bot webhook pointing to the app.
+|     Usage: php artisan telegram:set-webhook [--url=https://example.com/telegram/webhook]
+|     If --url is omitted it defaults to APP_URL/telegram/webhook.
 |==============================================================================
 */
 class TelegramSetWebhook extends Command
@@ -46,11 +46,11 @@ class TelegramSetWebhook extends Command
             return self::FAILURE;
         }
 
-        // EN: Default URL: the app URL + /telegram/webhook. ES: URL por defecto: APP_URL + /telegram/webhook.
+        // ES: URL por defecto: APP_URL + /telegram/webhook. EN: Default URL: the app URL + /telegram/webhook.
         $url = $this->option('url') ?: rtrim(config('app.url'), '/').'/telegram/webhook';
 
-        // EN: Register the webhook with the secret token for header validation.
         // ES: Registramos el webhook con el secret token para validar la cabecera.
+        // EN: Register the webhook with the secret token for header validation.
         $res = Http::asForm()->post("https://api.telegram.org/bot{$token}/setWebhook", [
             'url' => $url,
             'secret_token' => $secret,

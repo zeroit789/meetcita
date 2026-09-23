@@ -2,13 +2,13 @@
     ============================================================================
     REJECTED EMAIL / EMAIL RECHAZADO — Appointment declined / Cita rechazada
     ============================================================================
-    EN: Email to the client: the owner cannot take the appointment. Includes the
-        reason ($motivo) + brand signature. Branding from config('appointments.brand.*').
-        Rendered in the CLIENT's language (active locale set with ->locale($appointment->locale)).
-
     ES: Email al cliente: el dueño no puede atender la cita. Incluye el motivo
         ($motivo) + firma de marca. Marca desde config('appointments.brand.*').
         Se renderiza en el idioma del CLIENTE (locale activo fijado con ->locale($appointment->locale)).
+
+    EN: Email to the client: the owner cannot take the appointment. Includes the
+        reason ($motivo) + brand signature. Branding from config('appointments.brand.*').
+        Rendered in the CLIENT's language (active locale set with ->locale($appointment->locale)).
 
     INDEX / ÍNDICE
         1. bloque PHP ....... formatted values + branding / valores formateados + marca
@@ -20,21 +20,21 @@
     ============================================================================
 --}}
 @php
-    // 1. EN: Branding from config (no personal data hardcoded).
-    //    ES: Marca desde config (sin datos personales hardcodeados).
+    // 1. ES: Marca desde config (sin datos personales hardcodeados).
+    //    EN: Branding from config (no personal data hardcoded).
     $brandName = config('appointments.brand.name');
     $ownerName = config('appointments.brand.owner_name');
     $website   = config('appointments.brand.website');
 
-    // EN: Re-book URL = brand website + the public booking path (/citas).
-    //     Display label without scheme (e.g. "example.com/citas").
     // ES: URL para volver a reservar = web de marca + ruta pública de reservas (/citas).
     //     Etiqueta sin esquema (ej: "example.com/citas").
+    // EN: Re-book URL = brand website + the public booking path (/citas).
+    //     Display label without scheme (e.g. "example.com/citas").
     $bookingUrl   = rtrim((string) $website, '/') . '/citas';
     $bookingLabel = preg_replace('#^https?://#', '', $bookingUrl);
 
-    // EN: Date in the active email locale (set by the sender with ->locale()).
     // ES: Fecha en el idioma activo del email (lo fija quien envía con ->locale()).
+    // EN: Date in the active email locale (set by the sender with ->locale()).
     $fechaCita = $appointment->date->locale(app()->getLocale())->isoFormat(__('emails.date_format'));
 @endphp
 <!DOCTYPE html>
@@ -45,7 +45,7 @@
     <title>{{ __('emails.rejected_title_tag') }}</title>
 </head>
 <body style="margin:0; padding:0; background-color:#f5f5f7;">
-    {{-- EN: Hidden preheader. ES: Preheader oculto. --}}
+    {{-- ES: Preheader oculto. EN: Hidden preheader. --}}
     <div style="display:none; max-height:0; overflow:hidden; mso-hide:all; font-size:1px; line-height:1px; color:#f5f5f7;">
         {{ __('emails.rejected_preheader', ['date' => $fechaCita]) }}
     </div>
@@ -68,10 +68,10 @@
                 <tr>
                     <td style="padding:32px;">
                         <h1 style="margin:0 0 12px 0; font-family:Arial,sans-serif; color:#1f2937; font-size:22px; font-weight:bold;">{{ __('emails.rejected_heading') }}</h1>
-                        {{-- 3. EN: Translated greeting: name, date and time are injected as variables.
-                                 The reference (optional) is appended inline only if it exists.
-                             ES: Saludo traducido: el nombre, la fecha y la hora se inyectan como variables.
-                                 La referencia (opcional) se añade en línea solo si existe. --}}
+                        {{-- 3. ES: Saludo traducido: el nombre, la fecha y la hora se inyectan como variables.
+                                 La referencia (opcional) se añade en línea solo si existe.
+                             EN: Translated greeting: name, date and time are injected as variables.
+                                 The reference (optional) is appended inline only if it exists. --}}
                         <p style="margin:0 0 16px 0; font-family:Arial,sans-serif; color:#374151; font-size:15px; line-height:1.65;">
                             {!! __('emails.rejected_intro', [
                                 'name' => '<strong style="color:#7c3aed;">' . e($appointment->name) . '</strong>',
@@ -94,8 +94,8 @@
                         @endif
 
                         {{-- 5. ===== RE-BOOK LINK / ENLACE PARA VOLVER A RESERVAR =====
-                             EN: The booking link is injected already built as the :link variable.
-                             ES: El enlace de reserva se inyecta ya montado como variable :link. --}}
+                             ES: El enlace de reserva se inyecta ya montado como variable :link.
+                             EN: The booking link is injected already built as the :link variable. --}}
                         <p style="margin:0 0 8px 0; font-family:Arial,sans-serif; color:#374151; font-size:15px; line-height:1.65;">
                             {!! __('emails.rejected_outro', [
                                 'link' => '<a href="' . e($bookingUrl) . '" style="color:#7c3aed; text-decoration:none;">' . e($bookingLabel) . '</a>',

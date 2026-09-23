@@ -3,11 +3,11 @@
   PanelCitas view — appointments table for the owner
   Vista PanelCitas — tabla de citas para el dueño
   ============================================================================
-  EN: Neutral dark + accent theme. All labels go through __('citas.*') so the
-      panel is bilingual too. The single root div is mandatory in Livewire.
   ES: Tema oscuro neutro + acento. Todas las etiquetas pasan por __('citas.*')
       para que el panel también sea bilingüe. El div raíz único es obligatorio
       en Livewire.
+  EN: Neutral dark + accent theme. All labels go through __('citas.*') so the
+      panel is bilingual too. The single root div is mandatory in Livewire.
   ============================================================================
 --}}
 <div class="w-full">
@@ -96,8 +96,8 @@
               {{-- Status: colour badge per value / Estado: badge con color por valor --}}
               <td class="py-3 px-2 whitespace-nowrap">
                 @php
-                  // EN: Badge colour + localised label by status.
                   // ES: Color del badge + etiqueta traducida según el estado.
+                  // EN: Badge colour + localised label by status.
                   $style = match($cita->status) {
                     'confirmada' => 'border-term/40 bg-term/10 text-term',
                     'cancelada'  => 'border-red-500/40 bg-red-500/10 text-red-400',

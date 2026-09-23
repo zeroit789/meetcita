@@ -9,14 +9,14 @@ use Illuminate\Support\Facades\Log;
 |==============================================================================
 | TelegramNotifier / Notificador de Telegram
 |==============================================================================
-| EN: Minimal Telegram Bot API client. Sends alerts to the owner (their chat_id)
-|     and handles the button callbacks of the booking flow. Uses Laravel's HTTP
-|     client against the Bot API. If no token/chat is configured, calls are
-|     graceful no-ops (nothing breaks).
 | ES: Cliente mínimo de la Bot API de Telegram. Envía avisos al dueño (su
 |     chat_id) y maneja las respuestas a los botones (callbacks) del flujo de
 |     citas. Usa el HTTP client de Laravel contra la Bot API. Si no hay
 |     token/chat configurado, las llamadas no hacen nada (no rompe).
+| EN: Minimal Telegram Bot API client. Sends alerts to the owner (their chat_id)
+|     and handles the button callbacks of the booking flow. Uses Laravel's HTTP
+|     client against the Bot API. If no token/chat is configured, calls are
+|     graceful no-ops (nothing breaks).
 |
 | INDEX / ÍNDICE
 |   1. CONFIG .......... token/chat + is-configured / token/chat y configurado
@@ -43,14 +43,14 @@ class TelegramNotifier
      */
     public function __construct()
     {
-        // EN: Read bot token + owner chat id from config. ES: Token + chat del dueño desde config.
+        // ES: Token + chat del dueño desde config. EN: Read bot token + owner chat id from config.
         $this->token = config('services.telegram.token');
         $this->chatId = config('services.telegram.chat_id');
     }
 
     /**
-     * EN: Is the bot configured? (token + chat).
      * ES: ¿Está el bot configurado? (token + chat).
+     * EN: Is the bot configured? (token + chat).
      */
     public function configurado(): bool
     {
@@ -58,8 +58,8 @@ class TelegramNotifier
     }
 
     /**
-     * EN: Builds the Bot API URL for a given method.
      * ES: Construye la URL de la Bot API para un método dado.
+     * EN: Builds the Bot API URL for a given method.
      */
     protected function apiUrl(string $method): string
     {
@@ -69,10 +69,10 @@ class TelegramNotifier
     // ── 2. Send — enviar mensaje con botones inline ─────────────────────────
 
     /**
-     * EN: Sends a message to the owner. $buttons = rows of inline buttons:
-     *       [ [ ['text'=>'✅ Confirm','callback_data'=>'...'], ... ], ... ]
      * ES: Envía un mensaje al dueño. $buttons = filas de botones inline:
      *       [ [ ['text'=>'✅ Confirmar','callback_data'=>'...'], ... ], ... ]
+     * EN: Sends a message to the owner. $buttons = rows of inline buttons:
+     *       [ [ ['text'=>'✅ Confirm','callback_data'=>'...'], ... ], ... ]
      *
      * @return int|null EN: message_id of the sent message (to edit later), or null.
      *                  ES: message_id del mensaje enviado (para editarlo luego), o null.
@@ -116,8 +116,8 @@ class TelegramNotifier
     // ── 3. Callback — responder al toque de un botón ────────────────────────
 
     /**
-     * EN: Answers a button tap (removes the loading "clock" on the client).
      * ES: Responde al toque de un botón (quita el "reloj" de carga en el cliente).
+     * EN: Answers a button tap (removes the loading "clock" on the client).
      */
     public function responderCallback(string $callbackQueryId, ?string $aviso = null): void
     {
@@ -142,10 +142,10 @@ class TelegramNotifier
     // ── 4. Edit — editar un mensaje ya enviado ──────────────────────────────
 
     /**
-     * EN: Edits the text of an already-sent message (e.g. to reflect "confirmed"
-     *     and remove the buttons after they're pressed).
      * ES: Edita el texto de un mensaje ya enviado (p. ej. para reflejar
      *     "confirmada" y quitar los botones tras pulsarlos).
+     * EN: Edits the text of an already-sent message (e.g. to reflect "confirmed"
+     *     and remove the buttons after they're pressed).
      */
     public function editarMensaje(int $messageId, string $textoHtml): void
     {

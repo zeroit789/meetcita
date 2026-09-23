@@ -3,12 +3,12 @@
   PanelBlockedDays view — manage off days (holidays)
   Vista PanelBlockedDays — gestión de días no disponibles (vacaciones)
   ============================================================================
-  EN: Form to add a non-operating date + list of the marked ones with a remove
-      button. Neutral dark + accent theme. All labels via __('citas.*'). The
-      single root div is mandatory in Livewire.
   ES: Formulario para añadir una fecha no operativa + lista de las marcadas con
       botón para quitarlas. Tema oscuro neutro + acento. Todas las etiquetas vía
       __('citas.*'). El div raíz único es obligatorio en Livewire.
+  EN: Form to add a non-operating date + list of the marked ones with a remove
+      button. Neutral dark + accent theme. All labels via __('citas.*'). The
+      single root div is mandatory in Livewire.
   ============================================================================
 --}}
 <div class="glass p-6">

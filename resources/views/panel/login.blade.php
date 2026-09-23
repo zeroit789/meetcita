@@ -3,10 +3,10 @@
   PANEL LOGIN — single shared password
   LOGIN DEL PANEL — una única contraseña compartida
   ============================================================================
-  EN: Single password (config('appointments.panel.password')) checked by the
-      backend controller. Neutral dark + accent theme. Labels via __('citas.*').
   ES: Contraseña única (config('appointments.panel.password')) comprobada por
       el controlador backend. Tema oscuro neutro + acento. Etiquetas vía __('citas.*').
+  EN: Single password (config('appointments.panel.password')) checked by the
+      backend controller. Neutral dark + accent theme. Labels via __('citas.*').
   ============================================================================
 --}}
 @extends('layouts.panel')
@@ -31,8 +31,8 @@
           {{-- Password field. Label tied by for/id (a11y). / Campo contraseña con label. --}}
           <div>
             <label for="panel-password" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.login_password') }}</label>
-            {{-- EN: Accessible focus: accent border + ring on focus.
-                 ES: Foco accesible: borde de acento + anillo al enfocar. --}}
+            {{-- ES: Foco accesible: borde de acento + anillo al enfocar.
+                 EN: Accessible focus: accent border + ring on focus. --}}
             <input type="password" id="panel-password" name="password" autofocus autocomplete="current-password" required
                    class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand-glow/60 focus:outline-none transition-colors" />
           </div>

@@ -3,12 +3,12 @@
   WELCOME — minimal landing for "/"
   WELCOME — landing mínima para "/"
   ============================================================================
-  EN: A tiny, clean home page that explains this is a demo of the open-source
-      appointments system and links to /citas and to the repo. Bilingual via
-      __('citas.*'). Uses the public layout (neutral dark + accent theme).
   ES: Página de inicio mínima y limpia que explica que esto es una demo del
       sistema de reservas open-source y enlaza a /citas y al repo. Bilingüe vía
       __('citas.*'). Usa el layout público (tema oscuro neutro + acento).
+  EN: A tiny, clean home page that explains this is a demo of the open-source
+      appointments system and links to /citas and to the repo. Bilingual via
+      __('citas.*'). Uses the public layout (neutral dark + accent theme).
   ============================================================================
 --}}
 @extends('layouts.public')

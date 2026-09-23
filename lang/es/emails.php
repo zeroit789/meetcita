@@ -4,18 +4,18 @@
 |==============================================================================
 | EMAILS (ES) — Traducciones de las plantillas de email de CITAS
 |==============================================================================
-| EN: Spanish strings for the appointment email templates:
-|       - appointments/owner     (new request → the OWNER reads it)
-|       - appointments/client    (request received → the CLIENT reads it)
-|       - appointments/confirmed (appointment confirmed → CLIENT)
-|       - appointments/rejected  (appointment declined → CLIENT)
-|       - partials/signature     (shared signature, translatable bits only)
 | ES: Cadenas en español de las plantillas de email de citas:
 |       - appointments/owner     (nueva solicitud → la lee el DUEÑO)
 |       - appointments/client    (solicitud recibida → la lee el CLIENTE)
 |       - appointments/confirmed (cita confirmada → CLIENTE)
 |       - appointments/rejected  (cita rechazada → CLIENTE)
 |       - partials/signature     (firma común, solo lo traducible)
+| EN: Spanish strings for the appointment email templates:
+|       - appointments/owner     (new request → the OWNER reads it)
+|       - appointments/client    (request received → the CLIENT reads it)
+|       - appointments/confirmed (appointment confirmed → CLIENT)
+|       - appointments/rejected  (appointment declined → CLIENT)
+|       - partials/signature     (shared signature, translatable bits only)
 |
 | INDEX / ÍNDICE
 |   1. SUBJECTS .......... Mailable Envelope subjects / asuntos de los Mailables
@@ -27,34 +27,34 @@
 |   7. REJECTED ......... appointments/rejected
 |
 | NOTE / NOTA:
-|   EN: For client emails the final language is the active locale at send time
-|       (Mail::...->locale($appointment->locale)). The OWNER email uses the
-|       business default locale (config 'appointments.default_locale').
 |   ES: En los emails al cliente el idioma final es el locale activo al enviar
 |       (Mail::...->locale($appointment->locale)). El email al DUEÑO usa el idioma
 |       por defecto del negocio (config 'appointments.default_locale').
+|   EN: For client emails the final language is the active locale at send time
+|       (Mail::...->locale($appointment->locale)). The OWNER email uses the
+|       business default locale (config 'appointments.default_locale').
 |==============================================================================
 */
 
 return [
 
     // ── 1. SUBJECTS / ASUNTOS (Envelope subject de los Mailables) ─────────
-    // EN: :name/:date/:time are interpolated by the owner Mailable.
     // ES: :name/:date/:time los interpola el Mailable del dueño.
+    // EN: :name/:date/:time are interpolated by the owner Mailable.
     'subject_appointment_owner' => 'Nueva solicitud de cita — :name (:date :time)',
     'subject_appointment_received' => 'Hemos recibido tu solicitud de cita',
     'subject_appointment_confirmed' => 'Tu cita está confirmada',
     'subject_appointment_rejected' => 'Sobre tu cita',
 
     // ── 2. SHARED / COMÚN ─────────────────────────────────────────────────
-    // EN: Brand tagline + section headers shared across client templates.
     // ES: Eslogan de marca + cabeceras de sección comunes a las plantillas de cliente.
+    // EN: Brand tagline + section headers shared across client templates.
     'brand_tagline' => 'Reserva tu cita online',
     'header_confirmed' => 'Cita confirmada',
     'header_appointment' => 'Sobre tu cita',
 
-    // EN: Long-date isoFormat pattern (Carbon). ES inserts "de" between parts.
     // ES: Patrón isoFormat de fecha larga (Carbon). ES lleva "de" entre las partes.
+    // EN: Long-date isoFormat pattern (Carbon). ES inserts "de" between parts.
     'date_format' => 'dddd D [de] MMMM [de] YYYY',
 
     // ── Etiquetas del resumen de la cita (reutilizadas) / Appointment summary labels (reused) ──
@@ -63,7 +63,7 @@ return [
     'label_duration' => 'Duración',
     'label_modality' => 'Modalidad',
 
-    // EN: Modality and duration values. ES: Valores de modalidad y duración.
+    // ES: Valores de modalidad y duración. EN: Modality and duration values.
     'modality_presencial' => 'Presencial',
     'modality_online' => 'Online (videollamada)',
     'duration_one_hour' => '1 hora',
@@ -83,9 +83,9 @@ return [
 
     // ════════════════════════════════════════════════════════════════════
     // 4. OWNER / DUEÑO — appointments/owner (idioma por defecto del negocio)
-    // EN: These keys were HARDCODED in the original owner blade. Now decoupled.
     // ES: Estas claves estaban HARDCODEADAS en el blade del dueño original.
     //     Ahora desacopladas.
+    // EN: These keys were HARDCODED in the original owner blade. Now decoupled.
     // ════════════════════════════════════════════════════════════════════
     'owner_title_tag' => 'Nueva solicitud de cita',
     'owner_header' => 'Sistema de citas',
@@ -135,8 +135,8 @@ return [
     'rejected_title_tag' => 'Sobre tu cita',
     'rejected_preheader' => 'Sobre tu solicitud de cita del :date.',
     'rejected_heading' => 'Sobre tu solicitud de cita',
-    // EN: The reason and reference are built in the template with Blade variables.
     // ES: El motivo y la referencia se montan en la plantilla con variables Blade.
+    // EN: The reason and reference are built in the template with Blade variables.
     'rejected_intro' => 'Hola :name, gracias por tu interés. Lamentablemente no voy a poder atender la cita del :date a las :time',
     'rejected_ref_inline' => '(referencia :reference)',
     'rejected_outro' => 'Si te viene bien, podemos buscar otro hueco: solo tienes que reservar de nuevo en :link o responder a este correo. Disculpa las molestias.',

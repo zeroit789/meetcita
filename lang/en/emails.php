@@ -4,13 +4,13 @@
 |==============================================================================
 | EMAILS (EN) — Translations for the APPOINTMENT email templates
 |==============================================================================
+| ES: Cadenas en inglés de las plantillas de email de citas (ver detalle en lang/es).
 | EN: English strings for the appointment email templates:
 |       - appointments/owner     (new request → the OWNER reads it)
 |       - appointments/client    (request received → the CLIENT reads it)
 |       - appointments/confirmed (appointment confirmed → CLIENT)
 |       - appointments/rejected  (appointment declined → CLIENT)
 |       - partials/signature     (shared signature, translatable bits only)
-| ES: Cadenas en inglés de las plantillas de email de citas (ver detalle en lang/es).
 |
 | INDEX / ÍNDICE
 |   1. SUBJECTS .......... Mailable Envelope subjects / asuntos de los Mailables
@@ -22,19 +22,19 @@
 |   7. REJECTED ......... appointments/rejected
 |
 | NOTE / NOTA:
+|   ES: Idéntico criterio que en lang/es: cliente = locale activo, dueño = locale
+|       por defecto del negocio.
 |   EN: For client emails the final language is the active locale at send time
 |       (Mail::...->locale($appointment->locale)). The OWNER email uses the
 |       business default locale (config 'appointments.default_locale').
-|   ES: Idéntico criterio que en lang/es: cliente = locale activo, dueño = locale
-|       por defecto del negocio.
 |==============================================================================
 */
 
 return [
 
     // ── 1. SUBJECTS / ASUNTOS (Mailable Envelope subject) ─────────────────
-    // EN: :name/:date/:time are interpolated by the owner Mailable.
     // ES: :name/:date/:time los interpola el Mailable del dueño.
+    // EN: :name/:date/:time are interpolated by the owner Mailable.
     'subject_appointment_owner' => 'New appointment request — :name (:date :time)',
     'subject_appointment_received' => "We've received your appointment request",
     'subject_appointment_confirmed' => 'Your appointment is confirmed',
@@ -45,8 +45,8 @@ return [
     'header_confirmed' => 'Appointment confirmed',
     'header_appointment' => 'About your appointment',
 
-    // EN: Long-date isoFormat pattern (Carbon). EN uses natural English order.
     // ES: Patrón isoFormat de fecha larga (Carbon). EN usa el orden inglés natural.
+    // EN: Long-date isoFormat pattern (Carbon). EN uses natural English order.
     'date_format' => 'dddd D MMMM YYYY',
 
     // ── Appointment summary labels (reused) / Etiquetas del resumen ───────
@@ -55,7 +55,7 @@ return [
     'label_duration' => 'Duration',
     'label_modality' => 'Format',
 
-    // EN: Modality and duration values. ES: Valores de modalidad y duración.
+    // ES: Valores de modalidad y duración. EN: Modality and duration values.
     'modality_presencial' => 'In person',
     'modality_online' => 'Online (video call)',
     'duration_one_hour' => '1 hour',
@@ -75,10 +75,10 @@ return [
 
     // ════════════════════════════════════════════════════════════════════
     // 4. OWNER / DUEÑO — appointments/owner (business default locale)
-    // EN: New EN keys: the original owner blade was hardcoded in Spanish only,
-    //     so these are created here translated.
     // ES: Claves EN nuevas: el blade del dueño original estaba hardcodeado solo
     //     en español, así que se crean aquí traducidas.
+    // EN: New EN keys: the original owner blade was hardcoded in Spanish only,
+    //     so these are created here translated.
     // ════════════════════════════════════════════════════════════════════
     'owner_title_tag' => 'New appointment request',
     'owner_header' => 'Appointment system',
