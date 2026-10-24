@@ -85,7 +85,7 @@ Versiones exactas del `composer.lock` y del `pnpm-lock.yaml`:
 |---|---|
 | PHP | ≥ 8.4.1 (lo exigen las dependencias de Symfony 8 del lockfile) |
 | laravel/framework | 13.33.0 |
-| livewire/livewire | 4.4.6 |
+| livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.0 |
 | laravel/tinker | 3.0.2 |
 | laravel/pint (dev) | 1.32.1 |
@@ -359,7 +359,7 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 |---|---|
 | PHP | ≥ 8.4.1 (required by the Symfony 8 packages in the lockfile) |
 | laravel/framework | 13.33.0 |
-| livewire/livewire | 4.4.6 |
+| livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.0 |
 | laravel/tinker | 3.0.2 |
 | laravel/pint (dev) | 1.32.1 |
