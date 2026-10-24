@@ -92,9 +92,9 @@ Versiones exactas del `composer.lock` y del `pnpm-lock.yaml`:
 | phpunit/phpunit (dev) | 12.5.35 |
 | laravel/pail (dev) | 1.2.7 |
 | tailwindcss / @tailwindcss/vite | 4.3.3 |
-| vite | 8.3.0 |
+| vite | 8.3.5 |
 | laravel-vite-plugin | 3.2.0 |
-| concurrently (dev) | 9.2.4 |
+| concurrently (dev) | 9.2.5 |
 
 Base de datos: SQLite por defecto. También funciona con PostgreSQL y MySQL/MariaDB (ver [Limitaciones conocidas](#limitaciones-conocidas)).
 
@@ -366,9 +366,9 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 | phpunit/phpunit (dev) | 12.5.35 |
 | laravel/pail (dev) | 1.2.7 |
 | tailwindcss / @tailwindcss/vite | 4.3.3 |
-| vite | 8.3.0 |
+| vite | 8.3.5 |
 | laravel-vite-plugin | 3.2.0 |
-| concurrently (dev) | 9.2.4 |
+| concurrently (dev) | 9.2.5 |
 
 Database: SQLite by default. PostgreSQL and MySQL/MariaDB also work (see [Known limitations](#known-limitations)).
 
