@@ -1,0 +1,54 @@
+# ES: Dependabot de Meetcita: PR semanales con las dependencias nuevas.
+#     Tres ecosistemas: Composer (PHP), npm (cubre pnpm-lock.yaml) y las GitHub
+#     Actions de la CI. Los parches y menores de cada ecosistema llegan juntos en
+#     una sola PR; los majors (p. ej. PHPUnit 13) llegan sueltos, para revisarlos
+#     uno a uno. Cada PR pasa por la CI (PHP 8.4 y 8.5, tests, audit, Pint, build).
+# EN: Meetcita Dependabot: weekly PRs with new dependency versions.
+#     Three ecosystems: Composer (PHP), npm (covers pnpm-lock.yaml) and the CI's
+#     GitHub Actions. Patch and minor updates for each ecosystem arrive together in
+#     a single PR; majors (e.g. PHPUnit 13) arrive on their own so they can be
+#     reviewed one by one. Every PR goes through CI (PHP 8.4 and 8.5, tests, audit,
+#     Pint, build).
+version: 2
+updates:
+  # ES: PHP (composer.json / composer.lock).
+  # EN: PHP (composer.json / composer.lock).
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    groups:
+      composer-minor:
+        update-types: [minor, patch]
+
+  # ES: Frontend (package.json / pnpm-lock.yaml).
+  # EN: Front end (package.json / pnpm-lock.yaml).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor:
+        update-types: [minor, patch]
+
+  # ES: GitHub Actions (fijadas por SHA; Dependabot actualiza el SHA y el comentario).
+  # EN: GitHub Actions (pinned by SHA; Dependabot updates the SHA and the comment).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "07:00"
+      timezone: Europe/Madrid
+    open-pull-requests-limit: 5
+    groups:
+      actions:
+        patterns: ["*"]
