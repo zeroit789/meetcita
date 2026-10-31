@@ -5,7 +5,7 @@
 [![CI](https://github.com/zeroit789/meetcita/actions/workflows/ci.yml/badge.svg)](https://github.com/zeroit789/meetcita/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/zeroit789/meetcita)](LICENSE)
 ![PHP ≥ 8.4.1](https://img.shields.io/badge/PHP-%E2%89%A5%208.4.1-777BB4?logo=php&logoColor=white)
-![Laravel 13.33](https://img.shields.io/badge/Laravel-13.33-FF2D20?logo=laravel&logoColor=white)
+![Laravel 13.39](https://img.shields.io/badge/Laravel-13.39-FF2D20?logo=laravel&logoColor=white)
 ![Livewire 4.4](https://img.shields.io/badge/Livewire-4.4-4E56A6?logo=livewire&logoColor=white)
 ![Tailwind CSS 4.3](https://img.shields.io/badge/Tailwind%20CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)
 
@@ -84,9 +84,9 @@ Versiones exactas del `composer.lock` y del `pnpm-lock.yaml`:
 | Pieza | Versión |
 |---|---|
 | PHP | ≥ 8.4.1 (lo exigen las dependencias de Symfony 8 del lockfile) |
-| laravel/framework | 13.33.0 |
+| laravel/framework | 13.39.0 |
 | livewire/livewire | 4.4.8 |
-| google/apiclient | 2.20.0 |
+| google/apiclient | 2.20.1 |
 | laravel/tinker | 3.0.2 |
 | laravel/pint (dev) | 1.32.1 |
 | phpunit/phpunit (dev) | 12.5.35 |
@@ -358,9 +358,9 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 | Component | Version |
 |---|---|
 | PHP | ≥ 8.4.1 (required by the Symfony 8 packages in the lockfile) |
-| laravel/framework | 13.33.0 |
+| laravel/framework | 13.39.0 |
 | livewire/livewire | 4.4.8 |
-| google/apiclient | 2.20.0 |
+| google/apiclient | 2.20.1 |
 | laravel/tinker | 3.0.2 |
 | laravel/pint (dev) | 1.32.1 |
 | phpunit/phpunit (dev) | 12.5.35 |
