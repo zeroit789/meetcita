@@ -8,11 +8,11 @@ use Illuminate\Support\Facades\Schedule;
 |==============================================================================
 | CONSOLE ROUTES / RUTAS DE CONSOLA
 |==============================================================================
-| ES: Tareas programadas del módulo de citas. La única tarea es el worker de la
+| ES: Tareas programadas del módulo de citas. La principal es el worker de la
 |     cola que envía los emails de las citas (los Mailables implementan
 |     ShouldQueue, así que reservar / confirmar / rechazar solo deja el email en
 |     la cola sin esperar al SMTP; este worker lo envía después).
-| EN: Scheduled tasks for the appointments module. The only scheduled job is the
+| EN: Scheduled tasks for the appointments module. The main scheduled job is the
 |     queue worker that sends the booking emails (the Mailables implement
 |     ShouldQueue, so reserving / confirming / rejecting just leaves the email in
 |     the queue without waiting for SMTP; this worker sends it afterwards).
@@ -37,4 +37,16 @@ Artisan::command('inspire', function () {
 //     withoutOverlapping prevents two workers running at once if one is slow.
 Schedule::command('queue:work --stop-when-empty --max-time=55 --tries=3')
     ->everyMinute()
+    ->withoutOverlapping();
+
+// ES: Retención de datos (RGPD): cada noche borra las citas que pasaron hace
+//     más de APPOINTMENTS_RETENTION_MONTHS meses (12 por defecto; 0 = nunca) y
+//     los registros técnicos caducados. Ver app/Console/Commands/PurgeOldData.php.
+//     A las 03:30 para no coincidir con el tráfico del día.
+// EN: Data retention (GDPR): every night deletes the bookings that took place
+//     more than APPOINTMENTS_RETENTION_MONTHS months ago (12 by default; 0 =
+//     never) and expired technical records. See PurgeOldData.php.
+//     At 03:30 so it doesn't clash with daytime traffic.
+Schedule::command('citas:purgar')
+    ->dailyAt('03:30')
     ->withoutOverlapping();

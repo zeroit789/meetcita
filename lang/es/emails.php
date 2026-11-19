@@ -142,4 +142,8 @@ return [
     'rejected_ref_inline' => '(nº de cita :reference)',
     'rejected_outro' => 'Si te viene bien, podemos buscar otro hueco: solo tienes que reservar de nuevo en :link o responder a este correo. Disculpa las molestias.',
 
+    // ES: Nota de protección de datos al pie de los correos al cliente.
+    // EN: Data-protection note at the foot of the client emails.
+    'privacy_note_no_retention' => 'Recibes este correo porque se pidió una cita con :brand. Usamos tus datos solo para gestionarla. Para ejercer tus derechos o pedir el borrado, responde a este correo.',
+    'privacy_note' => 'Recibes este correo porque se pidió una cita con :brand. Usamos tus datos solo para gestionarla y los borramos a los :months meses de la cita. Para ejercer tus derechos o pedir el borrado, responde a este correo.',
 ];

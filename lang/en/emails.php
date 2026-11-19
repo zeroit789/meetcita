@@ -133,4 +133,8 @@ return [
     'rejected_ref_inline' => '(ref :reference)',
     'rejected_outro' => 'If it works for you, we can find another slot: simply book again at :link or reply to this email. Sorry for the inconvenience.',
 
+    // ES: Nota de protección de datos al pie de los correos al cliente.
+    // EN: Data-protection note at the foot of the client emails.
+    'privacy_note_no_retention' => 'You are receiving this email because a booking was requested with :brand. We use your data only to manage it. To exercise your rights or ask for deletion, reply to this email.',
+    'privacy_note' => 'You are receiving this email because a booking was requested with :brand. We use your data only to manage it and delete it :months months after the booking. To exercise your rights or ask for deletion, reply to this email.',
 ];

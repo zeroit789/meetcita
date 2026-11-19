@@ -197,6 +197,7 @@
                             {{-- 7. ===== BRAND SIGNATURE / FIRMA DE MARCA ===== --}}
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;">
                                 <tr><td>@include('emails.partials.signature')</td></tr>
+                            <tr><td>@include('emails.partials.privacy-note')</td></tr>
                             </table>
 
                         </td>

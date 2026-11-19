@@ -123,6 +123,35 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // 4c. PRIVACY / PRIVACIDAD (RGPD / GDPR)
+    // ES: Primera capa de información junto al botón de reservar y plazo de
+    //     conservación. El texto legal lo pone el negocio: rellena el
+    //     responsable y el enlace a TU política de privacidad.
+    // EN: First-layer notice next to the booking button and retention period.
+    //     The legal text is the business's: fill in the controller and the
+    //     link to YOUR privacy policy.
+    // ──────────────────────────────────────────────────────────────────────
+    'privacy' => [
+        // ES: Responsable del tratamiento (por defecto, la marca).
+        // EN: Data controller (defaults to the brand).
+        'controller' => env('APPOINTMENTS_PRIVACY_CONTROLLER', env('APPOINTMENTS_BRAND', 'Acme Inc.')),
+
+        // ES: Enlace a tu política de privacidad completa. Vacío = sin enlace.
+        // EN: Link to your full privacy policy. Empty = no link.
+        'policy_url' => env('APPOINTMENTS_PRIVACY_URL', ''),
+
+        // ES: Destinatarios (proveedores). Vacío = texto genérico traducido.
+        // EN: Recipients (providers). Empty = generic translated text.
+        'recipients' => env('APPOINTMENTS_PRIVACY_RECIPIENTS', ''),
+
+        // ES: Meses que se guardan las citas pasadas; después, citas:purgar las
+        //     borra cada noche. ACTIVADO por defecto (12). 0 = no borrar nunca.
+        // EN: Months past bookings are kept; then citas:purgar deletes them
+        //     every night. ENABLED by default (12). 0 = never delete.
+        'retention_months' => (int) env('APPOINTMENTS_RETENTION_MONTHS', 12),
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // 5. MODALITIES / MODALIDADES
     // ES: Ofrece citas online (enlace de Google Meet automático) y/o presenciales.
     //     Al menos una debe ser true. Si Google no está configurado, "online"

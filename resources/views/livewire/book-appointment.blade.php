@@ -335,8 +335,8 @@
 
         {{-- People attending / Personas que asistirán --}}
         <div>
-          <label for="appt-attendees" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_attendees') }}</label>
-          <input type="text" id="appt-attendees" wire:model="attendees" placeholder="{{ __('citas.ph_attendees') }}" required
+          <label for="appt-attendees" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_attendees') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <input type="text" id="appt-attendees" wire:model="attendees" placeholder="{{ __('citas.ph_attendees') }}"
                  class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
           @error('attendees') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
         </div>
@@ -359,11 +359,16 @@
 
         {{-- Message: what to discuss / Mensaje: qué tratar --}}
         <div>
-          <label for="appt-message" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_message') }}</label>
-          <textarea id="appt-message" wire:model="message" rows="4" placeholder="{{ __('citas.ph_message') }}" required
+          <label for="appt-message" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_message') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <textarea id="appt-message" wire:model="message" rows="4" placeholder="{{ __('citas.ph_message') }}"
                     class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
+          <p class="font-mono text-xs text-faint mt-1">{{ __('citas.help_message') }}</p>
           @error('message') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
         </div>
+
+        {{-- First-layer data-protection notice (GDPR art. 13 / LOPDGDD art. 11), right before booking.
+             Primera capa de protección de datos (RGPD art. 13 / LOPDGDD art. 11), justo antes de reservar. --}}
+        @include('partials.privacy-basic')
 
         {{-- Actions: back + book / Acciones: atrás + reservar --}}
         <div class="flex items-center justify-between gap-4 pt-2">

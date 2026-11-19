@@ -146,6 +146,20 @@ class BookingIntegrityTest extends TestCase
         $this->assertNull($cita->attendees);
     }
 
+    public function test_el_formulario_muestra_la_primera_capa_de_privacidad(): void
+    {
+        config([
+            'appointments.privacy.controller' => 'Asesoría Pérez SL',
+            'appointments.privacy.policy_url' => 'https://example.com/privacidad',
+        ]);
+
+        $this->wizardMinimo()
+            ->assertSee(__('citas.privacy_title'))
+            ->assertSee('Asesoría Pérez SL')
+            ->assertSee('https://example.com/privacidad')
+            ->assertSee(__('citas.privacy_retention', ['months' => 12]));
+    }
+
     public function test_un_correo_no_puede_acumular_mas_citas_activas_que_el_tope(): void
     {
         Mail::fake();
