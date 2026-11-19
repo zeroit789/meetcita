@@ -131,5 +131,14 @@ class EmailsTest extends TestCase
         $cita->forceFill(['status' => 'confirmada', 'revision' => 1]);
         Mail::to('cliente@example.com')->sendNow($correo);
         $this->assertCount(1, app('mail.manager')->mailer()->getSymfonyTransport()->messages());
+
+        // ES: Sin revisión guardada (encolado antes de actualizar) o con la
+        //     misma revisión pero ya no confirmada: no sale.
+        // EN: Without a stored revision (queued before upgrading) or with the
+        //     same revision but no longer confirmed: not sent.
+        $correo->revisionEsperada = null;
+        $cita->forceFill(['status' => 'cancelada']);
+        Mail::to('cliente@example.com')->sendNow($correo);
+        $this->assertCount(1, app('mail.manager')->mailer()->getSymfonyTransport()->messages());
     }
 }

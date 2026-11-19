@@ -106,10 +106,17 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
                 // EN: Signed "manage my booking" link (null if disabled and
                 //     never on the attendees' copy).
                 'gestionarUrl' => $this->enlaceGestionSoloTitular(),
-                // ES: true = la cita cambió desde que se encoló: no se envía.
-                // EN: true = the booking changed since it was queued: not sent.
-                'citaCambiada' => $this->revisionEsperada !== null
-                    && (int) $this->appointment->revision !== $this->revisionEsperada,
+                // ES: true = la cita ya no está confirmada o cambió desde que se
+                //     encoló: no se envía. El estado se exige siempre (también en
+                //     correos sin revisión guardada, o si la revisión se tomó de
+                //     una relectura que ya veía un cambio posterior).
+                // EN: true = the booking is no longer confirmed or changed since
+                //     it was queued: not sent. The status is always required
+                //     (also on emails without a stored revision, or if the
+                //     revision came from a re-read that already saw a later change).
+                'citaCambiada' => $this->appointment->status !== 'confirmada'
+                    || ($this->revisionEsperada !== null
+                        && (int) $this->appointment->revision !== $this->revisionEsperada),
             ],
         );
     }
