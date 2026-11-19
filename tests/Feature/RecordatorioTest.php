@@ -65,6 +65,39 @@ class RecordatorioTest extends TestCase
         Mail::assertSentCount(1);
     }
 
+    public function test_un_envio_fallido_de_la_hora_vieja_no_suelta_la_marca_de_la_hora_nueva(): void
+    {
+        $cita = Appointment::factory()->confirmada()->create(['date' => '2026-09-22', 'time' => '10:00']);
+
+        // ES: Mientras se envía el de las 10:00, el cliente pasa la cita a las
+        //     12:00, el dueño la confirma y otro proceso ya reclama SU
+        //     recordatorio. Después el envío viejo falla.
+        // EN: While the 10:00 one is being sent, the client moves the booking
+        //     to 12:00, the owner confirms it and another process already
+        //     claims ITS reminder. Then the old send fails.
+        Mail::shouldReceive('to')->andReturnUsing(function () use ($cita) {
+            Appointment::whereKey($cita->id)->update(['time' => '12:00', 'revision' => 2, 'reminded_at' => now()]);
+
+            throw new \RuntimeException('SMTP caído');
+        });
+
+        $this->artisan('citas:recordar')->assertSuccessful();
+
+        // ES: La marca es del recordatorio de las 12:00: no se suelta.
+        // EN: The mark belongs to the 12:00 reminder: it isn't released.
+        $this->assertNotNull($cita->fresh()->reminded_at);
+    }
+
+    public function test_un_envio_fallido_se_suelta_para_reintentar(): void
+    {
+        $cita = Appointment::factory()->confirmada()->create(['date' => '2026-09-22', 'time' => '10:00']);
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP caído'));
+
+        $this->artisan('citas:recordar')->assertSuccessful();
+
+        $this->assertNull($cita->fresh()->reminded_at);
+    }
+
     public function test_va_en_el_idioma_de_la_cita_con_los_enlaces_firmados(): void
     {
         $cita = Appointment::factory()->confirmada()->create(['date' => '2026-09-22', 'time' => '10:00', 'locale' => 'en']);

@@ -23,7 +23,10 @@ use Illuminate\Support\Facades\Mail;
 |     Una sola vez por cita aunque corran dos procesos a la vez: cada cita se
 |     RECLAMA con un UPDATE condicional (whereNull('reminded_at')) ANTES de
 |     enviar; si afecta 0 filas, otro proceso ya la cogió. Si el envío falla
-|     se suelta (reminded_at = null) para reintentar en la siguiente vuelta.
+|     se suelta (reminded_at = null) para reintentar en la siguiente vuelta,
+|     solo si la cita no ha cambiado entre medias (misma revisión, día y
+|     hora). Entrega «como mucho una vez»: si el proceso muere entre marcar y
+|     enviar, esa cita se queda sin recordatorio (limitación documentada).
 |     Se envía directamente (sendNow, sin cola): así el correo sale con el
 |     estado que se acaba de comprobar, no con el que tenga la cita cuando
 |     pase el worker. Las citas sin correo (alta manual por teléfono) se saltan.
@@ -36,7 +39,10 @@ use Illuminate\Support\Facades\Mail;
 |     Only once per booking even with two processes at once: each booking is
 |     CLAIMED with a conditional UPDATE (whereNull('reminded_at')) BEFORE
 |     sending; if it affects 0 rows, another process took it. If sending
-|     fails it is released (reminded_at = null) to retry on the next run.
+|     fails it is released (reminded_at = null) to retry on the next run,
+|     only if the booking didn't change meanwhile (same revision, day and
+|     time). "At most once" delivery: if the process dies between marking
+|     and sending, that booking gets no reminder (documented limitation).
 |     Sent directly (sendNow, no queue): the email goes out with the state
 |     just checked, not whatever the booking has when the worker runs.
 |     Bookings without an email (manual phone entry) are skipped.
@@ -129,9 +135,22 @@ class SendReminders extends Command
                     ->sendNow(new AppointmentReminder($cita));
                 $enviados++;
             } catch (\Throwable $e) {
-                // ES: Se suelta para reintentar en la siguiente vuelta. Solo la clase en el log.
-                // EN: Released to retry on the next run. Class only in the log.
-                Appointment::whereKey($id)->update(['reminded_at' => null]);
+                // ES: Se suelta para reintentar en la siguiente vuelta, pero SOLO si
+                //     la cita sigue siendo la que se reclamó (misma revisión, día y
+                //     hora): si entre medias se reprogramó y otro proceso ya
+                //     reclamó el recordatorio de la hora nueva, esa marca no es
+                //     nuestra y soltarla daría un recordatorio repetido. Solo la
+                //     clase en el log.
+                // EN: Released to retry on the next run, but ONLY if the booking
+                //     is still the one claimed (same revision, day and time): if
+                //     it was rescheduled meanwhile and another process already
+                //     claimed the new time's reminder, that mark isn't ours and
+                //     releasing it would send a duplicate. Class only in the log.
+                Appointment::whereKey($id)
+                    ->where('revision', $cita->revision)
+                    ->whereDate('date', $manana)
+                    ->where('time', $cita->time)
+                    ->update(['reminded_at' => null]);
                 Log::error('Reminder for '.$cita->reference.' failed ('.$e::class.').');
             }
         }
