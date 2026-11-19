@@ -82,6 +82,10 @@
      ES: Livewire 4 inyecta sus assets automáticamente; @yield del contenido.
      EN: Livewire 4 injects its assets automatically; @yield for the content. --}}
 <body class="font-sans antialiased text-ink selection:bg-brand/30">
+  {{-- Public demo notice / Aviso de demo pública --}}
+  @if(config('appointments.demo.enabled'))
+    <div role="note" class="bg-amber-100 text-amber-950 text-center text-sm px-4 py-2">{{ __('citas.demo_banner') }}</div>
+  @endif
   @yield('content')
 </body>
 </html>

@@ -47,6 +47,15 @@ Schedule::command('queue:work --stop-when-empty --max-time=55 --tries=3')
 //     more than APPOINTMENTS_RETENTION_MONTHS months ago (12 by default; 0 =
 //     never) and expired technical records. See PurgeOldData.php.
 //     At 03:30 so it doesn't clash with daytime traffic.
+// ES: Demo pública: cada hora se vacía y se vuelven a poner datos de ejemplo.
+//     Solo corre con MEETCITA_DEMO=true (la orden, además, se niega fuera).
+// EN: Public demo: every hour it is emptied and sample data is put back.
+//     Only runs with MEETCITA_DEMO=true (the command refuses otherwise too).
+Schedule::command('citas:demo')
+    ->hourly()
+    ->when(fn () => (bool) config('appointments.demo.enabled'))
+    ->withoutOverlapping();
+
 Schedule::command('citas:purgar')
     ->dailyAt('03:30')
     ->withoutOverlapping();

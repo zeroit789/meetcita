@@ -162,6 +162,22 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // 4d. DEMO / DEMO PÚBLICA
+    // ES: MEETCITA_DEMO=true convierte la instalación en una demo pública:
+    //     correo al log, sin Telegram ni Google, aviso de demo en las páginas,
+    //     contraseña de panel conocida y reinicio con datos de ejemplo cada
+    //     hora (php artisan citas:demo). NUNCA en una instalación real.
+    // EN: MEETCITA_DEMO=true turns the install into a public demo: mail to
+    //     the log, no Telegram nor Google, demo notice on the pages, a known
+    //     panel password and a reset with sample data every hour (php artisan
+    //     citas:demo). NEVER on a real installation.
+    // ──────────────────────────────────────────────────────────────────────
+    'demo' => [
+        'enabled' => (bool) env('MEETCITA_DEMO', false),
+        'panel_password' => env('MEETCITA_DEMO_PANEL_PASSWORD', 'demo'),
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // 5. MODALITIES / MODALIDADES
     // ES: Ofrece citas online (enlace de Google Meet automático) y/o presenciales.
     //     Al menos una debe ser true. Si Google no está configurado, "online"

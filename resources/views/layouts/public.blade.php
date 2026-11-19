@@ -96,6 +96,10 @@
 </head>
 
 <body class="font-sans antialiased text-ink selection:bg-brand/30 min-h-screen flex flex-col">
+  {{-- Public demo notice / Aviso de demo pública --}}
+  @if(config('appointments.demo.enabled'))
+    <div role="note" class="bg-amber-100 text-amber-950 text-center text-sm px-4 py-2">{{ __('citas.demo_banner') }}</div>
+  @endif
 
   {{-- ── 2. TOPBAR EN / ES ──────────────────────────────────────────────────
        ES: Nombre de marca (de config) a la izquierda, toggle ES/EN a la dcha.

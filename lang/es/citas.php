@@ -147,6 +147,9 @@ return [
     'err_max_attendees' => 'Máximo :max asistentes.',
     'err_email_limit' => 'Este correo ya tiene :max citas pendientes. Cuando pasen o se cancelen podrás pedir otra.',
     'err_captcha' => 'Comprueba que no eres un robot (marca la casilla) y vuelve a enviar.',
+    // ES: Modo demo. EN: Demo mode.
+    'demo_banner' => 'Esto es una demo: no se envía ningún correo y los datos se borran cada hora. No escribas datos reales.',
+    'demo_panel_hint' => 'Demo: la contraseña del panel es «:password».',
     'err_retry_soon' => 'Inténtalo de nuevo en un momento.',
     'err_slot_taken' => 'Ese hueco acaba de ocuparse, elige otro.',
     'err_slot_taken_step2' => 'Ese hueco se acaba de ocupar. Elige otra hora, por favor.',

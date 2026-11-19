@@ -25,6 +25,11 @@
           <p class="font-mono text-xs text-red-400 mb-4">// {{ $errors->first() }}</p>
         @endif
 
+        {{-- ES: En la demo se enseña la contraseña. EN: The demo shows the password. --}}
+        @if(config('appointments.demo.enabled'))
+          <p class="text-sm mb-4">{{ __('citas.demo_panel_hint', ['password' => config('appointments.demo.panel_password', 'demo')]) }}</p>
+        @endif
+
         <form method="POST" action="{{ route('panel.login.attempt') }}" class="space-y-4">
           @csrf
 

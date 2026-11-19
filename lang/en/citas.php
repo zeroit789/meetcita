@@ -145,6 +145,9 @@ return [
     'err_max_attendees' => 'Maximum :max attendees.',
     'err_email_limit' => 'This email already has :max upcoming bookings. You can book again once they are over or cancelled.',
     'err_captcha' => 'Please confirm you\'re not a robot (tick the box) and send again.',
+    // ES: Modo demo. EN: Demo mode.
+    'demo_banner' => 'This is a demo: no email is sent and the data is wiped every hour. Please do not enter real data.',
+    'demo_panel_hint' => 'Demo: the panel password is ":password".',
     'err_retry_soon' => 'Please try again in a moment.',
     'err_slot_taken' => 'That slot has just been taken, please pick another.',
     'err_slot_taken_step2' => 'That slot has just been taken. Please pick another time.',

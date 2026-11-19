@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Middleware\AdminPanelPassword;
+use App\Support\ModoDemo;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -44,5 +45,9 @@ class AppServiceProvider extends ServiceProvider
         Livewire::addPersistentMiddleware([
             AdminPanelPassword::class,
         ]);
+
+        // ES: Demo pública (MEETCITA_DEMO=true): nada sale de verdad.
+        // EN: Public demo (MEETCITA_DEMO=true): nothing is really sent.
+        ModoDemo::aplicar();
     }
 }
