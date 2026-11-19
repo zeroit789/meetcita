@@ -184,7 +184,9 @@ class TelegramWebhookController extends Controller
                     // EN: Holder with the manage link; attendees separately without it.
                     if ($cita->tieneEmail()) {
                         try {
-                            CorreoCliente::enviar($cita, fn (bool $asistentes) => new AppointmentConfirmed($cita, paraAsistentes: $asistentes));
+                            // ES: Con la foto de ESTA confirmación: el correo guarda su revisión y no sale si después cambia.
+                            // EN: With THIS confirmation's snapshot: the email keeps its revision and isn't sent if it changes later.
+                            CorreoCliente::enviar($foto, fn (bool $asistentes) => new AppointmentConfirmed($foto, paraAsistentes: $asistentes));
                         } catch (\Throwable $e) {
                             Log::error('Telegram webhook: email failed ('.$e::class.').');
                         }
