@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\EnlaceGestionSoloTitular;
 use App\Models\Appointment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -37,7 +38,7 @@ use Illuminate\Queue\SerializesModels;
 */
 class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use EnlaceGestionSoloTitular, Queueable, SerializesModels;
 
     // 1. ES: Recibe la cita recién creada para personalizar el mensaje.
     //    EN: Receives the freshly created appointment to personalise the message.
@@ -99,7 +100,7 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
                 //     y nunca en la copia de los asistentes).
                 // EN: Signed "manage my booking" link (null if disabled and
                 //     never on the attendees' copy).
-                'gestionarUrl' => $this->paraAsistentes ? null : $this->appointment->urlGestionar(),
+                'gestionarUrl' => $this->enlaceGestionSoloTitular(),
                 'reprogramada' => $this->reprogramada,
             ],
         );

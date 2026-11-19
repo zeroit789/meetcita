@@ -138,4 +138,18 @@ class EnlaceSoloTitularTest extends TestCase
             'attendee_emails' => 'extra@example.com',
         ]);
     }
+
+    public function test_un_correo_con_asistentes_en_copia_no_lleva_el_enlace(): void
+    {
+        // ES: Correo encolado con el código anterior (asistentes en Cc) que el
+        //     worker procesa ya con el código nuevo: sin enlace.
+        // EN: Email queued with the previous code (attendees in Cc) that the
+        //     worker processes with the new code: no link.
+        $cita = $this->cita('confirmada');
+
+        foreach ([new AppointmentConfirmed($cita), new AppointmentConfirmationToClient($cita), new AppointmentReminder($cita)] as $correo) {
+            $correo->to('cliente@example.com')->cc('extra@example.com');
+            $this->assertStringNotContainsString('/gestionar?', $correo->render());
+        }
+    }
 }

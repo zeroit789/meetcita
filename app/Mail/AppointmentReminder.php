@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Mail\Concerns\EnlaceGestionSoloTitular;
 use App\Models\Appointment;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -27,7 +28,7 @@ use Illuminate\Queue\SerializesModels;
 */
 class AppointmentReminder extends Mailable implements ShouldQueue
 {
-    use Queueable, SerializesModels;
+    use EnlaceGestionSoloTitular, Queueable, SerializesModels;
 
     // ES: true en la copia para los asistentes extra: el mismo correo SIN el
     //     enlace de «gestionar mi cita», que es solo del titular. Propiedad
@@ -80,7 +81,7 @@ class AppointmentReminder extends Mailable implements ShouldQueue
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
                 'icsUrl' => $this->appointment->urlIcs(),
                 // ES: Nunca en la copia de los asistentes. EN: Never on the attendees' copy.
-                'gestionarUrl' => $this->paraAsistentes ? null : $this->appointment->urlGestionar(),
+                'gestionarUrl' => $this->enlaceGestionSoloTitular(),
             ],
         );
     }
