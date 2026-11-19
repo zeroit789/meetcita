@@ -5,7 +5,7 @@
 [![CI](https://github.com/zeroit789/meetcita/actions/workflows/ci.yml/badge.svg)](https://github.com/zeroit789/meetcita/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/zeroit789/meetcita)](LICENSE)
 ![PHP ≥ 8.4.1](https://img.shields.io/badge/PHP-%E2%89%A5%208.4.1-777BB4?logo=php&logoColor=white)
-![Laravel 13.39](https://img.shields.io/badge/Laravel-13.39-FF2D20?logo=laravel&logoColor=white)
+![Laravel 13.43](https://img.shields.io/badge/Laravel-13.43-FF2D20?logo=laravel&logoColor=white)
 ![Livewire 4.4](https://img.shields.io/badge/Livewire-4.4-4E56A6?logo=livewire&logoColor=white)
 ![Tailwind CSS 4.3](https://img.shields.io/badge/Tailwind%20CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)
 
@@ -249,8 +249,9 @@ Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
    ```
 
    También puedes tener un worker permanente con `php artisan queue:work --tries=3`.
-5. **Proxy inverso**: `bootstrap/app.php` solo confía en el proxy de la red `10.0.1.0/24` (la red interna de Coolify en el despliegue original). Si tu proxy está en otra red, cambia ese CIDR. Si no lo cambias, Laravel no verá la IP real ni el HTTPS del cliente, y los límites por IP se aplicarán a la IP del proxy.
-6. El webhook de Telegram necesita HTTPS público. Después del despliegue, ejecuta `php artisan telegram:set-webhook`.
+5. **Proxy inverso**: pon en `TRUSTED_PROXIES` (`.env`) la IP o el rango CIDR de tu proxy (por ejemplo `10.0.1.0/24` en Coolify). Vacío no confía en ninguno: detrás de un proxy, Laravel no verá la IP real ni el HTTPS del cliente, y el límite de reservas por IP se aplicará a la IP del proxy, común para todos.
+6. **Borrado de datos antiguos**: `citas:purgar` se ejecuta cada noche con el scheduler y borra las citas que pasaron hace más de `APPOINTMENTS_RETENTION_MONTHS` meses (12 por defecto). Ponlo a `0` si no quieres que se borre nada.
+7. El webhook de Telegram necesita HTTPS público. Después del despliegue, ejecuta `php artisan telegram:set-webhook`.
 
 ### Personalización
 
@@ -523,8 +524,9 @@ Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
    ```
 
    You can also run a long-lived worker with `php artisan queue:work --tries=3`.
-5. **Reverse proxy**: `bootstrap/app.php` only trusts a proxy on `10.0.1.0/24` (Coolify's internal network in the original deployment). If your proxy lives on another network, change that CIDR. Otherwise Laravel won't see the client's real IP or HTTPS, and per-IP limits will apply to the proxy's IP.
-6. The Telegram webhook needs public HTTPS. After deploying, run `php artisan telegram:set-webhook`.
+5. **Reverse proxy**: set `TRUSTED_PROXIES` (`.env`) to your proxy's IP or CIDR range (for example `10.0.1.0/24` on Coolify). Empty trusts none: behind a proxy, Laravel won't see the client's real IP or HTTPS, and the per-IP booking limit will apply to the proxy's IP, shared by everyone.
+6. **Old data purge**: `citas:purgar` runs every night through the scheduler and deletes the bookings that took place more than `APPOINTMENTS_RETENTION_MONTHS` months ago (12 by default). Set it to `0` if you don't want anything deleted.
+7. The Telegram webhook needs public HTTPS. After deploying, run `php artisan telegram:set-webhook`.
 
 ### Customization
 
