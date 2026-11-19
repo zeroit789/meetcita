@@ -209,7 +209,7 @@ class AutogestionTest extends TestCase
 
         $this->assertSame('cancelada', $cita->fresh()->status);
         Mail::assertQueued(AppointmentChangedToOwner::class, fn ($m) => $m->hasTo('owner@example.com') && $m->cambio === 'cancelada');
-        Event::assertDispatched(AppointmentCancelled::class, fn ($e) => $e->cancelledBy === 'client' && $e->appointment->is($cita));
+        Event::assertDispatched(AppointmentCancelled::class, fn ($e) => $e->cancelledBy === 'client' && $e->appointment->id === $cita->id);
     }
 
     public function test_fuera_de_plazo_no_deja_cancelar_ni_reprogramar(): void

@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Events\AppointmentCancelled;
 use App\Events\AppointmentConfirmed;
 use App\Events\AppointmentRequested;
+use App\Events\AppointmentRescheduled;
 use App\Livewire\BookAppointment;
 use App\Livewire\PanelCitas;
 use App\Models\Appointment;
+use App\Services\GestionCitas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
@@ -38,7 +40,7 @@ class EventosTest extends TestCase
         parent::setUp();
 
         Mail::fake();
-        Event::fake([AppointmentRequested::class, AppointmentConfirmed::class, AppointmentCancelled::class]);
+        Event::fake([AppointmentRequested::class, AppointmentConfirmed::class, AppointmentCancelled::class, AppointmentRescheduled::class]);
     }
 
     public function test_la_reserva_publica_dispara_appointment_requested(): void
@@ -53,7 +55,7 @@ class EventosTest extends TestCase
 
         Event::assertDispatchedTimes(AppointmentRequested::class, 1);
         Event::assertDispatched(AppointmentRequested::class, fn ($e) => $e->source === 'web'
-            && $e->appointment->email === 'ana@example.com');
+            && $e->appointment->current()?->email === 'ana@example.com');
     }
 
     public function test_confirmar_en_el_panel_dispara_una_sola_vez(): void
@@ -67,7 +69,7 @@ class EventosTest extends TestCase
 
         Event::assertDispatchedTimes(AppointmentConfirmed::class, 1);
         Event::assertDispatched(AppointmentConfirmed::class, fn ($e) => $e->source === 'panel'
-            && $e->appointment->is($cita) && $e->appointment->status === 'confirmada');
+            && $e->appointment->id === $cita->id && $e->appointment->status === 'confirmada');
     }
 
     public function test_cancelar_en_el_panel_dispara_con_el_dueno_y_el_motivo(): void
@@ -133,5 +135,31 @@ class EventosTest extends TestCase
         Event::assertDispatchedTimes(AppointmentCancelled::class, 1);
         Event::assertDispatched(AppointmentCancelled::class, fn ($e) => $e->cancelledBy === 'telegram'
             && $e->reason === 'No llego a tiempo');
+    }
+
+    public function test_el_evento_lleva_una_foto_fija_de_la_cita_sin_datos_de_contacto(): void
+    {
+        $cita = Appointment::factory()->confirmada()->create([
+            'date' => '2026-09-23', 'time' => '10:00', 'email' => 'cliente@example.com', 'phone' => '612345678',
+        ]);
+
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+        $evento = Event::dispatched(AppointmentRescheduled::class)->first()[0];
+
+        // ES: La cita cambia otra vez: el evento ya disparado no cambia con ella.
+        // EN: The booking changes again: the already fired event doesn't change with it.
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-25', '15:00');
+
+        $this->assertSame('2026-09-24', $evento->appointment->date);
+        $this->assertSame('12:00', $evento->appointment->time);
+        $this->assertSame('2026-09-23', $evento->previousDate);
+        $this->assertSame($cita->reference, $evento->appointment->reference);
+        $this->assertSame($cita->id, $evento->appointment->id);
+
+        // ES: Sin datos de contacto; quien los necesite carga la cita por su id.
+        // EN: No contact data; whoever needs it loads the booking by its id.
+        $this->assertFalse(isset($evento->appointment->email));
+        $this->assertFalse(isset($evento->appointment->phone));
+        $this->assertSame('cliente@example.com', $evento->appointment->current()?->email);
     }
 }

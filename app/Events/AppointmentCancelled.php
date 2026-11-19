@@ -4,7 +4,6 @@ namespace App\Events;
 
 use App\Models\Appointment;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 /*
 |==============================================================================
@@ -16,17 +15,19 @@ use Illuminate\Queue\SerializesModels;
 |     por el dueño (null si no hay).
 |     Pensado para enganchar un CRM u otra herramienta con un listener
 |     (ver README, «Eventos»). Se dispara una sola vez por cambio real.
+|     $appointment es una foto fija sin datos de contacto (AppointmentSnapshot).
 | EN: A booking becomes cancelled. $cancelledBy says who did it: the client
 |     with their link ("client"), the owner in the panel ("owner") or the
 |     owner rejecting it on Telegram ("telegram"). $reason = the reason the
 |     owner wrote (null if none).
 |     Meant to hook a CRM or another tool with a listener (see README,
 |     "Events"). Fired once per real change.
+|     $appointment is a fixed snapshot without contact data (AppointmentSnapshot).
 |==============================================================================
 */
 class AppointmentCancelled
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
 
     // ES: Quién canceló. EN: Who cancelled.
     public const BY_CLIENT = 'client';
@@ -35,6 +36,12 @@ class AppointmentCancelled
 
     public const BY_TELEGRAM = 'telegram';
 
+    // ES: Foto fija de la cita en el momento del evento, sin datos de
+    //     contacto (ver AppointmentSnapshot; el contacto, con ->current()).
+    // EN: Fixed picture of the booking at the moment of the event, without
+    //     contact data (see AppointmentSnapshot; the contact, via ->current()).
+    public readonly AppointmentSnapshot $appointment;
+
     /**
      * ES: $appointment = la cita ya cancelada; $cancelledBy = "client", "owner"
      *     o "telegram"; $reason = motivo opcional.
@@ -42,8 +49,10 @@ class AppointmentCancelled
      *     "owner" or "telegram"; $reason = optional reason.
      */
     public function __construct(
-        public Appointment $appointment,
-        public string $cancelledBy,
-        public ?string $reason = null,
-    ) {}
+        Appointment $appointment,
+        public readonly string $cancelledBy,
+        public readonly ?string $reason = null,
+    ) {
+        $this->appointment = AppointmentSnapshot::from($appointment);
+    }
 }

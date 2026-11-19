@@ -379,6 +379,8 @@ Cada cambio de una cita dispara un evento de Laravel. Con un *listener* puedes l
 | `App\Events\AppointmentCancelled` | Una cita pasa a cancelada. | `$appointment`, `$cancelledBy` (`client`, `owner` o `telegram`), `$reason` (motivo o `null`) |
 | `App\Events\AppointmentRescheduled` | El cliente cambia el día o la hora con su enlace (la cita vuelve a pendiente). | `$appointment` (ya con la fecha nueva), `$previousDate`, `$previousTime` |
 
+`$appointment` es una **foto fija** de la cita en el momento del cambio (`App\Events\AppointmentSnapshot`), de solo lectura: `id`, `reference`, `date` (`"YYYY-MM-DD"`), `time` (`"HH:MM"`), `duration`, `status`, `modality`, `locale` y `revision`. **No lleva datos de contacto** (nombre, correo, teléfono, asistentes ni enlace de Meet), así no viajan por la cola. Si tu listener los necesita, carga la cita con `$evento->appointment->current()`: es la cita **actual** de la base de datos (puede haber cambiado después del evento) o `null` si ya no existe.
+
 Ejemplo: enviar cada cita nueva a un CRM. Crea `app/Listeners/EnviarCitaAlCrm.php`; Laravel lo registra solo porque está en `app/Listeners` y el tipo del parámetro dice qué evento escucha:
 
 ```php
@@ -395,14 +397,18 @@ class EnviarCitaAlCrm implements ShouldQueue
 {
     public function handle(AppointmentRequested $evento): void
     {
-        $cita = $evento->appointment;
+        $foto = $evento->appointment;      // ES: datos del momento del evento
+        $cita = $foto->current();          // ES: la cita actual, con el contacto
+        if ($cita === null) {
+            return;                        // ES: ya se borró
+        }
 
         Http::post('https://crm.example.com/api/leads', [
             'nombre' => $cita->name,
             'email' => $cita->email,
-            'cita' => $cita->reference,
-            'dia' => $cita->date->toDateString(),
-            'hora' => $cita->time,
+            'cita' => $foto->reference,
+            'dia' => $foto->date,
+            'hora' => $foto->time,
             'origen' => $evento->source,
         ]);
     }
@@ -464,7 +470,7 @@ Si un listener sin cola falla, el error se registra en el log (solo la clase de 
 ```text
 app/
 ├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:recordar, citas:demo
-├── Events/              AppointmentRequested, AppointmentConfirmed, AppointmentCancelled, AppointmentRescheduled
+├── Events/              AppointmentRequested, AppointmentConfirmed, AppointmentCancelled, AppointmentRescheduled, AppointmentSnapshot (foto fija)
 ├── Http/Controllers/    PanelController, AppointmentIcsController, GestionarCitaController, TelegramWebhookController
 ├── Http/Middleware/     AdminPanelPassword (panel), SecurityHeaders (CSP y cabeceras), SetLocale (idioma)
 ├── Livewire/            BookAppointment (asistente), GestionarCita (gestionar mi cita), PanelCitas, PanelNuevaCita, PanelBlockedDays
@@ -904,6 +910,8 @@ Every booking change fires a Laravel event. With a *listener* you can send booki
 | `App\Events\AppointmentCancelled` | A booking becomes cancelled. | `$appointment`, `$cancelledBy` (`client`, `owner` or `telegram`), `$reason` (reason or `null`) |
 | `App\Events\AppointmentRescheduled` | The client changes the day or time with their link (the booking goes back to pending). | `$appointment` (already with the new date), `$previousDate`, `$previousTime` |
 
+`$appointment` is a **fixed snapshot** of the booking at the moment of the change (`App\Events\AppointmentSnapshot`), read-only: `id`, `reference`, `date` (`"YYYY-MM-DD"`), `time` (`"HH:MM"`), `duration`, `status`, `modality`, `locale` and `revision`. **It carries no contact data** (name, email, phone, attendees or Meet link), so they don't travel through the queue. If your listener needs them, load the booking with `$event->appointment->current()`: it is the **current** booking from the database (it may have changed after the event) or `null` if it no longer exists.
+
 Example: send every new booking to a CRM. Create `app/Listeners/SendBookingToCrm.php`; Laravel registers it by itself because it lives in `app/Listeners` and the parameter type says which event it listens to:
 
 ```php
@@ -920,14 +928,18 @@ class SendBookingToCrm implements ShouldQueue
 {
     public function handle(AppointmentRequested $event): void
     {
-        $booking = $event->appointment;
+        $snapshot = $event->appointment;   // EN: data at the moment of the event
+        $booking = $snapshot->current();   // EN: the current booking, with the contact
+        if ($booking === null) {
+            return;                        // EN: already deleted
+        }
 
         Http::post('https://crm.example.com/api/leads', [
             'name' => $booking->name,
             'email' => $booking->email,
-            'booking' => $booking->reference,
-            'day' => $booking->date->toDateString(),
-            'time' => $booking->time,
+            'booking' => $snapshot->reference,
+            'day' => $snapshot->date,
+            'time' => $snapshot->time,
             'source' => $event->source,
         ]);
     }
@@ -989,7 +1001,7 @@ If a non-queued listener fails, the error is logged (only the exception class) a
 ```text
 app/
 ├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:recordar, citas:demo
-├── Events/              AppointmentRequested, AppointmentConfirmed, AppointmentCancelled, AppointmentRescheduled
+├── Events/              AppointmentRequested, AppointmentConfirmed, AppointmentCancelled, AppointmentRescheduled, AppointmentSnapshot (snapshot)
 ├── Http/Controllers/    PanelController, AppointmentIcsController, GestionarCitaController, TelegramWebhookController
 ├── Http/Middleware/     AdminPanelPassword (panel), SecurityHeaders (CSP and headers), SetLocale (language)
 ├── Livewire/            BookAppointment (wizard), GestionarCita (manage my booking), PanelCitas, PanelNuevaCita, PanelBlockedDays

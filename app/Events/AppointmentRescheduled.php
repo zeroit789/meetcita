@@ -4,7 +4,6 @@ namespace App\Events;
 
 use App\Models\Appointment;
 use Illuminate\Foundation\Events\Dispatchable;
-use Illuminate\Queue\SerializesModels;
 
 /*
 |==============================================================================
@@ -15,16 +14,24 @@ use Illuminate\Queue\SerializesModels;
 |     anteriores para saber de dónde venía.
 |     Pensado para enganchar un CRM u otra herramienta con un listener
 |     (ver README, «Eventos»). Se dispara una sola vez por cambio real.
+|     $appointment es una foto fija sin datos de contacto (AppointmentSnapshot).
 | EN: The client moved their booking to another day or time with their
 |     link. The booking goes back to pending (the owner confirms it again).
 |     It carries the previous date and time to know where it came from.
 |     Meant to hook a CRM or another tool with a listener (see README,
 |     "Events"). Fired once per real change.
+|     $appointment is a fixed snapshot without contact data (AppointmentSnapshot).
 |==============================================================================
 */
 class AppointmentRescheduled
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable;
+
+    // ES: Foto fija de la cita en el momento del evento, sin datos de
+    //     contacto (ver AppointmentSnapshot; el contacto, con ->current()).
+    // EN: Fixed picture of the booking at the moment of the event, without
+    //     contact data (see AppointmentSnapshot; the contact, via ->current()).
+    public readonly AppointmentSnapshot $appointment;
 
     /**
      * ES: $appointment = la cita con la fecha nueva; $previousDate ("YYYY-MM-DD")
@@ -33,8 +40,10 @@ class AppointmentRescheduled
      *     ("YYYY-MM-DD") and $previousTime ("HH:MM") = the old ones.
      */
     public function __construct(
-        public Appointment $appointment,
-        public string $previousDate,
-        public string $previousTime,
-    ) {}
+        Appointment $appointment,
+        public readonly string $previousDate,
+        public readonly string $previousTime,
+    ) {
+        $this->appointment = AppointmentSnapshot::from($appointment);
+    }
 }
