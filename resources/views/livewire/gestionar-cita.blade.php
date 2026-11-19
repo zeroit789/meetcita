@@ -171,9 +171,13 @@
       <h2 class="font-sans font-bold text-2xl text-ink mb-2" tabindex="-1" data-paso-titulo="cancelar">{{ __('citas.manage_cancel_title') }}</h2>
       <p class="text-muted mb-2 first-letter:uppercase">{{ $fechaCita }} · {{ $cita->time }} ({{ $duracion }})</p>
       <p class="text-sm text-muted mb-6">{{ __('citas.manage_cancel_text') }}</p>
+      {{-- ES: Botón con borde y texto rojo (no relleno): en el tema oscuro el rojo es
+           claro, pensado para texto, y con letra blanca encima no daría el contraste.
+           EN: Bordered button with red text (not filled): in the dark theme the red
+           is light, meant for text, and white text on it wouldn't reach the contrast. --}}
       <div class="flex flex-col gap-3 sm:flex-row">
         <button type="button" wire:click="cancelar"
-                class="rounded-lg bg-danger px-5 py-2.5 text-sm font-semibold text-white hover:opacity-90">{{ __('citas.manage_cancel_confirm') }}</button>
+                class="rounded-lg border-2 border-danger px-5 py-2.5 text-sm font-semibold text-danger hover:bg-danger/10">{{ __('citas.manage_cancel_confirm') }}</button>
         <button type="button" wire:click="volver"
                 class="rounded-lg border border-[var(--card-border)] px-5 py-2.5 text-sm text-muted hover:text-brand-glow">{{ __('citas.manage_back') }}</button>
       </div>
