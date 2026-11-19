@@ -174,4 +174,29 @@ class RecordatorioTest extends TestCase
         $this->assertSame('*/15 * * * *', $evento->expression);
         $this->assertTrue($evento->withoutOverlapping);
     }
+
+    public function test_si_la_cita_cambia_mientras_se_envia_al_titular_no_sale_la_copia_de_los_asistentes(): void
+    {
+        $cita = Appointment::factory()->confirmada()->create([
+            'date' => '2026-09-22', 'time' => '10:00', 'email' => 'cliente@example.com', 'attendee_emails' => 'extra@example.com',
+        ]);
+
+        // ES: Durante el envío al titular, el cliente cancela. Solo un envío.
+        // EN: During the send to the holder, the client cancels. Only one send.
+        $pendiente = \Mockery::mock();
+        $pendiente->shouldReceive('locale')->andReturnSelf();
+        $pendiente->shouldReceive('sendNow')->andReturnUsing(function () use ($cita) {
+            Appointment::whereKey($cita->id)->update(['status' => 'cancelada', 'revision' => 3]);
+        });
+        $destinos = [];
+        Mail::shouldReceive('to')->andReturnUsing(function ($a) use (&$destinos, $pendiente) {
+            $destinos[] = $a;
+
+            return $pendiente;
+        });
+
+        $this->artisan('citas:recordar')->assertSuccessful();
+
+        $this->assertSame(['cliente@example.com'], $destinos);
+    }
 }

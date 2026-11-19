@@ -56,6 +56,16 @@ class CorreoCliente
             return;
         }
 
+        // ES: Si la cita cambió mientras se enviaba el del titular (se canceló
+        //     o reprogramó), la copia ya no es verdad: no se envía.
+        // EN: If the booking changed while the holder's was being sent
+        //     (cancelled or rescheduled), the copy is no longer true: not sent.
+        if ((int) Appointment::whereKey($cita->id)->value('revision') !== (int) $cita->revision) {
+            Log::info('Attendee copy of '.$cita->reference.' skipped: the booking changed.');
+
+            return;
+        }
+
         try {
             $copia = Mail::to($asistentes)->locale($idioma);
             $ahora ? $copia->sendNow($fabrica(true)) : $copia->send($fabrica(true));
