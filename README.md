@@ -84,16 +84,16 @@ Versiones exactas del `composer.lock` y del `pnpm-lock.yaml`:
 | Pieza | Versión |
 |---|---|
 | PHP | ≥ 8.4.1 (lo exigen las dependencias de Symfony 8 del lockfile) |
-| laravel/framework | 13.39.0 |
+| laravel/framework | 13.43.0 |
 | livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.1 |
-| laravel/tinker | 3.0.2 |
-| laravel/pint (dev) | 1.32.1 |
-| phpunit/phpunit (dev) | 12.5.35 |
-| laravel/pail (dev) | 1.2.7 |
-| tailwindcss / @tailwindcss/vite | 4.3.3 |
-| vite | 8.3.5 |
-| laravel-vite-plugin | 3.2.0 |
+| laravel/tinker | 3.2.0 |
+| laravel/pint (dev) | 1.32.3 |
+| phpunit/phpunit (dev) | 12.5.44 |
+| laravel/pail (dev) | 1.3.0 |
+| tailwindcss / @tailwindcss/vite | 4.3.5 |
+| vite | 8.3.8 |
+| laravel-vite-plugin | 3.2.1 |
 | concurrently (dev) | 9.2.5 |
 
 Base de datos: SQLite por defecto. También funciona con PostgreSQL y MySQL/MariaDB (ver [Limitaciones conocidas](#limitaciones-conocidas)).
@@ -359,16 +359,16 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 | Component | Version |
 |---|---|
 | PHP | ≥ 8.4.1 (required by the Symfony 8 packages in the lockfile) |
-| laravel/framework | 13.39.0 |
+| laravel/framework | 13.43.0 |
 | livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.1 |
-| laravel/tinker | 3.0.2 |
-| laravel/pint (dev) | 1.32.1 |
-| phpunit/phpunit (dev) | 12.5.35 |
-| laravel/pail (dev) | 1.2.7 |
-| tailwindcss / @tailwindcss/vite | 4.3.3 |
-| vite | 8.3.5 |
-| laravel-vite-plugin | 3.2.0 |
+| laravel/tinker | 3.2.0 |
+| laravel/pint (dev) | 1.32.3 |
+| phpunit/phpunit (dev) | 12.5.44 |
+| laravel/pail (dev) | 1.3.0 |
+| tailwindcss / @tailwindcss/vite | 4.3.5 |
+| vite | 8.3.8 |
+| laravel-vite-plugin | 3.2.1 |
 | concurrently (dev) | 9.2.5 |
 
 Database: SQLite by default. PostgreSQL and MySQL/MariaDB also work (see [Known limitations](#known-limitations)).
