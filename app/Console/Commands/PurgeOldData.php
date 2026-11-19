@@ -85,7 +85,9 @@ class PurgeOldData extends Command
         }
 
         $ahora = Carbon::now();
-        $limiteCitas = $ahora->copy()->subMonths($meses);
+        // ES: Sin desbordar: 31-03 menos un mes es 28/29-02, no 03-03.
+        // EN: Without overflow: Mar 31 minus one month is Feb 28/29, not Mar 3.
+        $limiteCitas = $ahora->copy()->subMonthsNoOverflow($meses);
         $limiteTecnico = $ahora->copy()->subDays(self::DIAS_REGISTROS_TECNICOS);
 
         // ES: 1) Citas: pasaron hace más del plazo y nadie las ha tocado desde entonces.

@@ -89,6 +89,14 @@ class AdminPanelPassword
             return redirect()->route('panel.login');
         }
 
-        return $next($request);
+        $respuesta = $next($request);
+
+        // ES: El panel (y sus respuestas de Livewire) llevan datos de clientes:
+        //     que el navegador no guarde copia (ordenadores compartidos).
+        // EN: The panel (and its Livewire responses) carry client data: the
+        //     browser must not keep a copy (shared computers).
+        $respuesta->headers->set('Cache-Control', 'no-store, private');
+
+        return $respuesta;
     }
 }

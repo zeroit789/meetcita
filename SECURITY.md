@@ -33,6 +33,7 @@ negocios ni hagas pruebas que tumben un servicio.
 ### Buenas prácticas al instalar Meetcita
 
 - Pon una contraseña larga en `APPOINTMENTS_PANEL_PASSWORD`. Cambiarla cierra todas las sesiones abiertas del panel.
+- Guarda las sesiones en el servidor (`SESSION_DRIVER=database`, que es el valor de `.env.example`, o `redis`/`file`). Con `SESSION_DRIVER=cookie` la sesión vive en el navegador y cerrar sesión no puede anular en el servidor una copia robada de esa cookie.
 - Sirve la web solo por HTTPS y rellena `TRUSTED_PROXIES` con la IP de tu proxy.
 - Ten el scheduler en marcha (`php artisan schedule:run` cada minuto): envía los correos y borra los datos antiguos.
 - Actualiza a menudo (`composer update` y `pnpm update`) y pasa `composer audit`.
@@ -70,6 +71,7 @@ data or run tests that take a service down.
 ### Good practices when installing Meetcita
 
 - Set a long password in `APPOINTMENTS_PANEL_PASSWORD`. Changing it closes every open panel session.
+- Keep sessions on the server (`SESSION_DRIVER=database`, the `.env.example` value, or `redis`/`file`). With `SESSION_DRIVER=cookie` the session lives in the browser, and logging out cannot revoke a stolen copy of that cookie on the server.
 - Serve the site over HTTPS only and fill `TRUSTED_PROXIES` with your proxy's IP.
 - Keep the scheduler running (`php artisan schedule:run` every minute): it sends the emails and deletes old data.
 - Update often (`composer update` and `pnpm update`) and run `composer audit`.

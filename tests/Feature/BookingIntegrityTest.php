@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Mail;
 use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Features\SupportTesting\Testable;
 use Livewire\Livewire;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
@@ -49,11 +50,27 @@ class BookingIntegrityTest extends TestCase
         $this->wizardMinimo()->set('duration', 240);
     }
 
-    public function test_la_fecha_y_la_hora_no_se_pueden_escribir_desde_el_navegador(): void
+    /**
+     * ES: Cada propiedad que fija el servidor está bloqueada por separado.
+     * EN: Every server-set property is locked on its own.
+     *
+     * @return array<string, array{0: string, 1: mixed}>
+     */
+    public static function propiedadesBloqueadas(): array
+    {
+        return [
+            'día / day' => ['selectedDate', ' 2026-09-22'],
+            'hora / time' => ['selectedTime', '10:15'],
+            'paso / step' => ['step', 4],
+        ];
+    }
+
+    #[DataProvider('propiedadesBloqueadas')]
+    public function test_dia_hora_y_paso_no_se_pueden_escribir_desde_el_navegador(string $propiedad, mixed $valor): void
     {
         $this->expectException(CannotUpdateLockedPropertyException::class);
 
-        $this->wizardMinimo()->set('selectedTime', '10:15');
+        $this->wizardMinimo()->set($propiedad, $valor);
     }
 
     public function test_una_duracion_fuera_de_la_config_nunca_esta_libre(): void
@@ -98,6 +115,30 @@ class BookingIntegrityTest extends TestCase
         $this->assertNotContains('10:00', $libres);
         $this->assertNotContains('10:30', $libres);
         $this->assertContains('11:00', $libres);
+    }
+
+    public function test_si_cambia_la_apertura_las_citas_viejas_siguen_ocupando_su_tramo(): void
+    {
+        // ES: Cita guardada 09:30-10:30 con la rejilla vieja; el dueño abre ahora
+        //     a las 09:15 y la rejilla pasa a 09:15, 09:45, 10:15…
+        // EN: Booking stored 09:30-10:30 on the old grid; the owner now opens at
+        //     09:15 and the grid becomes 09:15, 09:45, 10:15…
+        Appointment::factory()->create(['date' => '2026-09-22', 'time' => '09:30', 'duration' => 60]);
+        config(['appointments.schedule.open' => '09:15']);
+
+        $libres = app(AvailabilityService::class)->huecosParaDuracion('2026-09-22', 30);
+
+        $this->assertNotContains('09:15', $libres);
+        $this->assertNotContains('09:45', $libres);
+        $this->assertNotContains('10:15', $libres);
+        $this->assertContains('10:45', $libres);
+    }
+
+    public function test_duraciones_cero_o_negativas_de_la_config_se_ignoran(): void
+    {
+        config(['appointments.schedule.durations' => [0, -30, 30]]);
+
+        $this->assertSame([30], app(AvailabilityService::class)->duraciones());
     }
 
     public function test_noventa_minutos_se_reservan_y_bloquean_tres_medias_horas(): void
@@ -180,9 +221,11 @@ class BookingIntegrityTest extends TestCase
         config(['appointments.booking.lock_wait_seconds' => 0]);
         Cache::lock('reserva-dia:2026-09-22', 10)->get();
 
-        $errores = $this->wizardMinimo()->call('reserve')->errors();
+        $wizard = $this->wizardMinimo()->call('reserve');
 
-        $this->assertSame([__('citas.err_retry_soon')], $errores->get('selectedTime'));
+        $this->assertSame([__('citas.err_retry_soon')], $wizard->errors()->get('selectedTime'));
+        // ES: El aviso se ve en el paso 3, junto al botón. EN: The notice shows on step 3, by the button.
+        $wizard->assertSet('step', 3)->assertSee(__('citas.err_retry_soon'));
         $this->assertSame(0, Appointment::count());
     }
 }

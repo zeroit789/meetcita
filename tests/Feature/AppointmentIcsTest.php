@@ -59,6 +59,17 @@ class AppointmentIcsTest extends TestCase
         $this->assertStringNotContainsString('Asunto', $cita->descripcionCalendario());
     }
 
+    public function test_el_ics_descargado_usa_el_idioma_de_la_cita_y_no_el_de_quien_lo_pide(): void
+    {
+        $cita = Appointment::factory()->create(['locale' => 'en', 'modality' => 'presencial', 'message' => 'Budget review']);
+
+        $ics = $this->withCookie('locale', 'es')->get("/cita/{$cita->reference}/calendario.ics")->getContent();
+
+        $this->assertStringContainsString('LOCATION:In person', $ics);
+        $this->assertStringContainsString('Topic: Budget review', $ics);
+        $this->assertStringNotContainsString('Presencial', $ics);
+    }
+
     public function test_sin_mensaje_no_sale_la_linea_del_asunto(): void
     {
         $cita = Appointment::factory()->create(['message' => null, 'locale' => 'es']);

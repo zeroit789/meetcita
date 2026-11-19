@@ -72,9 +72,33 @@ class PurgeOldDataTest extends TestCase
     {
         $vieja = $this->cita('2025-01-01', '2025-01-02');
 
-        $this->artisan('citas:purgar --simular')->assertSuccessful();
+        DB::table('failed_jobs')->insert([
+            'uuid' => 'b2', 'connection' => 'database', 'queue' => 'default',
+            'payload' => '{}', 'exception' => 'x', 'failed_at' => Carbon::now()->subDays(45),
+        ]);
+
+        $this->artisan('citas:purgar --simular')
+            ->expectsOutput('citas: 1')
+            ->expectsOutput('trabajos_fallidos: 1')
+            ->assertSuccessful();
 
         $this->assertModelExists($vieja);
+        $this->assertSame(1, DB::table('failed_jobs')->count());
+    }
+
+    public function test_a_final_de_mes_el_corte_no_se_adelanta(): void
+    {
+        // ES: 31-03 menos 1 mes con desbordamiento daría 03-03 y borraría una
+        //     cita del 01-03 que aún no ha cumplido el plazo.
+        // EN: Mar 31 minus 1 month with overflow would give Mar 3 and delete a
+        //     Mar 1 booking that hasn't reached the period yet.
+        Carbon::setTestNow(Carbon::parse('2027-03-31 10:00', 'Europe/Madrid'));
+        config(['appointments.privacy.retention_months' => 1]);
+        $cita = $this->cita('2027-03-01', '2027-03-01');
+
+        $this->artisan('citas:purgar')->assertSuccessful();
+
+        $this->assertModelExists($cita);
     }
 
     public function test_un_plazo_de_cero_desactiva_la_purga(): void

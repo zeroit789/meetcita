@@ -71,7 +71,7 @@ class AvailabilityService
      */
     protected function slotMinutos(): int
     {
-        return (int) config('appointments.schedule.slot_minutes', 30);
+        return max(1, (int) config('appointments.schedule.slot_minutes', 30));
     }
 
     /**
@@ -102,7 +102,12 @@ class AvailabilityService
      */
     public function duraciones(): array
     {
-        return array_map('intval', (array) config('appointments.schedule.durations', [30, 60]));
+        // ES: Solo enteros positivos: una duración 0 o negativa en la config se ignora.
+        // EN: Positive integers only: a 0 or negative duration in the config is ignored.
+        return array_values(array_filter(
+            array_map('intval', (array) config('appointments.schedule.durations', [30, 60])),
+            fn (int $d) => $d > 0
+        ));
     }
 
     /**
@@ -398,8 +403,11 @@ class AvailabilityService
         foreach ($libres as $inicio) {
             // ES: La cita no puede terminar después del cierre.
             // EN: The booking can't end after closing time.
-            $fin = Carbon::parse($inicio)->addMinutes($duracion)->format('H:i');
-            if ($fin > $this->horaCierre()) {
+            //     En minutos desde medianoche: comparar "HH:MM" como texto fallaría
+            //     si la suma pasara de las 24:00.
+            //     In minutes since midnight: comparing "HH:MM" as text would fail
+            //     if the sum went past 24:00.
+            if ($this->minutos($inicio) + $duracion > $this->minutos($this->horaCierre())) {
                 continue;
             }
 
@@ -537,27 +545,61 @@ class AvailabilityService
      */
     protected function mediosSlotsOcupados(string $fecha): array
     {
+        // ES: Tramos ocupados [inicio, fin) en minutos desde medianoche.
+        // EN: Busy ranges [start, end) in minutes since midnight.
+        $tramos = [];
+
         $citas = Appointment::query()
             ->whereDate('date', $fecha)
             ->where('status', '!=', 'cancelada')
             ->get(['time', 'duration']);
 
-        $ocupados = [];
-
+        // ES: Cada cita, con su duración REAL guardada.
+        // EN: Each booking, with its REAL stored duration.
         foreach ($citas as $cita) {
-            // ES: Cada cita marca su inicio y, si es de 1h, también el siguiente.
-            // EN: Each booking marks its start and, if 1h, the next half-slot too.
-            foreach ($this->slotsCubiertos($cita->time, (int) $cita->duration) as $medio) {
-                $ocupados[] = $medio;
+            $inicio = $this->minutos((string) $cita->time);
+            $tramos[] = [$inicio, $inicio + max(1, (int) $cita->duration)];
+        }
+
+        // ES: Los ocupados del propio Google Calendar (si está configurado),
+        //     cada uno como un tramo de un hueco.
+        // EN: Busy slots from the owner's own Google Calendar (if configured),
+        //     each one as a one-slot range.
+        foreach (app(GoogleCalendarService::class)->eventosOcupados($fecha) as $medio) {
+            $inicio = $this->minutos((string) $medio);
+            $tramos[] = [$inicio, $inicio + $this->slotMinutos()];
+        }
+
+        // ES: Un medio-slot de la rejilla de HOY está ocupado si se solapa con
+        //     algún tramo. Se compara por intervalos, no por texto: si el dueño
+        //     cambia la apertura o el tamaño del hueco, las citas guardadas con
+        //     la rejilla vieja siguen bloqueando su tramo.
+        // EN: A half-slot of TODAY's grid is busy if it overlaps any range.
+        //     Compared as intervals, not text: if the owner changes the opening
+        //     time or the slot size, bookings stored on the old grid still block
+        //     their range.
+        $ocupados = [];
+        foreach ($this->slotsDelDia() as $slot) {
+            $a = $this->minutos($slot);
+            $b = $a + $this->slotMinutos();
+            foreach ($tramos as [$ini, $fin]) {
+                if ($a < $fin && $b > $ini) {
+                    $ocupados[] = $slot;
+                    break;
+                }
             }
         }
 
-        // ES: Fusionamos con los medios-slots ocupados por el propio Google Calendar.
-        // EN: Merge with half-slots occupied by the owner's own Google Calendar.
-        $ocupadosGoogle = app(GoogleCalendarService::class)->eventosOcupados($fecha);
+        return $ocupados;
+    }
 
-        // ES: array_unique para no duplicar medios-slots que estén en ambas fuentes.
-        // EN: array_unique to avoid duplicating slots present in both sources.
-        return array_values(array_unique(array_merge($ocupados, $ocupadosGoogle)));
+    /**
+     * ES: "HH:MM" a minutos desde medianoche. EN: "HH:MM" to minutes since midnight.
+     */
+    protected function minutos(string $hora): int
+    {
+        [$h, $m] = array_map('intval', explode(':', substr($hora, 0, 5)) + [0, 0]);
+
+        return $h * 60 + $m;
     }
 }

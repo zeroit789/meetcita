@@ -88,10 +88,9 @@ class PanelSecurityTest extends TestCase
      */
     private function assertRechazada(TestResponse $respuesta): void
     {
-        $this->assertTrue(
-            $respuesta->status() === 403 || $respuesta->isRedirect(),
-            'Se esperaba 403 o redirección; llegó '.$respuesta->status()
-        );
+        // ES: Las peticiones de Livewire no siguen redirecciones: tiene que ser 403.
+        // EN: Livewire requests don't follow redirects: it must be a 403.
+        $this->assertSame(403, $respuesta->status(), 'Se esperaba 403; llegó '.$respuesta->status());
     }
 
     public function test_el_middleware_del_panel_es_persistente_en_livewire(): void
@@ -170,6 +169,19 @@ class PanelSecurityTest extends TestCase
         Livewire::test('panel-citas')->assertForbidden();
         Livewire::test('panel-blocked-days')->assertForbidden();
         $this->assertSame('pendiente', $cita->fresh()->status);
+    }
+
+    public function test_el_panel_no_se_guarda_en_cache_del_navegador(): void
+    {
+        // ES: Una copia del panel en caché (ordenador compartido) es justo el
+        //     punto de partida del ataque F1: el panel sale con no-store.
+        // EN: A cached copy of the panel (shared computer) is exactly where
+        //     the F1 attack starts: the panel is served with no-store.
+        $this->post('/panel/login', ['password' => 'secreto-de-test']);
+
+        $cabecera = (string) $this->get('/panel')->assertOk()->headers->get('Cache-Control');
+
+        $this->assertStringContainsString('no-store', $cabecera);
     }
 
     public function test_cerrar_sesion_invalida_la_sesion_y_regenera_el_token(): void

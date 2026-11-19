@@ -370,6 +370,12 @@
              Primera capa de protección de datos (RGPD art. 13 / LOPDGDD art. 11), justo antes de reservar. --}}
         @include('partials.privacy-basic')
 
+        {{-- Booking-level notice (e.g. "try again in a moment") right above the button.
+             Aviso de la reserva (p. ej. «inténtalo en un momento») justo encima del botón. --}}
+        @error('selectedTime')
+          <p class="font-mono text-xs text-red-400" role="alert">// {{ $message }}</p>
+        @enderror
+
         {{-- Actions: back + book / Acciones: atrás + reservar --}}
         <div class="flex items-center justify-between gap-4 pt-2">
           <button type="button" wire:click="back"
