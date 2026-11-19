@@ -159,4 +159,25 @@ class GoogleCalendarServiceTest extends TestCase
         // ES: Un 401 invalida el token cacheado. EN: A 401 drops the cached token.
         $this->assertFalse(Cache::has('gcal_access_token'));
     }
+
+    public function test_se_puede_excluir_el_evento_de_una_cita_concreta(): void
+    {
+        $this->configurarGoogle();
+
+        // ES: El evento "propio" (10:00-11:00) es el de la cita que se reprograma.
+        // EN: The "own" event (10:00-11:00) belongs to the booking being rescheduled.
+        $propio = $this->evento('2026-09-22T10:00:00+02:00', '2026-09-22T11:00:00+02:00');
+        $propio->setId('evento-propio');
+        $otro = $this->evento('2026-09-22T10:30:00+02:00', '2026-09-22T11:00:00+02:00');
+        $otro->setId('evento-otro');
+
+        $eventos = Mockery::mock(EventsResource::class);
+        $eventos->shouldReceive('listEvents')->once()->andReturn(new Events(['items' => [$propio, $otro]]));
+
+        $servicio = $this->servicioConEventos($eventos);
+
+        $this->assertSame(['10:00', '10:30'], $servicio->eventosOcupados('2026-09-22'));
+        // ES: Sin el propio solo queda el otro evento. EN: Without the own one only the other remains.
+        $this->assertSame(['10:30'], $servicio->eventosOcupados('2026-09-22', 'evento-propio'));
+    }
 }

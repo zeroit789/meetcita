@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\Appointment;
 use App\Models\BlockedDay;
+use App\Support\Horario;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
 
 /*
 |==============================================================================
@@ -13,7 +13,8 @@ use Carbon\CarbonPeriod;
 |==============================================================================
 | ES: Hogar central de TODA la lógica de huecos:
 |       - qué días se pueden reservar (próximos N días laborables)
-|       - qué franjas existen (continuo apertura→cierre, granularidad base)
+|       - qué franjas existen (tramos de cada día: continuo apertura→cierre o
+|         el horario partido/por día de schedule.hours, granularidad base)
 |       - qué medios-slots quedan LIBRES un día (todos menos reservados menos pasados)
 |       - qué INICIOS válidos hay para una duración (p.ej. 60 min necesita el slot
 |         siguiente libre y no salirse del cierre)
@@ -22,7 +23,8 @@ use Carbon\CarbonPeriod;
 |     sea reutilizable sin tocar código.
 | EN: Central home of ALL slot logic:
 |       - which days are bookable (next N working days)
-|       - which time slots exist (continuous open→close, base slot granularity)
+|       - which time slots exist (each day's ranges: continuous open→close or
+|         the split/per-day schedule.hours, base slot granularity)
 |       - which half-slots are FREE on a day (all minus booked minus past)
 |       - which valid STARTS exist for a given duration (e.g. 60 min needs the
 |         next half-slot free too and must not run past closing time)
@@ -122,53 +124,132 @@ class AvailabilityService
     }
 
     /**
-     * ES: Días laborables en formato ISO (1 = lun … 7 = dom).
-     * EN: Working weekdays in ISO format (1 = Mon … 7 = Sun).
+     * ES: Días laborables del atajo, en formato ISO (1 = lun … 7 = dom). Solo
+     *     cuenta si schedule.hours está vacío.
+     * EN: Working weekdays of the shortcut, ISO format (1 = Mon … 7 = Sun).
+     *     Only used when schedule.hours is empty.
      *
      * @return array<int, int>
      */
     protected function diasLaborables(): array
     {
-        return (array) config('appointments.schedule.weekdays', [1, 2, 3, 4, 5]);
+        return array_map('intval', (array) config('appointments.schedule.weekdays', [1, 2, 3, 4, 5]));
     }
 
     /**
-     * ES: Indica si una fecha Carbon cae en un día laborable configurado (ISO).
-     *     Sustituye al antiguo isWeekday() hardcoded: filtramos por dayOfWeekIso
-     *     contra la lista 'weekdays' de la config.
-     * EN: Whether a Carbon date falls on a configured working weekday (ISO).
-     *     Replaces the old hardcoded isWeekday(): we filter by dayOfWeekIso
-     *     against the configured 'weekdays' list.
+     * ES: Horario por día de la semana ya limpio (schedule.hours). Vacío = se
+     *     usa el atajo open/close + weekdays.
+     * EN: Cleaned per-weekday schedule (schedule.hours). Empty = the
+     *     open/close + weekdays shortcut is used.
+     *
+     * @return array<int, array<int, array{0:string, 1:string}>>
+     */
+    protected function horasPorDia(): array
+    {
+        return Horario::normalizar(config('appointments.schedule.hours', []));
+    }
+
+    /**
+     * ES: Tramos abiertos de un día de la semana ISO: [["09:00","14:00"], …].
+     *     Con schedule.hours, los de ese día (ninguno = cerrado); sin él, el
+     *     tramo único apertura→cierre si el día está en weekdays.
+     * EN: Open ranges of an ISO weekday: [["09:00","14:00"], …]. With
+     *     schedule.hours, that day's ranges (none = closed); without it, the
+     *     single open→close range if the day is in weekdays.
+     *
+     * @return array<int, array{0:string, 1:string}>
+     */
+    public function tramosDelDiaSemana(int $iso): array
+    {
+        $horas = $this->horasPorDia();
+        if ($horas !== []) {
+            return $horas[$iso] ?? [];
+        }
+
+        return in_array($iso, $this->diasLaborables(), true)
+            ? [[$this->horaApertura(), $this->horaCierre()]]
+            : [];
+    }
+
+    /**
+     * ES: Tramos abiertos de una fecha "YYYY-MM-DD" (según su día de la semana).
+     * EN: Open ranges of a "YYYY-MM-DD" date (by its weekday).
+     *
+     * @return array<int, array{0:string, 1:string}>
+     */
+    public function tramosDelDia(string $fecha): array
+    {
+        try {
+            $dia = Carbon::createFromFormat('!Y-m-d', $fecha, $this->zona());
+        } catch (\Exception) {
+            return [];
+        }
+
+        return $dia ? $this->tramosDelDiaSemana($dia->dayOfWeekIso) : [];
+    }
+
+    /**
+     * ES: Un día es laborable si tiene algún tramo abierto (sustituye al antiguo
+     *     isWeekday() fijo; con horario por día manda schedule.hours).
+     * EN: A day is a working day if it has any open range (replaces the old
+     *     hardcoded isWeekday(); with a per-day schedule, schedule.hours rules).
      */
     protected function esLaborable(Carbon $dia): bool
     {
-        return in_array($dia->dayOfWeekIso, $this->diasLaborables(), true);
+        return $this->tramosDelDiaSemana($dia->dayOfWeekIso) !== [];
     }
 
     /**
      * ES: Texto del horario para la página, sacado de la config (antes estaba
-     *     escrito a mano en las traducciones y no cambiaba con la config, F5).
-     *     Ej.: "lunes a viernes · 09:30–18:00".
+     *     escrito a mano en las traducciones, F5). Agrupa los días que tienen el
+     *     mismo horario: "lunes a jueves · 09:00–14:00 y 16:00–19:00; viernes ·
+     *     09:00–14:00". Con el atajo sale igual que siempre: "lunes a viernes ·
+     *     09:30–18:00".
      * EN: Schedule text for the page, built from the config (it used to be
-     *     hand-written in the translations and didn't follow the config, F5).
-     *     E.g. "Monday to Friday · 09:30–18:00".
+     *     hand-written in the translations, F5). Groups days sharing the same
+     *     hours: "Monday to Thursday · 09:00–14:00 and 16:00–19:00; Friday ·
+     *     09:00–14:00". With the shortcut it reads as before: "Monday to
+     *     Friday · 09:30–18:00".
      */
     public function textoHorario(): string
     {
-        $dias = $this->diasLaborables();
-        sort($dias);
         $nombre = fn (int $iso) => Carbon::create(2024, 1, $iso)->locale(app()->getLocale())->isoFormat('dddd');
 
-        // ES: Días seguidos (L-V) como rango; si no, lista. EN: Consecutive days as a range; otherwise a list.
-        $seguidos = count($dias) > 2 && $dias === range($dias[0], $dias[count($dias) - 1]);
-        $textoDias = $seguidos
-            ? __('citas.cal_days_range', ['from' => $nombre($dias[0]), 'to' => $nombre($dias[count($dias) - 1])])
-            : implode(__('citas.cal_days_join'), array_map($nombre, $dias));
+        // ES: Días agrupados por su horario (clave = tramos), en orden lun→dom.
+        // EN: Days grouped by their hours (key = ranges), in Mon→Sun order.
+        $grupos = [];
+        for ($iso = 1; $iso <= 7; $iso++) {
+            $tramos = $this->tramosDelDiaSemana($iso);
+            if ($tramos === []) {
+                continue;
+            }
+            $clave = json_encode($tramos);
+            $grupos[$clave]['tramos'] = $tramos;
+            $grupos[$clave]['dias'][] = $iso;
+        }
 
-        return __('citas.cal_hours_value', [
-            'days' => $textoDias,
-            'hours' => $this->horaApertura().'–'.$this->horaCierre(),
-        ]);
+        $textos = [];
+        foreach ($grupos as $grupo) {
+            $dias = $grupo['dias'];
+
+            // ES: Días seguidos (L-V) como rango; si no, lista.
+            // EN: Consecutive days as a range; otherwise a list.
+            $seguidos = count($dias) > 2 && $dias === range($dias[0], $dias[count($dias) - 1]);
+            $textoDias = $seguidos
+                ? __('citas.cal_days_range', ['from' => $nombre($dias[0]), 'to' => $nombre($dias[count($dias) - 1])])
+                : implode(__('citas.cal_days_join'), array_map($nombre, $dias));
+
+            // ES: Tramos del grupo: "09:00–14:00 y 16:00–19:00". EN: Group ranges.
+            $textos[] = __('citas.cal_hours_value', [
+                'days' => $textoDias,
+                'hours' => implode(__('citas.cal_ranges_join'), array_map(
+                    fn (array $t) => $t[0].'–'.$t[1],
+                    $grupo['tramos']
+                )),
+            ]);
+        }
+
+        return implode(__('citas.cal_groups_join'), $textos);
     }
 
     // ── 2. Caches — memoización por instancia ───────────────────────────────
@@ -247,9 +328,14 @@ class AvailabilityService
         // ES: "Hoy" en hora local del negocio. EN: "Today" in local business time (not UTC).
         $cursor = Carbon::today($this->zona());
 
-        // ES: Avanzamos día a día hasta juntar los laborables que queremos ofrecer.
+        // ES: Avanzamos día a día hasta juntar los laborables que queremos
+        //     ofrecer. Tope de dos años: con un horario sin ningún día abierto
+        //     (o todo bloqueado) el bucle no terminaría nunca.
         // EN: Advance day by day until we gather the working days to offer.
-        while (count($dias) < $this->diasAOfrecer()) {
+        //     Two-year cap: with a schedule that has no open day (or everything
+        //     blocked) the loop would never end.
+        $limite = Carbon::today($this->zona())->addYears(2);
+        while (count($dias) < $this->diasAOfrecer() && $cursor->lte($limite)) {
             // ES: Día laborable (según config) y no bloqueado.
             // EN: Working weekday (per config) and not a blocked day.
             if ($this->esLaborable($cursor) && ! in_array($cursor->toDateString(), $this->diasBloqueados(), true)) {
@@ -288,6 +374,14 @@ class AvailabilityService
 
         $dias = $this->diasDisponibles();
 
+        // ES: Sin ningún día abierto, el rango es solo hoy (nada reservable).
+        // EN: With no open day at all, the range is just today (nothing bookable).
+        if ($dias === []) {
+            $hoy = Carbon::today($this->zona())->toDateString();
+
+            return $this->rangoReservable = ['min' => $hoy, 'max' => $hoy];
+        }
+
         return $this->rangoReservable = [
             'min' => $dias[0]['value'],
             'max' => $dias[count($dias) - 1]['value'],
@@ -297,35 +391,32 @@ class AvailabilityService
     // ── 4. Slots — todos los slots, libres e inicios válidos ────────────────
 
     /**
-     * ES: Genera TODOS los medios-slots posibles de un día (continuo apertura→cierre).
-     *     El cierre es exclusivo: el último medio-slot generado es anterior al cierre.
-     * EN: Generates ALL possible half-slots of a day (continuous open→close). The
-     *     close time is exclusive: the last generated half-slot is before close.
+     * ES: Genera TODOS los medios-slots posibles de un día: los de cada uno de
+     *     sus tramos (apertura→cierre, cierre exclusivo). Sin fecha usa el
+     *     tramo del atajo open/close.
+     * EN: Generates ALL possible half-slots of a day: those of each of its
+     *     ranges (open→close, close exclusive). Without a date it uses the
+     *     open/close shortcut range.
      *
+     * @param  string|null  $fecha  ES: día "YYYY-MM-DD" · EN: day "YYYY-MM-DD"
      * @return array<int, string> ES: lista de horas "HH:MM" · EN: "HH:MM" list
      */
-    public function slotsDelDia(): array
+    public function slotsDelDia(?string $fecha = null): array
     {
+        $tramos = $fecha === null
+            ? [[$this->horaApertura(), $this->horaCierre()]]
+            : $this->tramosDelDia($fecha);
+
         $slots = [];
-
-        // ES: CarbonPeriod genera marcas cada slot_minutos entre apertura y cierre.
-        // EN: CarbonPeriod marks every slot_minutes between open and close.
-        $periodo = CarbonPeriod::create(
-            Carbon::parse($this->horaApertura()),
-            $this->slotMinutos().' minutes',
-            Carbon::parse($this->horaCierre())
-        );
-
-        foreach ($periodo as $marca) {
-            // ES: El cierre es exclusivo: no incluimos la hora de cierre como inicio.
-            // EN: Close is exclusive: don't include the closing time as a start.
-            if ($marca->format('H:i') === $this->horaCierre()) {
-                continue;
+        foreach ($tramos as [$abre, $cierra]) {
+            // ES: Marcas cada slot_minutos desde la apertura; el cierre no es inicio.
+            // EN: Marks every slot_minutes from opening; closing is not a start.
+            for ($m = $this->minutos($abre); $m < $this->minutos($cierra); $m += $this->slotMinutos()) {
+                $slots[] = $this->hhmm($m);
             }
-            $slots[] = $marca->format('H:i');
         }
 
-        return $slots;
+        return array_values(array_unique($slots));
     }
 
     /**
@@ -339,9 +430,11 @@ class AvailabilityService
      *     half-slots, so we expand each booking to all the half-slots it covers.
      *
      * @param  string  $fecha  ES: día "YYYY-MM-DD" · EN: day "YYYY-MM-DD"
+     * @param  int|null  $excluirId  ES: cita que no cuenta como ocupada (reprogramar)
+     *                               EN: booking not counted as busy (rescheduling)
      * @return array<int, string> ES: medios-slots libres · EN: free half-slots "HH:MM"
      */
-    public function huecosLibres(string $fecha): array
+    public function huecosLibres(string $fecha, ?int $excluirId = null): array
     {
         // ES: Defensivo: si la fecha no es válida/reservable, no hay huecos.
         // EN: Defensive: not a valid/bookable date → no slots.
@@ -349,11 +442,11 @@ class AvailabilityService
             return [];
         }
 
-        $todos = $this->slotsDelDia();
+        $todos = $this->slotsDelDia($fecha);
 
         // ES: Medios-slots ocupados ese día (cada cita no cancelada expandida).
         // EN: Occupied half-slots that day (each non-cancelled booking expanded).
-        $ocupados = $this->mediosSlotsOcupados($fecha);
+        $ocupados = $this->mediosSlotsOcupados($fecha, $excluirId);
 
         $libres = array_diff($todos, $ocupados);
 
@@ -387,27 +480,31 @@ class AvailabilityService
      *
      * @param  string  $fecha  ES: día "YYYY-MM-DD" · EN: day "YYYY-MM-DD"
      * @param  int  $duracion  ES: minutos · EN: minutes
+     * @param  int|null  $excluirId  ES: cita que no cuenta como ocupada (reprogramar)
+     *                               EN: booking not counted as busy (rescheduling)
      * @return array<int, string> ES: inicios válidos · EN: valid start times "HH:MM"
      */
-    public function huecosParaDuracion(string $fecha, int $duracion): array
+    public function huecosParaDuracion(string $fecha, int $duracion, ?int $excluirId = null): array
     {
         // ES: Duración desconocida: nada que ofrecer. EN: Unknown duration: nothing to offer.
         if (! $this->duracionValida($duracion)) {
             return [];
         }
 
-        $libres = $this->huecosLibres($fecha);
+        $libres = $this->huecosLibres($fecha, $excluirId);
         $libresSet = array_flip($libres);   // ES: búsqueda O(1) · EN: O(1) lookup
+        $tramos = $this->tramosDelDia($fecha);
         $validos = [];
 
         foreach ($libres as $inicio) {
-            // ES: La cita no puede terminar después del cierre.
-            // EN: The booking can't end after closing time.
-            //     En minutos desde medianoche: comparar "HH:MM" como texto fallaría
-            //     si la suma pasara de las 24:00.
-            //     In minutes since midnight: comparing "HH:MM" as text would fail
-            //     if the sum went past 24:00.
-            if ($this->minutos($inicio) + $duracion > $this->minutos($this->horaCierre())) {
+            // ES: La cita no puede terminar después del cierre de SU tramo (no
+            //     cruza el descanso de un horario partido). En minutos desde
+            //     medianoche: comparar "HH:MM" como texto fallaría pasadas las 24:00.
+            // EN: The booking can't end after the close of ITS range (it never
+            //     crosses the break of a split schedule). In minutes since
+            //     midnight: comparing "HH:MM" as text would fail past 24:00.
+            $cierre = $this->cierreDelTramo($tramos, $inicio);
+            if ($cierre === null || $this->minutos($inicio) + $duracion > $cierre) {
                 continue;
             }
 
@@ -492,10 +589,12 @@ class AvailabilityService
      *     Used right before creating the booking (anti double-booking re-check).
      *       - 30 min: the start half-slot must be a valid start.
      *       - 60 min: the start must be a valid 1h start (two free half-slots).
+     *     ES: $excluirId deja fuera una cita (la que se reprograma).
+     *     EN: $excluirId leaves one booking out (the one being rescheduled).
      */
-    public function slotSigueLibre(string $fecha, string $hora, int $duracion = 30): bool
+    public function slotSigueLibre(string $fecha, string $hora, int $duracion = 30, ?int $excluirId = null): bool
     {
-        return in_array($hora, $this->huecosParaDuracion($fecha, $duracion), true);
+        return in_array($hora, $this->huecosParaDuracion($fecha, $duracion, $excluirId), true);
     }
 
     /**
@@ -543,15 +642,18 @@ class AvailabilityService
      *
      * @return array<int, string>
      */
-    protected function mediosSlotsOcupados(string $fecha): array
+    protected function mediosSlotsOcupados(string $fecha, ?int $excluirId = null): array
     {
         // ES: Tramos ocupados [inicio, fin) en minutos desde medianoche.
         // EN: Busy ranges [start, end) in minutes since midnight.
         $tramos = [];
 
+        // ES: La cita excluida (la que se reprograma) no se ocupa a sí misma.
+        // EN: The excluded booking (the one being rescheduled) doesn't block itself.
         $citas = Appointment::query()
             ->whereDate('date', $fecha)
             ->where('status', '!=', 'cancelada')
+            ->when($excluirId !== null, fn ($q) => $q->whereKeyNot($excluirId))
             ->get(['time', 'duration']);
 
         // ES: Cada cita, con su duración REAL guardada.
@@ -565,7 +667,12 @@ class AvailabilityService
         //     cada uno como un tramo de un hueco.
         // EN: Busy slots from the owner's own Google Calendar (if configured),
         //     each one as a one-slot range.
-        foreach (app(GoogleCalendarService::class)->eventosOcupados($fecha) as $medio) {
+        //     El evento de Google de la cita excluida tampoco cuenta.
+        //     The excluded booking's own Google event doesn't count either.
+        $eventoExcluido = $excluirId !== null
+            ? Appointment::whereKey($excluirId)->value('google_event_id')
+            : null;
+        foreach (app(GoogleCalendarService::class)->eventosOcupados($fecha, $eventoExcluido) as $medio) {
             $inicio = $this->minutos((string) $medio);
             $tramos[] = [$inicio, $inicio + $this->slotMinutos()];
         }
@@ -579,7 +686,7 @@ class AvailabilityService
         //     time or the slot size, bookings stored on the old grid still block
         //     their range.
         $ocupados = [];
-        foreach ($this->slotsDelDia() as $slot) {
+        foreach ($this->slotsDelDia($fecha) as $slot) {
             $a = $this->minutos($slot);
             $b = $a + $this->slotMinutos();
             foreach ($tramos as [$ini, $fin]) {
@@ -601,5 +708,33 @@ class AvailabilityService
         [$h, $m] = array_map('intval', explode(':', substr($hora, 0, 5)) + [0, 0]);
 
         return $h * 60 + $m;
+    }
+
+    /**
+     * ES: Minutos desde medianoche a "HH:MM". EN: Minutes since midnight to "HH:MM".
+     */
+    protected function hhmm(int $minutos): string
+    {
+        return sprintf('%02d:%02d', intdiv($minutos, 60), $minutos % 60);
+    }
+
+    /**
+     * ES: Cierre (en minutos) del tramo en el que empieza una hora, o null si
+     *     esa hora no cae dentro de ningún tramo.
+     * EN: Close (in minutes) of the range a start time falls in, or null if
+     *     that time is inside no range.
+     *
+     * @param  array<int, array{0:string, 1:string}>  $tramos
+     */
+    protected function cierreDelTramo(array $tramos, string $inicio): ?int
+    {
+        $m = $this->minutos($inicio);
+        foreach ($tramos as [$abre, $cierra]) {
+            if ($m >= $this->minutos($abre) && $m < $this->minutos($cierra)) {
+                return $this->minutos($cierra);
+            }
+        }
+
+        return null;
     }
 }

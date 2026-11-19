@@ -49,6 +49,14 @@ use Illuminate\Support\Facades\Log;
 */
 class GoogleCalendarService
 {
+    /**
+     * ES: Clave de caché del mapa de ocupados del rango (v2: cada hueco lleva
+     *     el id de su evento; el nombre nuevo evita leer el formato viejo).
+     * EN: Cache key of the range busy map (v2: each slot carries its event
+     *     id; the new name avoids reading the old format).
+     */
+    public const CLAVE_OCUPADOS = 'gcal_ocupados_rango_v2';
+
     // ── 1. Config / client — configuración y cliente autenticado ────────────
 
     /**
@@ -283,7 +291,7 @@ class GoogleCalendarService
             //     para que la disponibilidad lo refleje ya (sin esperar el TTL).
             // EN: New event occupies a slot: invalidate the range cache so
             //     availability reflects it right away (no 10-min TTL wait).
-            Cache::forget('gcal_ocupados_rango');
+            Cache::forget(self::CLAVE_OCUPADOS);
         } catch (\Throwable $e) {
             // ES: Si falló por token caducado/revocado (401), lo olvidamos para
             //     que la siguiente llamada pida uno fresco con el refresh_token.
@@ -395,7 +403,7 @@ class GoogleCalendarService
 
             // ES: El hueco vuelve a quedar libre: invalidamos la caché del rango.
             // EN: The slot is free again: invalidate the range cache.
-            Cache::forget('gcal_ocupados_rango');
+            Cache::forget(self::CLAVE_OCUPADOS);
         } catch (\Throwable $e) {
             // ES: Token caducado/revocado → lo olvidamos para refrescar a la próxima.
             // EN: Expired/revoked token → forget it to refresh next time.
@@ -420,10 +428,15 @@ class GoogleCalendarService
      *     No-op ([]) if not configured or on error. Ignores all-day events.
      *     Caches the whole range 10 minutes (see ocupadosDelRango()).
      *
+     *     $excluirEvento: id de un evento que no cuenta (el de la cita que se
+     *     reprograma, para que no se bloquee a sí misma).
+     *     $excluirEvento: id of an event that doesn't count (the one of the
+     *     booking being rescheduled, so it doesn't block itself).
+     *
      * @param  string  $fecha  ES: día "YYYY-MM-DD" · EN: day "YYYY-MM-DD"
      * @return array<int, string> ES: medios-slots ocupados · EN: occupied half-slots
      */
-    public function eventosOcupados(string $fecha): array
+    public function eventosOcupados(string $fecha, ?string $excluirEvento = null): array
     {
         // ES: Sin credenciales → el calendario de Google no aporta ocupación.
         // EN: No credentials → Google contributes no occupancy.
@@ -437,7 +450,15 @@ class GoogleCalendarService
         // EN: Read from the whole-range map (one cached call) and return the
         //     half-slots of the requested day. So selecting a day in the calendar
         //     does NOT trigger a new Google call (it's instant).
-        return $this->ocupadosDelRango()[$fecha] ?? [];
+        $horas = [];
+        foreach ($this->ocupadosDelRango()[$fecha] ?? [] as [$hora, $evento]) {
+            if ($excluirEvento === null || $evento !== $excluirEvento) {
+                $horas[] = $hora;
+            }
+        }
+
+        // ES: Sin duplicados y en orden de aparición. EN: No duplicates, in order of appearance.
+        return array_values(array_unique($horas));
     }
 
     /**
@@ -456,11 +477,14 @@ class GoogleCalendarService
      *     blocked days), and a fixed 16-day window left the last offered days
      *     without their Google occupancy.
      *
-     * @return array<string, array<int, string>> EN/ES: ["YYYY-MM-DD" => ["HH:MM", ...]]
+     *     Cada medio-slot lleva el id de su evento para poder excluirlo.
+     *     Each half-slot carries its event id so it can be left out.
+     *
+     * @return array<string, array<int, array{0:string, 1:?string}>> EN/ES: ["YYYY-MM-DD" => [["HH:MM", "id"], ...]]
      */
     protected function ocupadosDelRango(): array
     {
-        return Cache::remember('gcal_ocupados_rango', 600, function () {
+        return Cache::remember(self::CLAVE_OCUPADOS, 600, function () {
             try {
                 $service = $this->servicioCalendar();
 
@@ -510,14 +534,9 @@ class GoogleCalendarService
                     $cursor->minute(intdiv($cursor->minute, $paso) * $paso);
 
                     while ($cursor->lt($eFin)) {
-                        $porFecha[$cursor->toDateString()][] = $cursor->format('H:i');
+                        $porFecha[$cursor->toDateString()][] = [$cursor->format('H:i'), $evento->getId()];
                         $cursor->addMinutes($paso);
                     }
-                }
-
-                // ES: Sin duplicados dentro de cada fecha. EN: No duplicates within each date.
-                foreach ($porFecha as $f => $slots) {
-                    $porFecha[$f] = array_values(array_unique($slots));
                 }
 
                 return $porFecha;

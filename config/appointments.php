@@ -1,5 +1,7 @@
 <?php
 
+use App\Support\Horario;
+
 /*
 |==============================================================================
 | APPOINTMENTS — Central configuration / Configuración central
@@ -106,6 +108,26 @@ return [
         // ES: Días laborables, formato ISO (1 = lun … 7 = dom). Por defecto L-V.
         // EN: Working weekdays, ISO format (1 = Mon … 7 = Sun). Default Mon-Fri.
         'weekdays' => [1, 2, 3, 4, 5],
+
+        // ES: Horario por día de la semana (OPCIONAL). Si tiene algo, manda él y
+        //     open/close/weekdays se ignoran: los días que no aparecen están
+        //     cerrados y cada día puede tener varios tramos (horario partido).
+        //     Una cita nunca cruza el descanso entre dos tramos. En el .env, en
+        //     una línea: grupos separados por ";" con el día o rango ISO y sus
+        //     tramos, p. ej.
+        //       APPOINTMENTS_HOURS="1-4 09:00-14:00 16:00-19:00; 5 09:00-14:00"
+        //     (lunes a jueves partido, viernes solo mañana). También puedes
+        //     escribir el array aquí directamente:
+        //       [1 => [['09:00', '14:00'], ['16:00', '19:00']], 5 => [['09:00', '14:00']]]
+        // EN: Per-weekday hours (OPTIONAL). If set, it wins and
+        //     open/close/weekdays are ignored: days not listed are closed and
+        //     each day can have several ranges (split schedule). A booking never
+        //     crosses the break between two ranges. In the .env, on one line:
+        //     groups split by ";" with the ISO day or range and its ranges, e.g.
+        //       APPOINTMENTS_HOURS="1-4 09:00-14:00 16:00-19:00; 5 09:00-14:00"
+        //     (Monday to Thursday split, Friday morning only). You can also
+        //     write the array here directly (see the example above).
+        'hours' => Horario::desdeTexto(env('APPOINTMENTS_HOURS', '')),
 
         // ES: Máx. asistentes extra. EN: Max extra attendees a client may invite.
         'max_attendees' => (int) env('APPOINTMENTS_MAX_ATTENDEES', 10),

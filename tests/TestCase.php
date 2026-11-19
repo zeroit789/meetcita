@@ -42,6 +42,9 @@ abstract class TestCase extends BaseTestCase
             'appointments.schedule.close' => '18:00',
             'appointments.schedule.durations' => [30, 60],
             'appointments.schedule.weekdays' => [1, 2, 3, 4, 5],
+            // ES: Sin horario por día: manda el atajo open/close + weekdays.
+            // EN: No per-day schedule: the open/close + weekdays shortcut rules.
+            'appointments.schedule.hours' => [],
             'appointments.schedule.max_attendees' => 10,
             'appointments.modalities.online' => true,
             'appointments.modalities.in_person' => true,

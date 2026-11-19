@@ -52,6 +52,10 @@ return [
     'cal_hours_value' => ':days · :hours',
     'cal_days_range' => ':from to :to',
     'cal_days_join' => ', ',
+    // ES: Unión de tramos de un día y de grupos de días con horarios distintos.
+    // EN: Join between a day's ranges and between day groups with different hours.
+    'cal_ranges_join' => ' and ',
+    'cal_groups_join' => '; ',
 
     // Step 2: pick a time / Paso 2: elegir hora
     'step2_title' => 'Pick a length and time',
