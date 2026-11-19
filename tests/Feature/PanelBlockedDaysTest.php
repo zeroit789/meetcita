@@ -19,6 +19,7 @@ class PanelBlockedDaysTest extends TestCase
 
     public function test_bloquear_un_dia_lo_guarda(): void
     {
+        $this->entrarAlPanel();
         Livewire::test(PanelBlockedDays::class)
             ->set('newDate', '2026-09-24')
             ->set('newReason', 'Festivo')
@@ -30,6 +31,7 @@ class PanelBlockedDaysTest extends TestCase
 
     public function test_no_se_bloquea_un_dia_pasado(): void
     {
+        $this->entrarAlPanel();
         Livewire::test(PanelBlockedDays::class)
             ->set('newDate', '2026-09-18')
             ->call('block')
@@ -41,6 +43,8 @@ class PanelBlockedDaysTest extends TestCase
     public function test_no_se_bloquea_dos_veces_el_mismo_dia(): void
     {
         BlockedDay::create(['date' => '2026-09-24']);
+
+        $this->entrarAlPanel();
 
         Livewire::test(PanelBlockedDays::class)
             ->set('newDate', '2026-09-24')
@@ -54,6 +58,8 @@ class PanelBlockedDaysTest extends TestCase
     {
         Appointment::factory()->create(['date' => '2026-09-24']);
 
+        $this->entrarAlPanel();
+
         Livewire::test(PanelBlockedDays::class)
             ->set('newDate', '2026-09-24')
             ->call('block')
@@ -65,6 +71,8 @@ class PanelBlockedDaysTest extends TestCase
     public function test_desbloquear_borra_el_dia(): void
     {
         $dia = BlockedDay::create(['date' => '2026-09-24']);
+
+        $this->entrarAlPanel();
 
         Livewire::test(PanelBlockedDays::class)->call('unblock', $dia->id);
 

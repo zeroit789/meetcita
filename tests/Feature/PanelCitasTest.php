@@ -46,6 +46,8 @@ class PanelCitasTest extends TestCase
         Mail::fake();
         $cita = Appointment::factory()->create(['email' => 'cliente@example.com']);
 
+        $this->entrarAlPanel();
+
         Livewire::test(PanelCitas::class)
             ->call('confirmar', $cita->id)
             ->assertHasNoErrors();
@@ -58,6 +60,8 @@ class PanelCitasTest extends TestCase
     {
         Mail::fake();
         $cita = Appointment::factory()->cancelada()->create();
+
+        $this->entrarAlPanel();
 
         Livewire::test(PanelCitas::class)
             ->call('confirmar', $cita->id)
@@ -76,6 +80,8 @@ class PanelCitasTest extends TestCase
         $cancelada = Appointment::factory()->cancelada()->create(['time' => '10:00']);
         Appointment::factory()->create(['time' => '10:00']);
 
+        $this->entrarAlPanel();
+
         Livewire::test(PanelCitas::class)
             ->call('confirmar', $cancelada->id)
             ->assertHasErrors('accion');
@@ -88,6 +94,8 @@ class PanelCitasTest extends TestCase
     {
         Mail::fake();
         $cita = Appointment::factory()->confirmada()->create();
+
+        $this->entrarAlPanel();
 
         Livewire::test(PanelCitas::class)
             ->call('confirmar', $cita->id)
@@ -104,6 +112,8 @@ class PanelCitasTest extends TestCase
             'attendee_emails' => 'extra@example.com',
             'locale' => 'en',
         ]);
+
+        $this->entrarAlPanel();
 
         Livewire::test(PanelCitas::class)
             ->call('pedirCancelacion', $cita->id)
@@ -128,6 +138,8 @@ class PanelCitasTest extends TestCase
         Mail::fake();
         $cita = Appointment::factory()->create(['email' => 'cliente@example.com']);
 
+        $this->entrarAlPanel();
+
         Livewire::test(PanelCitas::class)->call('cancelar', $cita->id);
 
         $this->assertSame('cancelada', $cita->fresh()->status);
@@ -149,6 +161,8 @@ class PanelCitasTest extends TestCase
         Mail::fake();
         $cita = Appointment::factory()->create();
 
+        $this->entrarAlPanel();
+
         Livewire::test(PanelCitas::class)
             ->set('motivoCancelacion', str_repeat('x', 1001))
             ->call('cancelar', $cita->id)
@@ -162,6 +176,8 @@ class PanelCitasTest extends TestCase
     {
         Mail::fake();
         $cita = Appointment::factory()->cancelada()->create();
+
+        $this->entrarAlPanel();
 
         Livewire::test(PanelCitas::class)->call('cancelar', $cita->id);
 

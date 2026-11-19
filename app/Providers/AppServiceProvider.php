@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\AdminPanelPassword;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 /**
  * ES: Proveedor de servicios principal de la app. Hoy no registra nada: los
@@ -29,6 +31,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // ES: Panel privado: Livewire NO reaplica por defecto los middleware
+        //     propios en sus peticiones de actualización (/livewire/update). Con
+        //     esto, cada acción de un componente cargado desde /panel vuelve a
+        //     pasar por AdminPanelPassword: sin una sesión válida del panel, la
+        //     acción no se ejecuta (aunque se reutilice una copia antigua).
+        // EN: Private panel: by default Livewire does NOT re-apply custom
+        //     middleware on its update requests (/livewire/update). With this,
+        //     every action of a component loaded from /panel goes through
+        //     AdminPanelPassword again: without a valid panel session the action
+        //     doesn't run (even if an old copy of the page is replayed).
+        Livewire::addPersistentMiddleware([
+            AdminPanelPassword::class,
+        ]);
     }
 }

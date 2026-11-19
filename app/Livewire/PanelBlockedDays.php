@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Http\Middleware\AdminPanelPassword;
 use App\Models\Appointment;
 use App\Models\BlockedDay;
 use Carbon\Carbon;
@@ -41,6 +42,21 @@ class PanelBlockedDays extends Component
     public string $newReason = '';
 
     // ── 2. block() EN / ES ───────────────────────────────────────────────
+
+    /**
+     * ES: Guarda del panel en CADA petición del componente (montaje, acciones,
+     *     paginación y repintados): sin una sesión válida del panel, 403. Va en
+     *     boot() y no en cada acción porque repintar también enseña los datos.
+     *     Es la defensa en profundidad del middleware persistente.
+     * EN: Panel guard on EVERY request of the component (mount, actions,
+     *     pagination and re-renders): without a valid panel session, 403. It
+     *     lives in boot() rather than in each action because re-rendering also
+     *     shows the data. Defence in depth on top of the persistent middleware.
+     */
+    public function boot(): void
+    {
+        abort_unless(AdminPanelPassword::sesionValida(), 403);
+    }
 
     /**
      * ES: Bloquea un día nuevo (lo añade a la tabla).

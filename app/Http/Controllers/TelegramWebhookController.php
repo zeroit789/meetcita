@@ -61,8 +61,13 @@ class TelegramWebhookController extends Controller
         //        si no hay secreto configurado o no coincide, se rechaza (fix M1).
         // EN: 1) Validate the webhook secret (anti-spoofing). Fail-closed: if no
         //        secret is configured or it doesn't match, reject (fix M1).
-        $secret = config('services.telegram.webhook_secret');
-        if (! $secret || $request->header('X-Telegram-Bot-Api-Secret-Token') !== $secret) {
+        // ES: hash_equals compara en tiempo constante: no filtra el secreto por
+        //    la diferencia de tiempos de respuesta.
+        // EN: hash_equals compares in constant time: it does not leak the secret
+        //    through response-time differences.
+        $secret = (string) config('services.telegram.webhook_secret');
+        $recibido = (string) $request->header('X-Telegram-Bot-Api-Secret-Token', '');
+        if ($secret === '' || ! hash_equals($secret, $recibido)) {
             return response('forbidden', 403);
         }
 

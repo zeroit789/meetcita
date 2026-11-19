@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\AdminPanelPassword;
 use Illuminate\Http\Request;
 
 /*
@@ -34,7 +35,7 @@ class PanelController extends Controller
      */
     public function showLogin(Request $request)
     {
-        if ($request->session()->get('panel_autenticado', false)) {
+        if (AdminPanelPassword::sesionValida()) {
             return redirect()->route('panel.index');
         }
 
@@ -66,10 +67,12 @@ class PanelController extends Controller
             return back()->withErrors(['password' => 'Contraseña incorrecta.']);
         }
 
-        // ES: Acierto: marcamos la sesión como autenticada y regeneramos el id.
-        // EN: Success: mark the session as authenticated and regenerate the id.
+        // ES: Acierto: regeneramos el id de sesión y guardamos la HUELLA de la
+        //     contraseña (si luego cambia, esta sesión deja de valer).
+        // EN: Success: regenerate the session id and store the password
+        //     FINGERPRINT (if it later changes, this session stops working).
         $request->session()->regenerate();
-        $request->session()->put('panel_autenticado', true);
+        $request->session()->put(AdminPanelPassword::CLAVE_SESION, AdminPanelPassword::huella());
 
         return redirect()->route('panel.index');
     }
@@ -90,12 +93,17 @@ class PanelController extends Controller
     // ── 4. Logout — cerrar la sesión del panel ──────────────────────────────
 
     /**
-     * ES: Cierra la sesión del panel.
-     * EN: Ends the panel session.
+     * ES: Cierra la sesión del panel: invalida la sesión entera (borra sus
+     *     datos y cambia el id) y regenera el token CSRF, para que nada de la
+     *     sesión anterior siga valiendo.
+     * EN: Ends the panel session: invalidates the whole session (wipes its
+     *     data and changes the id) and regenerates the CSRF token, so nothing
+     *     from the previous session keeps working.
      */
     public function logout(Request $request)
     {
-        $request->session()->forget('panel_autenticado');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('panel.login');
     }

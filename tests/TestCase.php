@@ -2,6 +2,7 @@
 
 namespace Tests;
 
+use App\Http\Middleware\AdminPanelPassword;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 
@@ -61,6 +62,17 @@ abstract class TestCase extends BaseTestCase
         // ES: Reloj congelado en la zona del negocio.
         // EN: Clock frozen in the business time zone.
         Carbon::setTestNow(Carbon::parse(self::AHORA, 'Europe/Madrid'));
+    }
+
+    /**
+     * ES: Simula una sesión válida del panel (la misma huella que deja el login).
+     * EN: Simulates a valid panel session (the same fingerprint the login sets).
+     */
+    protected function entrarAlPanel(): static
+    {
+        session([AdminPanelPassword::CLAVE_SESION => AdminPanelPassword::huella()]);
+
+        return $this;
     }
 
     /**
