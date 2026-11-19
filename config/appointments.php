@@ -54,6 +54,12 @@ return [
         // ES: LinkedIn (o cualquier) URL opcional para la firma. Vacío = oculto.
         // EN: Optional LinkedIn (or any) URL for the email signature. Empty = hidden.
         'linkedin' => env('APPOINTMENTS_LINKEDIN', ''),
+
+        // ES: Teléfono de contacto opcional (se muestra al cliente cuando ya no
+        //     puede cambiar su cita en línea). Vacío = oculto.
+        // EN: Optional contact phone (shown to the client when they can no
+        //     longer change their booking online). Empty = hidden.
+        'phone' => env('APPOINTMENTS_PHONE', ''),
     ],
 
     // ──────────────────────────────────────────────────────────────────────
@@ -150,6 +156,25 @@ return [
         // EN: Seconds a booking waits if another one for the same day is being
         //     saved at that moment; after that it asks to retry.
         'lock_wait_seconds' => 5,
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
+    // 4b2. SELF-SERVICE / AUTOGESTIÓN DEL CLIENTE
+    // ES: Los correos al cliente llevan un enlace firmado a «gestionar mi
+    //     cita», donde puede cancelarla o cambiarla de día y hora sin cuenta.
+    //     Solo hasta hours_before horas antes de la cita; después la página lo
+    //     explica y da tu contacto. Al cambiarla vuelve a pendiente y la
+    //     confirmas de nuevo. enabled=false quita el enlace y la página.
+    // EN: Client emails carry a signed link to "manage my booking", where
+    //     they can cancel it or move it to another day and time without an
+    //     account. Only up to hours_before hours before the booking; after
+    //     that the page explains it and shows your contact. When changed it
+    //     goes back to pending and you confirm it again. enabled=false removes
+    //     the link and the page.
+    // ──────────────────────────────────────────────────────────────────────
+    'self_service' => [
+        'enabled' => (bool) env('APPOINTMENTS_SELF_SERVICE', true),
+        'hours_before' => (int) env('APPOINTMENTS_SELF_SERVICE_HOURS_BEFORE', 24),
     ],
 
     // ──────────────────────────────────────────────────────────────────────

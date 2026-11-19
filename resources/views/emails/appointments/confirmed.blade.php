@@ -150,6 +150,10 @@
                             </table>
                         @endisset
 
+                        {{-- ES: ¿No puedes venir? Enlace para cancelar o cambiar la cita.
+                             EN: Can't make it? Link to cancel or change the booking. --}}
+                        @include('emails.partials.manage-link')
+
                         <p style="margin:24px 0 0 0; font-family:Arial,sans-serif; color:#374151; font-size:15px; line-height:1.65;">
                             {{ __('emails.confirmed_outro') }}
                         </p>

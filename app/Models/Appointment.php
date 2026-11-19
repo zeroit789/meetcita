@@ -46,6 +46,7 @@ use Illuminate\Support\Facades\URL;
 | @property string      $locale           Client language (es|en) / idioma del cliente
 | @property string|null $google_event_id  Google Calendar event id / id del evento
 | @property string|null $google_meet_url  Google Meet link (online only) / enlace Meet
+| @property \Carbon\Carbon|null $reminded_at  Day-before reminder sent at / recordatorio enviado
 */
 class Appointment extends Model
 {
@@ -115,6 +116,7 @@ class Appointment extends Model
         return [
             'date' => 'date:Y-m-d',
             'duration' => 'integer',
+            'reminded_at' => 'datetime',
         ];
     }
 
@@ -255,6 +257,69 @@ class Appointment extends Model
     public function urlIcs(): string
     {
         return url(URL::signedRoute('cita.ics', ['reference' => $this->reference], absolute: false));
+    }
+
+    /**
+     * ES: Enlace FIRMADO a la página «gestionar mi cita» (cancelar o cambiar
+     *     día y hora sin cuenta). Igual que el del .ics: firma sobre la ruta
+     *     relativa y sin caducidad (la referencia no cambia al reprogramar, así
+     *     que los enlaces ya enviados siguen valiendo); las acciones respetan
+     *     el plazo mínimo. Null si la autogestión está desactivada.
+     * EN: SIGNED link to the "manage my booking" page (cancel or change day
+     *     and time without an account). Like the .ics one: signature over the
+     *     relative path and no expiry (the reference doesn't change on
+     *     reschedule, so links already sent keep working); the actions honour
+     *     the minimum notice. Null if self-service is disabled.
+     */
+    public function urlGestionar(): ?string
+    {
+        if (! self::autogestionActiva()) {
+            return null;
+        }
+
+        return url(URL::signedRoute('cita.gestionar', ['reference' => $this->reference], absolute: false));
+    }
+
+    /**
+     * ES: ¿Está activada la autogestión del cliente? (config self_service.enabled)
+     * EN: Is client self-service enabled? (config self_service.enabled)
+     */
+    public static function autogestionActiva(): bool
+    {
+        return (bool) config('appointments.self_service.enabled', true);
+    }
+
+    /**
+     * ES: Horas mínimas antes de la cita para cancelarla o cambiarla en línea.
+     * EN: Minimum hours before the booking to cancel or change it online.
+     */
+    public static function horasPlazoAutogestion(): int
+    {
+        return max(0, (int) config('appointments.self_service.hours_before', 24));
+    }
+
+    /**
+     * ES: Inicio de la cita en la hora local del negocio.
+     * EN: Booking start in the business's local time.
+     */
+    public function inicioLocal(): Carbon
+    {
+        return Carbon::parse($this->date->toDateString().' '.$this->time, $this->zona());
+    }
+
+    /**
+     * ES: ¿Puede el cliente cancelarla o cambiarla él mismo AHORA? Autogestión
+     *     activada, cita sin cancelar y aún falta al menos el plazo mínimo
+     *     (hours_before) para que empiece.
+     * EN: Can the client cancel or change it themselves NOW? Self-service on,
+     *     booking not cancelled and at least the minimum notice (hours_before)
+     *     still left before it starts.
+     */
+    public function puedeAutogestionarse(): bool
+    {
+        return self::autogestionActiva()
+            && $this->status !== 'cancelada'
+            && Carbon::now($this->zona())->addHours(self::horasPlazoAutogestion())->lte($this->inicioLocal());
     }
 
     /**

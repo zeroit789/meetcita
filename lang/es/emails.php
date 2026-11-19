@@ -146,4 +146,39 @@ return [
     // EN: Data-protection note at the foot of the client emails.
     'privacy_note_no_retention' => 'Recibes este correo porque se pidió una cita con :brand. Usamos tus datos solo para gestionarla. Para ejercer tus derechos o pedir el borrado, responde a este correo.',
     'privacy_note' => 'Recibes este correo porque se pidió una cita con :brand. Usamos tus datos solo para gestionarla y los borramos a los :months meses de la cita. Para ejercer tus derechos o pedir el borrado, responde a este correo.',
+
+    // ════════════════════════════════════════════════════════════════════
+    // 8. MANAGE / GESTIONAR — bloque con el enlace firmado (partials/manage-link)
+    // ════════════════════════════════════════════════════════════════════
+    'manage_title' => '¿No puedes venir?',
+    'manage_text' => 'Puedes cambiar el día o la hora, o cancelar la cita, hasta :hours horas antes.',
+    'manage_text_no_limit' => 'Puedes cambiar el día o la hora, o cancelar la cita, hasta que empiece.',
+    'manage_button' => 'Gestionar mi cita',
+
+    // ════════════════════════════════════════════════════════════════════
+    // 9. RESCHEDULED / CAMBIO RECIBIDO (cliente) y AVISOS AL DUEÑO
+    // ════════════════════════════════════════════════════════════════════
+    'subject_appointment_rescheduled' => 'Hemos recibido el cambio de tu cita :reference',
+    'client_rescheduled_heading' => '¡Cambio recibido!',
+    'client_rescheduled_intro' => 'Hola :name, hemos recibido el cambio de tu cita. Estos son los datos nuevos; te la confirmaremos por correo lo antes posible.',
+    'subject_owner_cancelled' => 'El cliente ha cancelado la cita :reference — :name',
+    'subject_owner_rescheduled' => 'El cliente ha cambiado la cita :reference — :name (pendiente de confirmar)',
+    'owner_change_cancelled_heading' => 'Cita cancelada por el cliente',
+    'owner_change_cancelled_intro' => ':name ha cancelado su cita desde su enlace. El hueco vuelve a estar libre.',
+    'owner_change_rescheduled_heading' => 'Cita cambiada por el cliente',
+    'owner_change_rescheduled_intro' => ':name ha cambiado su cita de día u hora. Está pendiente: confírmala en el panel o por Telegram.',
+    'owner_change_before' => 'Antes',
+    'owner_change_now' => 'Ahora',
+    'owner_change_panel' => 'Abrir el panel',
+
+    // ════════════════════════════════════════════════════════════════════
+    // 10. REMINDER / RECORDATORIO — appointments/reminder (la víspera)
+    // ════════════════════════════════════════════════════════════════════
+    'subject_reminder' => 'Recordatorio: tu cita :reference es mañana a las :time',
+    'reminder_title_tag' => 'Recordatorio de tu cita',
+    'reminder_preheader' => 'Mañana, :date, a las :time.',
+    'reminder_heading' => 'Tu cita es mañana',
+    'reminder_intro' => 'Hola :name, te recordamos tu cita de mañana. Estos son los datos:',
+    'reminder_outro' => 'Si al final no puedes venir, avísanos cuanto antes con el botón de arriba o respondiendo a este correo, así el hueco le sirve a otra persona.',
+
 ];

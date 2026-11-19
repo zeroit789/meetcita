@@ -77,6 +77,9 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
                 'icsUrl' => $this->appointment->urlIcs(),   // ES: enlace firmado / EN: signed link
+                // ES: Enlace firmado a «gestionar mi cita» (null si está desactivado).
+                // EN: Signed "manage my booking" link (null if disabled).
+                'gestionarUrl' => $this->appointment->urlGestionar(),
             ],
         );
     }

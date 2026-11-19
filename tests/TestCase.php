@@ -52,6 +52,10 @@ abstract class TestCase extends BaseTestCase
             'appointments.default_locale' => 'es',
             'appointments.brand.owner_email' => 'owner@example.com',
             'appointments.panel.password' => 'secreto-de-test',
+            // ES: Autogestión con 24 h de plazo. EN: Self-service with 24 h notice.
+            'appointments.self_service.enabled' => true,
+            'appointments.self_service.hours_before' => 24,
+            'appointments.brand.phone' => '',
             // ES: Integraciones externas apagadas: ningún test llama a Google ni a Telegram.
             // EN: External integrations off: no test calls Google or Telegram.
             'services.google.client_id' => null,

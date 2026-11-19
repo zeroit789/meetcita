@@ -41,7 +41,11 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
 
     // 1. ES: Recibe la cita recién creada para personalizar el mensaje.
     //    EN: Receives the freshly created appointment to personalise the message.
-    public function __construct(public Appointment $appointment)
+    //    ES: $reprogramada = true cuando el cliente acaba de cambiar su cita de
+    //    día u hora (mismo correo, otro asunto y otro título).
+    //    EN: $reprogramada = true when the client has just moved their booking
+    //    to another day or time (same email, another subject and heading).
+    public function __construct(public Appointment $appointment, public bool $reprogramada = false)
     {
         //
     }
@@ -55,7 +59,7 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
         return new Envelope(
             // ES: La referencia va en el asunto, igual que en los demás emails.
             // EN: The reference goes in the subject, like in the other emails.
-            subject: __('emails.subject_appointment_received', ['reference' => $this->appointment->reference]),
+            subject: __($this->reprogramada ? 'emails.subject_appointment_rescheduled' : 'emails.subject_appointment_received', ['reference' => $this->appointment->reference]),
         );
     }
 
@@ -74,6 +78,10 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
                 'icsUrl' => $this->appointment->urlIcs(),   // ES: enlace firmado / EN: signed link
+                // ES: Enlace firmado a «gestionar mi cita» (null si está desactivado).
+                // EN: Signed "manage my booking" link (null if disabled).
+                'gestionarUrl' => $this->appointment->urlGestionar(),
+                'reprogramada' => $this->reprogramada,
             ],
         );
     }

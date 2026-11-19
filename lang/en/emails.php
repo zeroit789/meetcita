@@ -137,4 +137,39 @@ return [
     // EN: Data-protection note at the foot of the client emails.
     'privacy_note_no_retention' => 'You are receiving this email because a booking was requested with :brand. We use your data only to manage it. To exercise your rights or ask for deletion, reply to this email.',
     'privacy_note' => 'You are receiving this email because a booking was requested with :brand. We use your data only to manage it and delete it :months months after the booking. To exercise your rights or ask for deletion, reply to this email.',
+
+    // ════════════════════════════════════════════════════════════════════
+    // 8. MANAGE — block with the signed link (partials/manage-link)
+    // ════════════════════════════════════════════════════════════════════
+    'manage_title' => "Can't make it?",
+    'manage_text' => 'You can change the day or time, or cancel the booking, up to :hours hours before.',
+    'manage_text_no_limit' => 'You can change the day or time, or cancel the booking, until it starts.',
+    'manage_button' => 'Manage my booking',
+
+    // ════════════════════════════════════════════════════════════════════
+    // 9. RESCHEDULED (client) and OWNER NOTICES
+    // ════════════════════════════════════════════════════════════════════
+    'subject_appointment_rescheduled' => 'We have received the change to your booking :reference',
+    'client_rescheduled_heading' => 'Change received!',
+    'client_rescheduled_intro' => 'Hi :name, we have received the change to your booking. These are the new details; we will confirm it by email as soon as possible.',
+    'subject_owner_cancelled' => 'The client cancelled booking :reference — :name',
+    'subject_owner_rescheduled' => 'The client changed booking :reference — :name (pending confirmation)',
+    'owner_change_cancelled_heading' => 'Booking cancelled by the client',
+    'owner_change_cancelled_intro' => ':name cancelled their booking from their link. The slot is free again.',
+    'owner_change_rescheduled_heading' => 'Booking changed by the client',
+    'owner_change_rescheduled_intro' => ':name moved their booking to another day or time. It is pending: confirm it in the panel or on Telegram.',
+    'owner_change_before' => 'Before',
+    'owner_change_now' => 'Now',
+    'owner_change_panel' => 'Open the panel',
+
+    // ════════════════════════════════════════════════════════════════════
+    // 10. REMINDER — appointments/reminder (the day before)
+    // ════════════════════════════════════════════════════════════════════
+    'subject_reminder' => 'Reminder: your booking :reference is tomorrow at :time',
+    'reminder_title_tag' => 'Booking reminder',
+    'reminder_preheader' => 'Tomorrow, :date, at :time.',
+    'reminder_heading' => 'Your booking is tomorrow',
+    'reminder_intro' => 'Hi :name, this is a reminder of your booking tomorrow. Here are the details:',
+    'reminder_outro' => "If you can't make it after all, let us know as soon as possible with the button above or by replying to this email, so someone else can use the slot.",
+
 ];

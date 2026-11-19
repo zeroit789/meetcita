@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AppointmentChangedToOwner;
 use App\Mail\AppointmentConfirmationToClient;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
@@ -72,5 +73,30 @@ class EmailsTest extends TestCase
         $this->assertStringContainsString('Ana García', $html);
         $this->assertStringContainsString('martes 22 de septiembre', $html);
         $this->assertStringContainsString($cita->reference, $html);
+    }
+
+    public function test_los_avisos_al_dueno_de_cambios_del_cliente_se_renderizan(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-24', 'time' => '12:00', 'name' => 'Ana García']);
+
+        $cancelada = (new AppointmentChangedToOwner($cita, 'cancelada'))->render();
+        $this->assertStringContainsString(__('emails.owner_change_cancelled_heading', [], 'es'), $cancelada);
+        $this->assertStringContainsString('Ana García', $cancelada);
+
+        $mail = new AppointmentChangedToOwner($cita, 'reprogramada', '2026-09-22', '10:00');
+        $html = $mail->render();
+        $this->assertStringContainsStringIgnoringCase('martes 22 de septiembre', $html);
+        $this->assertStringContainsStringIgnoringCase('jueves 24 de septiembre', $html);
+        $this->assertStringContainsString($cita->reference, $mail->envelope()->subject);
+    }
+
+    public function test_el_cambio_recibido_del_cliente_sale_en_su_idioma(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-24', 'time' => '12:00', 'locale' => 'en']);
+
+        $html = (new AppointmentConfirmationToClient($cita, reprogramada: true))->locale('en')->render();
+
+        $this->assertStringContainsString(__('emails.client_rescheduled_heading', [], 'en'), $html);
+        $this->assertStringContainsString('/gestionar?signature=', $html);
     }
 }

@@ -95,12 +95,12 @@
                         <td style="padding:32px;">
 
                             <h1 style="margin:0 0 8px 0; font-family:Arial,Helvetica,sans-serif; color:#1f2937; font-size:22px; font-weight:bold;">
-                                {{ __('emails.client_heading') }}
+                                {{ __(! empty($reprogramada) ? 'emails.client_rescheduled_heading' : 'emails.client_heading') }}
                             </h1>
                             {{-- ES: El nombre se inserta en negrita morada dentro del saludo traducido.
                                  EN: The name is inserted bold-purple inside the translated greeting. --}}
                             <p style="margin:0 0 20px 0; font-family:Arial,Helvetica,sans-serif; color:#6b7280; font-size:15px; line-height:1.6;">
-                                {!! __('emails.client_intro', ['name' => '<strong style="color:#7c3aed;">' . e($appointment->name) . '</strong>']) !!}
+                                {!! __(! empty($reprogramada) ? 'emails.client_rescheduled_intro' : 'emails.client_intro', ['name' => '<strong style="color:#7c3aed;">' . e($appointment->name) . '</strong>']) !!}
                             </p>
 
                             {{-- 3. ===== BOOKING REFERENCE / Nº DE CITA ===== --}}
@@ -189,6 +189,10 @@
                                     </tr>
                                 </table>
                             @endisset
+
+                            {{-- ES: ¿No puedes venir? Enlace para cancelar o cambiar la cita.
+                                 EN: Can't make it? Link to cancel or change the booking. --}}
+                            @include('emails.partials.manage-link')
 
                             <p style="margin:28px 0 0 0; font-family:Arial,Helvetica,sans-serif; color:#374151; font-size:15px; line-height:1.6;">
                                 {{ __('emails.client_signoff') }}

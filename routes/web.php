@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AppointmentIcsController;
+use App\Http\Controllers\GestionarCitaController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Middleware\SetLocale;
@@ -18,6 +19,7 @@ use Illuminate\Support\Facades\Route;
 |  CITAS      GET  /citas                          -> view('citas') (Livewire)        [citas]
 |  IDIOMA     GET  /lang/{locale}                  -> closure (locale cookie)         [lang.switch]
 |  CITAS ICS  GET  /cita/{reference}/calendario.ics -> AppointmentIcsController@show  [cita.ics]
+|  GESTIONAR  GET  /cita/{reference}/gestionar     -> GestionarCitaController@show (firmada) [cita.gestionar]
 |  CAPTCHA    GET  /altcha/challenge               -> closure (ALTCHA challenge JSON) [altcha.challenge]
 |  TELEGRAM   POST /telegram/webhook               -> TelegramWebhookController@handle [telegram.webhook]
 |  PANEL      GET/POST /panel/*                     -> PanelController (login/index/logout) [panel.*]
@@ -70,6 +72,21 @@ Route::get('/lang/{locale}', function (string $locale) {
 Route::get('/cita/{reference}/calendario.ics', [AppointmentIcsController::class, 'show'])
     ->middleware('throttle:20,1')
     ->name('cita.ics');
+
+// ─── CITAS · GESTIONAR (manage my booking) / gestionar mi cita ────────────────
+// ES: Página del enlace FIRMADO de los correos al cliente para cancelar o
+//     cambiar su cita sin cuenta. 'signed:relative' valida la firma (sobre la
+//     ruta relativa, como el .ics) ANTES de mirar la base de datos: firma
+//     manipulada = 403. El GET solo muestra; las acciones son POST (Livewire).
+//     throttle:30,1 -> máximo 30 cargas/min por IP.
+// EN: Page of the SIGNED link in the client emails to cancel or change the
+//     booking without an account. 'signed:relative' validates the signature
+//     (over the relative path, like the .ics) BEFORE looking at the database:
+//     tampered signature = 403. The GET only shows; actions are POST (Livewire).
+//     throttle:30,1 -> max 30 loads/min per IP.
+Route::get('/cita/{reference}/gestionar', [GestionarCitaController::class, 'show'])
+    ->middleware(['throttle:30,1', 'signed:relative'])
+    ->name('cita.gestionar');
 
 // ─── CAPTCHA (ALTCHA) ─────────────────────────────────────────────────────────
 // ES: Reto del captcha propio (JSON). Sin caché y limitado a 30/min por IP.
