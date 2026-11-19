@@ -51,9 +51,22 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
     //     unserialized without it (and carries the link, as before).
     public bool $paraAsistentes = false;
 
+    // ES: Revisión de la cita al confirmarla. El correo va en cola y el
+    //     worker recarga la cita: si para entonces su revisión es otra (se
+    //     reprogramó o se canceló), este correo ya no es verdad y no se envía
+    //     (ver AppServiceProvider, MessageSending). Null en correos encolados
+    //     antes de actualizar: esos salen como antes.
+    // EN: The booking's revision when it was confirmed. The email is queued
+    //     and the worker reloads the booking: if by then its revision is
+    //     another (rescheduled or cancelled), this email is no longer true and
+    //     isn't sent (see AppServiceProvider, MessageSending). Null on emails
+    //     queued before upgrading: those go out as before.
+    public ?int $revisionEsperada = null;
+
     public function __construct(public Appointment $appointment, bool $paraAsistentes = false)
     {
         $this->paraAsistentes = $paraAsistentes;
+        $this->revisionEsperada = (int) $appointment->revision;
     }
 
     // 2. ES: Asunto traducido según el locale activo (idioma del cliente). El
@@ -93,6 +106,10 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
                 // EN: Signed "manage my booking" link (null if disabled and
                 //     never on the attendees' copy).
                 'gestionarUrl' => $this->enlaceGestionSoloTitular(),
+                // ES: true = la cita cambió desde que se encoló: no se envía.
+                // EN: true = the booking changed since it was queued: not sent.
+                'citaCambiada' => $this->revisionEsperada !== null
+                    && (int) $this->appointment->revision !== $this->revisionEsperada,
             ],
         );
     }

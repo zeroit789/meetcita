@@ -10,6 +10,7 @@ use App\Mail\AppointmentReminder;
 use App\Mail\AppointmentRequestedToOwner;
 use App\Models\Appointment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -109,5 +110,26 @@ class EmailsTest extends TestCase
         $mail = (new \ReflectionClass(AppointmentConfirmationToClient::class))->newInstanceWithoutConstructor();
 
         $this->assertFalse($mail->reprogramada);
+    }
+
+    public function test_un_correo_de_confirmada_no_sale_si_la_cita_cambio_mientras_esperaba_en_la_cola(): void
+    {
+        // ES: Se encola al confirmar (revisión 1); antes de que el worker lo
+        //     envíe, el cliente la reprograma (revisión 2, pendiente). El
+        //     worker recarga la cita: el correo ya no es verdad y no sale.
+        // EN: Queued on confirm (revision 1); before the worker sends it, the
+        //     client reschedules (revision 2, pending). The worker reloads the
+        //     booking: the email is no longer true and isn't sent.
+        $cita = Appointment::factory()->confirmada()->create(['revision' => 1, 'email' => 'cliente@example.com']);
+        $correo = new AppointmentConfirmed($cita);
+        $cita->forceFill(['status' => 'pendiente', 'revision' => 2]);
+
+        Mail::to('cliente@example.com')->sendNow($correo);
+        $this->assertCount(0, app('mail.manager')->mailer()->getSymfonyTransport()->messages());
+
+        // ES: Sin cambios, sí sale. EN: Unchanged, it is sent.
+        $cita->forceFill(['status' => 'confirmada', 'revision' => 1]);
+        Mail::to('cliente@example.com')->sendNow($correo);
+        $this->assertCount(1, app('mail.manager')->mailer()->getSymfonyTransport()->messages());
     }
 }

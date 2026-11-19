@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Http\Middleware\AdminPanelPassword;
 use App\Support\ModoDemo;
+use Illuminate\Mail\Events\MessageSending;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 
@@ -45,6 +47,14 @@ class AppServiceProvider extends ServiceProvider
         Livewire::addPersistentMiddleware([
             AdminPanelPassword::class,
         ]);
+
+        // ES: Un correo de cita que llega al worker cuando la cita ya cambió
+        //     (marca 'citaCambiada' en los datos de su vista) no se envía:
+        //     devolver false en MessageSending cancela el envío.
+        // EN: A booking email that reaches the worker when the booking has
+        //     already changed ('citaCambiada' flag in its view data) isn't
+        //     sent: returning false from MessageSending cancels the send.
+        Event::listen(MessageSending::class, fn (MessageSending $envio) => ($envio->data['citaCambiada'] ?? false) ? false : null);
 
         // ES: Demo pública (MEETCITA_DEMO=true): nada sale de verdad.
         // EN: Public demo (MEETCITA_DEMO=true): nothing is really sent.
