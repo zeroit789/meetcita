@@ -494,12 +494,15 @@ class GoogleCalendarService
                     //     alineados a la media hora (00 y 30) y los agrupamos por fecha.
                     // EN: Expand [start, end) to 30-min half-slots aligned to the
                     //     half hour (00 and 30) and group them by date.
-                    $cursor = $eInicio->copy();
-                    $cursor->minute($cursor->minute < 30 ? 0 : 30)->second(0);
+                    //     El tamaño del hueco sale de la config (slot_minutes), no de un 30 fijo.
+                    //     The slot size comes from the config (slot_minutes), not a fixed 30.
+                    $paso = max(1, (int) config('appointments.schedule.slot_minutes', 30));
+                    $cursor = $eInicio->copy()->second(0);
+                    $cursor->minute(intdiv($cursor->minute, $paso) * $paso);
 
                     while ($cursor->lt($eFin)) {
                         $porFecha[$cursor->toDateString()][] = $cursor->format('H:i');
-                        $cursor->addMinutes(30);
+                        $cursor->addMinutes($paso);
                     }
                 }
 

@@ -47,8 +47,10 @@ return [
     'cal_unavailable' => ', no disponible',
     'cal_weekdays' => 'L,M,X,J,V,S,D',
     'cal_hours_label' => 'Horario:',
-    'cal_hours_value' => 'Lunes a viernes · 9:30–18:00',
-    'cal_hours_note' => '(horario continuo)',
+    // ES: Horario generado desde la config (días y horas). EN: Schedule built from the config.
+    'cal_hours_value' => ':days · :hours',
+    'cal_days_range' => ':from a :to',
+    'cal_days_join' => ', ',
 
     // Step 2: pick a time / Paso 2: elegir hora
     'step2_cmd' => '$ ./availability.sh --slots',
@@ -108,12 +110,16 @@ return [
     // Duration labels (used across steps) / Etiquetas de duración (varios pasos)
     'dur_1hour' => '1 hora',
     'dur_30min' => '30 min',
+    'dur_minutes' => ':min min',
+    'dur_hours' => '{1} :h hora|[2,*] :h horas',
+    'dur_hours_minutes' => ':h h :min min',
     'dur_min_unit' => 'min', // ES: unidad de minutos en el panel / EN: minutes unit in the panel
 
     // ── 3. CLIENT ERRORS / ERRORES PARA EL CLIENTE ────────────────────────
     'err_too_many_attempts' => 'Demasiados intentos. Inténtalo de nuevo dentro de un rato.',
     'err_email_invalid' => 'El correo ":email" no es válido. Revisa la lista (sepáralos por comas).',
     'err_max_attendees' => 'Máximo :max asistentes.',
+    'err_email_limit' => 'Este correo ya tiene :max citas pendientes. Cuando pasen o se cancelen podrás pedir otra.',
     'err_retry_soon' => 'Inténtalo de nuevo en un momento.',
     'err_slot_taken' => 'Ese hueco acaba de ocuparse, elige otro.',
     'err_slot_taken_step2' => 'Ese hueco se acaba de ocupar. Elige otra hora, por favor.',

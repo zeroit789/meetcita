@@ -102,7 +102,18 @@ class AvailabilityService
      */
     public function duraciones(): array
     {
-        return (array) config('appointments.schedule.durations', [30, 60]);
+        return array_map('intval', (array) config('appointments.schedule.durations', [30, 60]));
+    }
+
+    /**
+     * ES: ¿Es una de las duraciones configuradas? Cualquier otra se rechaza
+     *     (antes se convertía en 30 y una cita de 240 min solo bloqueaba media hora).
+     * EN: Is it one of the configured durations? Anything else is rejected
+     *     (it used to become 30, so a 240-min booking only blocked half an hour).
+     */
+    public function duracionValida(int $duracion): bool
+    {
+        return in_array($duracion, $this->duraciones(), true);
     }
 
     /**
@@ -127,6 +138,32 @@ class AvailabilityService
     protected function esLaborable(Carbon $dia): bool
     {
         return in_array($dia->dayOfWeekIso, $this->diasLaborables(), true);
+    }
+
+    /**
+     * ES: Texto del horario para la página, sacado de la config (antes estaba
+     *     escrito a mano en las traducciones y no cambiaba con la config, F5).
+     *     Ej.: "lunes a viernes · 09:30–18:00".
+     * EN: Schedule text for the page, built from the config (it used to be
+     *     hand-written in the translations and didn't follow the config, F5).
+     *     E.g. "Monday to Friday · 09:30–18:00".
+     */
+    public function textoHorario(): string
+    {
+        $dias = $this->diasLaborables();
+        sort($dias);
+        $nombre = fn (int $iso) => Carbon::create(2024, 1, $iso)->locale(app()->getLocale())->isoFormat('dddd');
+
+        // ES: Días seguidos (L-V) como rango; si no, lista. EN: Consecutive days as a range; otherwise a list.
+        $seguidos = count($dias) > 2 && $dias === range($dias[0], $dias[count($dias) - 1]);
+        $textoDias = $seguidos
+            ? __('citas.cal_days_range', ['from' => $nombre($dias[0]), 'to' => $nombre($dias[count($dias) - 1])])
+            : implode(__('citas.cal_days_join'), array_map($nombre, $dias));
+
+        return __('citas.cal_hours_value', [
+            'days' => $textoDias,
+            'hours' => $this->horaApertura().'–'.$this->horaCierre(),
+        ]);
     }
 
     // ── 2. Caches — memoización por instancia ───────────────────────────────
@@ -332,16 +369,16 @@ class AvailabilityService
     }
 
     /**
-     * ES: Devuelve los INICIOS válidos de un día para una duración concreta.
-     *       - 30: cualquier medio-slot libre vale.
-     *       - 60: el medio-slot debe estar libre Y el siguiente también (sin
-     *         pasarse del cierre). Así nunca ofrecemos un inicio de 1h que choque
-     *         o termine después del cierre.
-     * EN: Returns the valid STARTS of a day for a given duration.
-     *       - 30: any free half-slot works.
-     *       - 60: the half-slot must be free AND the next half-slot too (without
-     *         going past closing). So we never offer a 1h start that clashes with
-     *         a following booking or ends after close.
+     * ES: Devuelve los INICIOS válidos de un día para una duración concreta:
+     *     todos los medios-slots que cubre la cita deben estar libres y la cita
+     *     debe terminar como muy tarde a la hora de cierre. Sirve para cualquier
+     *     duración múltiplo del hueco (30, 60, 90, 120…). Una duración que no
+     *     esté en la config no tiene ningún inicio válido.
+     * EN: Returns the valid STARTS of a day for a given duration: every
+     *     half-slot the booking covers must be free and the booking must end at
+     *     closing time at the latest. Works for any duration that is a multiple
+     *     of the slot (30, 60, 90, 120…). A duration not in the config has no
+     *     valid start at all.
      *
      * @param  string  $fecha  ES: día "YYYY-MM-DD" · EN: day "YYYY-MM-DD"
      * @param  int  $duracion  ES: minutos · EN: minutes
@@ -349,28 +386,34 @@ class AvailabilityService
      */
     public function huecosParaDuracion(string $fecha, int $duracion): array
     {
-        // ES: Normalizamos a una duración soportada. EN: Normalize to a supported duration.
-        $duracion = in_array($duracion, $this->duraciones(), true) ? $duracion : 30;
-
-        $libres = $this->huecosLibres($fecha);
-
-        // ES: Para una duración de un slot, todos los huecos libres son inicios válidos.
-        // EN: For one slot length, every free slot is a valid start.
-        if ($duracion === $this->slotMinutos()) {
-            return $libres;
+        // ES: Duración desconocida: nada que ofrecer. EN: Unknown duration: nothing to offer.
+        if (! $this->duracionValida($duracion)) {
+            return [];
         }
 
-        // ES: Para 1 hora: necesitamos dos medios-slots consecutivos libres.
-        // EN: For 1 hour: we need two consecutive free half-slots.
-        $libresSet = array_flip($libres);   // ES: mapa para búsqueda O(1) · EN: "HH:MM" => index, O(1) lookup
+        $libres = $this->huecosLibres($fecha);
+        $libresSet = array_flip($libres);   // ES: búsqueda O(1) · EN: O(1) lookup
         $validos = [];
 
         foreach ($libres as $inicio) {
-            $siguiente = $this->slotSiguiente($inicio);   // ES: medio-slot +30 min · EN: +30 min half-slot
+            // ES: La cita no puede terminar después del cierre.
+            // EN: The booking can't end after closing time.
+            $fin = Carbon::parse($inicio)->addMinutes($duracion)->format('H:i');
+            if ($fin > $this->horaCierre()) {
+                continue;
+            }
 
-            // ES: El siguiente debe existir (no pasarse del cierre) y estar libre.
-            // EN: Next must exist (not past close) and be free.
-            if ($siguiente !== null && isset($libresSet[$siguiente])) {
+            // ES: Todos los medios-slots que cubre deben estar libres.
+            // EN: Every half-slot it covers must be free.
+            $todosLibres = true;
+            foreach ($this->slotsCubiertos($inicio, $duracion) as $medio) {
+                if (! isset($libresSet[$medio])) {
+                    $todosLibres = false;
+                    break;
+                }
+            }
+
+            if ($todosLibres) {
                 $validos[] = $inicio;
             }
         }
@@ -393,9 +436,21 @@ class AvailabilityService
             //     "pasado/hoy" se decidan con el día real, no con el de la app (UTC).
             // EN: Parse the date in local business time so "past/today" is decided
             //     by the real business day, not the app's (UTC).
-            $dia = Carbon::parse($fecha, $this->zona())->startOfDay();
+            $dia = Carbon::createFromFormat('!Y-m-d', $fecha, $this->zona());
         } catch (\Exception $e) {
             return false; // ES: fecha mal formada · EN: malformed date
+        }
+
+        // ES: Solo cuenta el día escrito EXACTO ("YYYY-MM-DD"). Con una cadena
+        //     laxa (" 2026-11-06", "2026-9-6" o "2031-02-31", que desborda a
+        //     marzo) whereDate no vería las citas de ese día y el bloqueo por día
+        //     cambiaría de clave: era una vía a la doble reserva (F3).
+        // EN: Only the EXACT written day ("YYYY-MM-DD") counts. With a loose
+        //     string (" 2026-11-06", "2026-9-6" or "2031-02-31", which overflows
+        //     into March) whereDate wouldn't see that day's bookings and the
+        //     per-day lock would change key: a path to double booking (F3).
+        if ($dia === false || $dia->format('Y-m-d') !== $fecha) {
+            return false;
         }
 
         // ES: No días no laborables. EN: No non-working days.
@@ -445,8 +500,13 @@ class AvailabilityService
      */
     public function slotsCubiertos(string $hora, int $duracion): array
     {
-        $duracion = in_array($duracion, $this->duraciones(), true) ? $duracion : 30;
-        $numMedios = (int) ($duracion / $this->slotMinutos());   // ES: 30->1, 60->2 · EN: 30->1, 60->2
+        // ES: Duración REAL de la cita (aunque ya no esté en la config): una cita
+        //     de 60 min sigue ocupando 60 si el dueño quita esa duración.
+        //     Se redondea hacia arriba al número de medios-slots que toca.
+        // EN: The booking's REAL duration (even if no longer in the config): a
+        //     60-min booking still takes 60 if the owner removes that duration.
+        //     Rounded up to the number of half-slots it touches.
+        $numMedios = max(1, (int) ceil($duracion / $this->slotMinutos()));   // ES: 30->1, 60->2, 90->3
 
         $slots = [];
         $cursor = Carbon::parse($hora);
@@ -499,26 +559,5 @@ class AvailabilityService
         // ES: array_unique para no duplicar medios-slots que estén en ambas fuentes.
         // EN: array_unique to avoid duplicating slots present in both sources.
         return array_values(array_unique(array_merge($ocupados, $ocupadosGoogle)));
-    }
-
-    /**
-     * ES: Medio-slot inmediatamente posterior (+30 min). Devuelve null si ese
-     *     siguiente medio-slot caería fuera del horario (en el cierre o después),
-     *     porque entonces una cita de 1h no cabría.
-     * EN: Half-slot immediately after (+30 min). Returns null if that next
-     *     half-slot would fall outside hours (at or after close), because then a
-     *     1h booking would not fit.
-     */
-    protected function slotSiguiente(string $hora): ?string
-    {
-        $siguiente = Carbon::parse($hora)->addMinutes($this->slotMinutos())->format('H:i');
-
-        // ES: El siguiente medio-slot debe seguir siendo un inicio válido (< cierre).
-        // EN: The next half-slot must still be a valid start (< close).
-        if ($siguiente >= $this->horaCierre()) {
-            return null;
-        }
-
-        return $siguiente;
     }
 }

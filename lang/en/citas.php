@@ -47,8 +47,10 @@ return [
     'cal_unavailable' => ', unavailable',
     'cal_weekdays' => 'M,T,W,T,F,S,S',
     'cal_hours_label' => 'Working hours:',
-    'cal_hours_value' => 'Monday to Friday · 9:30am–6:00pm',
-    'cal_hours_note' => '(no lunch break)',
+    // ES: Horario generado desde la config (días y horas). EN: Schedule built from the config.
+    'cal_hours_value' => ':days · :hours',
+    'cal_days_range' => ':from to :to',
+    'cal_days_join' => ', ',
 
     // Step 2: pick a time / Paso 2: elegir hora
     'step2_cmd' => '$ ./availability.sh --slots',
@@ -106,12 +108,16 @@ return [
     // Duration labels (used across steps) / Etiquetas de duración (varios pasos)
     'dur_1hour' => '1 hour',
     'dur_30min' => '30 min',
+    'dur_minutes' => ':min min',
+    'dur_hours' => '{1} :h hour|[2,*] :h hours',
+    'dur_hours_minutes' => ':h h :min min',
     'dur_min_unit' => 'min',
 
     // ── 3. CLIENT ERRORS / ERRORES PARA EL CLIENTE ────────────────────────
     'err_too_many_attempts' => 'Too many attempts. Please try again in a little while.',
     'err_email_invalid' => 'The email ":email" is not valid. Check the list (separate them with commas).',
     'err_max_attendees' => 'Maximum :max attendees.',
+    'err_email_limit' => 'This email already has :max upcoming bookings. You can book again once they are over or cancelled.',
     'err_retry_soon' => 'Please try again in a moment.',
     'err_slot_taken' => 'That slot has just been taken, please pick another.',
     'err_slot_taken_step2' => 'That slot has just been taken. Please pick another time.',

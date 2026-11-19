@@ -104,6 +104,25 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // 4b. BOOKING LIMITS / LÍMITES DE RESERVA
+    // ES: Citas activas (sin cancelar, de hoy en adelante) que puede tener a la
+    //     vez un mismo correo. Frena a quien use el formulario para mandar
+    //     correos una y otra vez a la misma dirección. 0 = sin tope.
+    // EN: Active bookings (not cancelled, from today on) one email may hold at
+    //     once. Stops anyone using the form to send emails to the same address
+    //     over and over. 0 = no cap.
+    // ──────────────────────────────────────────────────────────────────────
+    'booking' => [
+        'max_active_per_email' => (int) env('APPOINTMENTS_MAX_ACTIVE_PER_EMAIL', 2),
+
+        // ES: Segundos que espera una reserva si otra del mismo día se está
+        //     guardando en ese instante; después pide reintentar.
+        // EN: Seconds a booking waits if another one for the same day is being
+        //     saved at that moment; after that it asks to retry.
+        'lock_wait_seconds' => 5,
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // 5. MODALITIES / MODALIDADES
     // ES: Ofrece citas online (enlace de Google Meet automático) y/o presenciales.
     //     Al menos una debe ser true. Si Google no está configurado, "online"

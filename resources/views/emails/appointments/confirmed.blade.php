@@ -31,9 +31,7 @@
     $fechaCita = $appointment->date->locale(app()->getLocale())->isoFormat(__('emails.date_format'));
 
     // ES: Duración legible (traducida). EN: Readable duration (translated).
-    $duracion = $appointment->duration == 60
-        ? __('emails.duration_one_hour')
-        : __('emails.duration_minutes', ['min' => $appointment->duration]);
+    $duracion = \App\Support\Duracion::etiqueta((int) $appointment->duration);
 
     // ES: Texto de la modalidad traducido (online = videollamada, presencial = en persona).
     // EN: Modality text translated (online = video call, presencial = in person).

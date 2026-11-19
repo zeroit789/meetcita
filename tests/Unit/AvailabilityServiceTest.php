@@ -123,14 +123,11 @@ class AvailabilityServiceTest extends TestCase
         $this->assertNotContains('17:30', $inicios);   // ES: terminaría a las 18:30 · EN: would end at 18:30
     }
 
-    public function test_una_duracion_no_soportada_se_trata_como_30_minutos(): void
+    public function test_una_duracion_no_soportada_no_tiene_inicios(): void
     {
-        $servicio = $this->servicio();
-
-        $this->assertSame(
-            $servicio->huecosParaDuracion('2026-09-22', 30),
-            $servicio->huecosParaDuracion('2026-09-22', 45)
-        );
+        // ES: Antes se trataba como 30 y una cita de 45 bloqueaba solo 30 (F2).
+        // EN: It used to be treated as 30, so a 45-min booking blocked only 30 (F2).
+        $this->assertSame([], $this->servicio()->huecosParaDuracion('2026-09-22', 45));
     }
 
     public function test_slot_sigue_libre_detecta_la_doble_reserva(): void

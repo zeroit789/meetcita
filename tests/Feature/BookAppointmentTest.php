@@ -168,7 +168,8 @@ class BookAppointmentTest extends TestCase
             ->call('selectDate', '2026-09-22')
             ->call('selectTime', '10:00')
             ->call('reserve')
-            ->assertHasErrors(['name' => 'required', 'email' => 'required', 'attendees' => 'required', 'message' => 'required']);
+            ->assertHasErrors(['name' => 'required', 'email' => 'required'])
+            ->assertHasNoErrors(['attendees', 'message']);
 
         $this->assertSame(0, Appointment::count());
     }

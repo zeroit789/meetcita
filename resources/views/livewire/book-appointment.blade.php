@@ -149,7 +149,7 @@
         </svg>
         <p class="font-sans text-base text-ink">
           <span class="font-semibold text-brand-glow">{{ __('citas.cal_hours_label') }}</span>
-          {{ __('citas.cal_hours_value') }} <span class="text-muted">{{ __('citas.cal_hours_note') }}</span>
+          {{ app(\App\Services\AvailabilityService::class)->textoHorario() }}
         </p>
       </div>
     </div>
@@ -246,7 +246,7 @@
         {{ __('citas.step3_summary_at') }}
         <span class="text-brand-glow font-medium">{{ $selectedTime }}</span>
         ·
-        <span class="text-brand-glow font-medium">{{ $duration === 60 ? __('citas.dur_1hour') : __('citas.dur_30min') }}</span>
+        <span class="text-brand-glow font-medium">{{ \App\Support\Duracion::etiqueta($duration) }}</span>
       </p>
 
       {{-- wire:submit fires reserve() without reloading / sin recargar --}}
@@ -405,7 +405,7 @@
         <span class="text-ink font-medium">{{ $confirmedDate }}</span>
         {{ __('citas.step4_summary_at') }}
         <span class="text-ink font-medium">{{ $confirmedTime }}</span>
-        ({{ $confirmedDuration === 60 ? __('citas.dur_1hour') : __('citas.dur_30min') }})
+        ({{ \App\Support\Duracion::etiqueta((int) $confirmedDuration) }})
         {{ __('citas.step4_summary_post') }}
       </p>
 

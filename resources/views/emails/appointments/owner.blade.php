@@ -45,9 +45,7 @@
 
     // ES: Duración legible: 60 min → "1 hora", resto → "30 min".
     // EN: Readable duration: 60 min → "1 hour", otherwise "30 min".
-    $duracion = $appointment->duration == 60
-        ? __('emails.duration_one_hour', [], $loc)
-        : __('emails.duration_minutes', ['min' => $appointment->duration], $loc);
+    $duracion = \App\Support\Duracion::etiqueta((int) $appointment->duration, $loc);
 
     // ES: Estado con primera letra en mayúscula (ej: "Pendiente").
     // EN: Status with first letter uppercased (e.g. "Pending"/"Pendiente").

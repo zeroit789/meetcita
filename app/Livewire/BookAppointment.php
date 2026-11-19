@@ -7,13 +7,16 @@ use App\Mail\AppointmentRequestedToOwner;
 use App\Models\Appointment;
 use App\Services\AvailabilityService;
 use App\Services\TelegramNotifier;
+use App\Support\Duracion;
 use Carbon\Carbon;
+use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 
@@ -50,15 +53,28 @@ class BookAppointment extends Component
 {
     // ── 1. STATE EN / ES ─────────────────────────────────────────────────
 
+    // ES: Paso, día, hora y duración los fija SOLO el servidor (selectDate,
+    //     selectTime y setDuration, tras comprobarlos). #[Locked] impide que el
+    //     navegador los escriba: antes se podía reservar 240 min o una fecha
+    //     laxa mandando el valor a mano (F2, F3).
+    // EN: Step, day, time and duration are set ONLY by the server (selectDate,
+    //     selectTime and setDuration, after checking them). #[Locked] stops the
+    //     browser from writing them: before, 240 min or a loose date could be
+    //     booked by sending the value by hand (F2, F3).
+
     // ES: Paso actual del wizard (1..4; 4 = confirmación final).
     // EN: Current wizard step (1..4; 4 = final confirmation).
+    #[Locked]
     public int $step = 1;
 
     // ES: Selección del usuario. / EN: User selection.
+    #[Locked]
     public string $selectedDate = '';  // ES: día elegido / EN: chosen day "YYYY-MM-DD"
 
+    #[Locked]
     public string $selectedTime = '';  // ES: hora de inicio / EN: chosen start "HH:MM"
 
+    #[Locked]
     public int $duration = 30;         // ES: minutos / EN: minutes
 
     // ES: Modalidad de la cita: 'online' (Meet) o 'presencial'.
@@ -76,8 +92,9 @@ class BookAppointment extends Component
     #[Validate('nullable|string|max:30')]
     public string $phone = '';
 
-    // ES: Asistentes (obligatorio). / EN: People attending the meeting (required).
-    #[Validate('required|string|min:2|max:255')]
+    // ES: Personas que asistirán (OPCIONAL: en una cita de una persona sobra).
+    // EN: People attending (OPTIONAL: pointless for a one-person meeting).
+    #[Validate('nullable|string|max:255')]
     public string $attendees = '';
 
     // ES: Correos extra a invitar (OPCIONAL), separados por comas. Longitud
@@ -87,8 +104,11 @@ class BookAppointment extends Component
     #[Validate('nullable|string|max:500')]
     public string $attendeeEmails = '';
 
-    // ES: Qué tratar (obligatorio). / EN: What they want to discuss (required).
-    #[Validate('required|string|min:5|max:1000')]
+    // ES: Qué tratar (OPCIONAL). No se obliga a escribir nada: en una clínica
+    //     invitaría a contar datos de salud que no hacen falta para la cita.
+    // EN: What to discuss (OPTIONAL). Nothing is forced: at a clinic it would
+    //     invite people to share health data the booking doesn't need.
+    #[Validate('nullable|string|max:1000')]
     public string $message = '';
 
     // ES: Honeypot anti-spam: campo oculto que un humano nunca rellena. Si llega
@@ -125,6 +145,10 @@ class BookAppointment extends Component
         $first = Carbon::parse($this->availability()->rangoReservable()['min']);
         $this->viewMonth = (int) $first->month;
         $this->viewYear = (int) $first->year;
+
+        // ES: Duración inicial: la primera de la config (no un 30 fijo).
+        // EN: Initial duration: the first configured one (not a fixed 30).
+        $this->duration = $this->availability()->duraciones()[0] ?? 30;
 
         // ES: Respetamos el contrato de modalidades de config. El valor por
         //     defecto es 'online'; si online está desactivado pero presencial
@@ -306,7 +330,7 @@ class BookAppointment extends Component
     {
         // ES: Solo duraciones soportadas (las de config, vía el servicio).
         // EN: Only supported durations (the configured ones, via the service).
-        if (! in_array($duration, $this->availability()->duraciones(), true)) {
+        if (! $this->availability()->duracionValida($duration)) {
             return;
         }
 
@@ -385,6 +409,34 @@ class BookAppointment extends Component
         // EN: 1) Validate everything (including the 'website' honeypot).
         $this->validate();
 
+        // ES: 1a) Día, hora y duración: el servidor vuelve a comprobarlos aunque
+        //     estén bloqueados (#[Locked]): formato exacto y duración de la config.
+        // EN: 1a) Day, time and duration: the server re-checks them even though
+        //     they are locked (#[Locked]): exact format and a configured duration.
+        if (! $this->availability()->esFechaReservable($this->selectedDate)
+            || ! preg_match('/^\d{2}:\d{2}$/', $this->selectedTime)
+            || ! $this->availability()->duracionValida($this->duration)) {
+            $this->selectedTime = '';
+            $this->step = 2;
+            $this->addError('selectedTime', __('citas.err_slot_taken_step2'));
+
+            return;
+        }
+
+        // ES: 1d) Tope de citas activas por correo (de hoy en adelante, sin
+        //     cancelar). Evita usar el acuse para escribir una y otra vez a la
+        //     misma dirección. 0 = sin tope.
+        // EN: 1d) Cap of active bookings per email (from today on, not
+        //     cancelled). Stops the acknowledgement from being used to write to
+        //     the same address over and over. 0 = no cap.
+        if ($this->correoEnElTope()) {
+            $this->addError('email', __('citas.err_email_limit', [
+                'max' => (int) config('appointments.booking.max_active_per_email', 2),
+            ]));
+
+            return;
+        }
+
         // ES: 1b) Validación EXTRA de correos de asistentes (campo opcional).
         //     Separados por comas; cada uno debe ser válido. Vacío = no hay nada.
         // EN: 1b) EXTRA validation of attendee emails (optional field). They are
@@ -433,10 +485,16 @@ class BookAppointment extends Component
         //     The finally releases the lock no matter what.
         $lock = Cache::lock('reserva-dia:'.$this->selectedDate, 10);
 
-        // ES: Si en 5s no conseguimos el lock, pedimos reintentar en un momento.
-        // EN: If we can't get the lock in 5s, ask the user to retry shortly.
-        if (! $lock->block(5)) {
-            $this->addError('time', __('citas.err_retry_soon'));
+        // ES: Si en 5 s no conseguimos el lock, pedimos reintentar en un momento.
+        //     block() LANZA LockTimeoutException (no devuelve false): antes la
+        //     excepción escapaba y el cliente veía un error genérico (F8).
+        // EN: If we can't get the lock in 5 s, ask the user to retry shortly.
+        //     block() THROWS LockTimeoutException (it doesn't return false):
+        //     the exception used to escape and the client saw a generic error (F8).
+        try {
+            $lock->block((int) config('appointments.booking.lock_wait_seconds', 5));
+        } catch (LockTimeoutException) {
+            $this->addError('selectedTime', __('citas.err_retry_soon'));
 
             return;
         }
@@ -474,10 +532,10 @@ class BookAppointment extends Component
                         'duration' => $this->duration,
                         'modality' => $this->modality,        // 'online' | 'presencial'
                         'locale' => app()->getLocale(),     // ES: idioma del cliente / EN: client language
-                        'attendees' => $this->attendees,
+                        'attendees' => trim($this->attendees) ?: null,
                         'attendee_emails' => trim($this->attendeeEmails) ?: null,
-                        'message' => $this->message,
-                        'reason' => $this->message,         // ES: columna antigua / EN: legacy column
+                        'message' => trim($this->message) ?: null,
+                        'reason' => trim($this->message),   // ES: columna antigua NOT NULL / EN: legacy NOT NULL column
                     ]);
                 });
             } catch (QueryException $e) {
@@ -485,14 +543,18 @@ class BookAppointment extends Component
                 //     real ocupó el hueco a la vez. Avisamos sin romper.
                 // EN: The partial unique (date, time) index fired: a real race
                 //     took the slot at the same time. Warn without breaking.
-                Log::warning('Booking rejected by slot collision (unique index): '.$e->getMessage());
+                // ES: Solo la clase: el texto de la excepción lleva la SQL con los
+                //     datos del cliente y acabaría en laravel.log (F10).
+                // EN: Only the class: the exception text carries the SQL with the
+                //     client's data and would end up in laravel.log (F10).
+                Log::warning('Booking rejected by slot collision (unique index) ('.$e::class.').');
                 $this->selectedTime = '';
                 $this->step = 2;
                 $this->addError('time', __('citas.err_slot_taken'));
 
                 return;
             } catch (\Throwable $e) {
-                Log::error('Error creating the appointment: '.$e->getMessage());
+                Log::error('Error creating the appointment ('.$e::class.').');
                 $appointment = null;
             }
         } finally {
@@ -530,7 +592,7 @@ class BookAppointment extends Component
                 ->locale($appointment->locale)
                 ->send(new AppointmentConfirmationToClient($appointment));
         } catch (\Throwable $e) {
-            Log::error('Appointment '.$appointment->reference.' created, but the email failed: '.$e->getMessage());
+            Log::error('Appointment '.$appointment->reference.' created, but the email failed ('.$e::class.').');
         }
 
         // ES: 4b) Aviso opcional por Telegram con botones confirmar/rechazar.
@@ -540,7 +602,7 @@ class BookAppointment extends Component
         try {
             $this->notifyTelegram($appointment);
         } catch (\Throwable $e) {
-            Log::error('Appointment '.$appointment->reference.' created, but Telegram failed: '.$e->getMessage());
+            Log::error('Appointment '.$appointment->reference.' created, but Telegram failed ('.$e::class.').');
         }
 
         // ES: 5) Guardamos datos para la pantalla de confirmación y avanzamos.
@@ -557,6 +619,26 @@ class BookAppointment extends Component
     }
 
     /**
+     * ES: ¿Ese correo ya tiene el máximo de citas activas (sin cancelar y de hoy
+     *     en adelante, en la zona del negocio)? Sin distinguir mayúsculas.
+     * EN: Does that email already hold the maximum of active bookings (not
+     *     cancelled, from today on, in the business zone)? Case-insensitive.
+     */
+    protected function correoEnElTope(): bool
+    {
+        $tope = (int) config('appointments.booking.max_active_per_email', 2);
+        if ($tope <= 0) {
+            return false;
+        }
+
+        return Appointment::query()
+            ->whereRaw('lower(email) = ?', [mb_strtolower(trim($this->email))])
+            ->where('status', '!=', 'cancelada')
+            ->whereDate('date', '>=', Carbon::today($this->tz())->toDateString())
+            ->count() >= $tope;
+    }
+
+    /**
      * ES: Avisa al dueño por Telegram de una nueva cita, con botones para
      *     confirmarla o rechazarla desde el móvil. El texto es neutro (sin
      *     nombres personales): usa los datos del cliente y la marca de config.
@@ -567,16 +649,19 @@ class BookAppointment extends Component
     protected function notifyTelegram(Appointment $cita): void
     {
         $date = $cita->date->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM');
-        $dur = $cita->duration == 60 ? '1h' : $cita->duration.' min';
+        $dur = Duracion::etiqueta((int) $cita->duration);
 
         // ES: Texto del aviso (HTML). e() escapa lo que escribe el cliente.
         // EN: Notice text (HTML). e() escapes whatever the client typed.
         $text = "🗓 <b>New appointment</b> · <code>{$cita->reference}</code>\n\n"
             .'👤 <b>'.e($cita->name)."</b>\n"
-            ."📅 {$date} · <b>{$cita->time}</b> ({$dur})\n"
-            .'✉️ '.e($cita->email)."\n"
-            .'👥 '.e($cita->attendees)."\n\n"
-            .'💬 '.e($cita->message);
+            ."📅 {$date} · <b>{$cita->time}</b> ({$dur})";
+        // ES: Lo mínimo: referencia, nombre, día y hora. Telegram es otro
+        //     destinatario (y fuera de la UE): email, asistentes y mensaje se
+        //     ven en el panel o en el correo, no aquí.
+        // EN: The bare minimum: reference, name, day and time. Telegram is
+        //     another recipient (and outside the EU): email, attendees and
+        //     message are seen in the panel or the email, not here.
 
         // ES: Botones: confirmar (ac:ID) / rechazar (ar:ID).
         // EN: Buttons: confirm (ac:ID) / reject (ar:ID).
@@ -602,7 +687,7 @@ class BookAppointment extends Component
             'confirmedDate', 'confirmedTime', 'confirmedDuration', 'confirmedRef',
         ]);
         $this->step = 1;
-        $this->duration = 30;       // ES: por defecto tras reset / EN: default after reset
+        $this->duration = $this->availability()->duraciones()[0] ?? 30; // ES: por defecto / EN: default
 
         // ES: Modalidad por defecto tras el reset, respetando el contrato de
         //     config (misma regla que mount(): cae a presencial si online está
