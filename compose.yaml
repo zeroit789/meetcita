@@ -1,0 +1,55 @@
+# ==============================================================================
+# Meetcita — ejemplo con Docker Compose / Docker Compose example
+# ==============================================================================
+# ES: Arranca la web en http://localhost:8080 y el scheduler (correos en cola,
+#     recordatorios y borrado de datos antiguos). Pasos:
+#       1. cp .env.example .env  y rellénalo (marca, correo, contraseña del panel…)
+#       2. docker compose build
+#       3. docker compose run --rm web php artisan key:generate --show
+#          y pega el resultado en APP_KEY del .env
+#       4. docker compose up -d
+#     Detrás de tu proxy (Caddy, Traefik, Coolify…) pon TRUSTED_PROXIES.
+# EN: Starts the site on http://localhost:8080 and the scheduler (queued
+#     emails, reminders and old-data purge). Steps:
+#       1. cp .env.example .env  and fill it in (brand, email, panel password…)
+#       2. docker compose build
+#       3. docker compose run --rm web php artisan key:generate --show
+#          and paste the result into APP_KEY in .env
+#       4. docker compose up -d
+#     Behind your proxy (Caddy, Traefik, Coolify…) set TRUSTED_PROXIES.
+# ==============================================================================
+services:
+  web:
+    build: .
+    image: meetcita:latest
+    env_file: .env
+    environment:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /app/database/database.sqlite
+    ports:
+      - "8080:80"
+    volumes:
+      - datos:/app/database
+      - almacen:/app/storage
+    restart: unless-stopped
+
+  # ES: Scheduler: ejecuta las tareas programadas cada minuto (cola de correos, purga…).
+  # EN: Scheduler: runs the scheduled tasks every minute (email queue, purge…).
+  scheduler:
+    image: meetcita:latest
+    depends_on:
+      - web
+    env_file: .env
+    environment:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /app/database/database.sqlite
+      MEETCITA_MIGRATE: "false"
+    command: ["php", "artisan", "schedule:work"]
+    volumes:
+      - datos:/app/database
+      - almacen:/app/storage
+    restart: unless-stopped
+
+volumes:
+  datos:
+  almacen:

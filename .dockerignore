@@ -1,0 +1,19 @@
+# ES: Fuera de la imagen: secretos, dependencias locales y datos de prueba.
+# EN: Kept out of the image: secrets, local dependencies and test data.
+.env
+.env.backup
+.env.production
+.git
+.local
+.codegraph
+node_modules
+vendor
+public/build
+public/hot
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+database/*.sqlite
+.phpunit.result.cache
+bootstrap/cache/*.php
