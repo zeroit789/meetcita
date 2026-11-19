@@ -29,11 +29,24 @@ class AppointmentReminder extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
+    // ES: true en la copia para los asistentes extra: el mismo correo SIN el
+    //     enlace de «gestionar mi cita», que es solo del titular. Propiedad
+    //     normal con valor por defecto: un correo ya en cola antes de
+    //     actualizar se deserializa sin ella (y lleva el enlace, como antes).
+    // EN: true on the copy for the extra attendees: the same email WITHOUT
+    //     the "manage my booking" link, which belongs to the holder only.
+    //     Plain property with a default: an email queued before upgrading is
+    //     unserialized without it (and carries the link, as before).
+    public bool $paraAsistentes = false;
+
     /**
-     * ES: Recibe la cita que se recuerda.
-     * EN: Receives the booking being reminded.
+     * ES: Recibe la cita que se recuerda (y si es la copia de los asistentes).
+     * EN: Receives the booking being reminded (and whether it is the attendees' copy).
      */
-    public function __construct(public Appointment $appointment) {}
+    public function __construct(public Appointment $appointment, bool $paraAsistentes = false)
+    {
+        $this->paraAsistentes = $paraAsistentes;
+    }
 
     /**
      * ES: Asunto traducido (idioma del cliente) con la referencia y la hora;
@@ -66,7 +79,8 @@ class AppointmentReminder extends Mailable implements ShouldQueue
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
                 'icsUrl' => $this->appointment->urlIcs(),
-                'gestionarUrl' => $this->appointment->urlGestionar(),
+                // ES: Nunca en la copia de los asistentes. EN: Never on the attendees' copy.
+                'gestionarUrl' => $this->paraAsistentes ? null : $this->appointment->urlGestionar(),
             ],
         );
     }

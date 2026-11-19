@@ -9,6 +9,7 @@ use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Services\GoogleCalendarService;
 use App\Services\TelegramNotifier;
+use App\Support\CorreoCliente;
 use App\Support\Eventos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -176,7 +177,15 @@ class TelegramWebhookController extends Controller
                     //     service degrades gracefully if Google isn't configured.
                     app(GoogleCalendarService::class)->crearEvento($cita);
 
-                    $this->enviarMail($cita->email, new AppointmentConfirmed($cita), $cita->emailsAsistentesExtra(), $cita->locale ?? config('appointments.default_locale'));
+                    // ES: Titular con el enlace de gestionar; asistentes aparte y sin él.
+                    // EN: Holder with the manage link; attendees separately without it.
+                    if ($cita->tieneEmail()) {
+                        try {
+                            CorreoCliente::enviar($cita, fn (bool $asistentes) => new AppointmentConfirmed($cita, paraAsistentes: $asistentes));
+                        } catch (\Throwable $e) {
+                            Log::error('Telegram webhook: email failed ('.$e::class.').');
+                        }
+                    }
 
                     // ES: Evento para el CRM. EN: Event for the CRM.
                     Eventos::disparar(new CitaConfirmada($cita, CitaConfirmada::SOURCE_TELEGRAM));

@@ -9,6 +9,7 @@ use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Services\GoogleCalendarService;
+use App\Support\CorreoCliente;
 use App\Support\Eventos;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -152,18 +153,17 @@ class PanelCitas extends Component
             Log::error('Could not create the Google Calendar event on confirm ('.$e::class.').');
         }
 
-        // ES: Avisamos al cliente de que su cita queda confirmada (cliente en To
-        //     + asistentes extra en Cc), en el idioma del cliente. Sin correo
-        //     (alta manual por teléfono) no se envía nada.
-        // EN: Tell the client their appointment is confirmed (client in To +
-        //     extra attendees in Cc), in the client's language. Without an
-        //     email (manual phone entry) nothing is sent.
+        // ES: Avisamos al cliente de que su cita queda confirmada, en su idioma:
+        //     el titular con el enlace de gestionar y los asistentes extra en
+        //     un envío aparte sin él. Sin correo (alta manual por teléfono) no
+        //     se envía nada.
+        // EN: Tell the client their appointment is confirmed, in their
+        //     language: the holder with the manage link and the extra
+        //     attendees in a separate send without it. Without an email
+        //     (manual phone entry) nothing is sent.
         if ($cita->tieneEmail()) {
             try {
-                Mail::to($cita->email)
-                    ->cc($cita->emailsAsistentesExtra())
-                    ->locale($cita->locale ?? config('appointments.default_locale', 'es'))
-                    ->send(new AppointmentConfirmed($cita));
+                CorreoCliente::enviar($cita, fn (bool $asistentes) => new AppointmentConfirmed($cita, paraAsistentes: $asistentes));
             } catch (\Throwable $e) {
                 Log::error('Could not send the confirmed-appointment email ('.$e::class.').');
             }

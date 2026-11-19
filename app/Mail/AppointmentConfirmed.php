@@ -40,9 +40,19 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
 
     // 1. ES: Recibe la cita para mostrar sus detalles.
     //    EN: Receives the appointment to render its details.
-    public function __construct(public Appointment $appointment)
+    // ES: true en la copia para los asistentes extra: el mismo correo SIN el
+    //     enlace de «gestionar mi cita», que es solo del titular. Propiedad
+    //     normal con valor por defecto: un correo ya en cola antes de
+    //     actualizar se deserializa sin ella (y lleva el enlace, como antes).
+    // EN: true on the copy for the extra attendees: the same email WITHOUT
+    //     the "manage my booking" link, which belongs to the holder only.
+    //     Plain property with a default: an email queued before upgrading is
+    //     unserialized without it (and carries the link, as before).
+    public bool $paraAsistentes = false;
+
+    public function __construct(public Appointment $appointment, bool $paraAsistentes = false)
     {
-        //
+        $this->paraAsistentes = $paraAsistentes;
     }
 
     // 2. ES: Asunto traducido según el locale activo (idioma del cliente). El
@@ -77,9 +87,11 @@ class AppointmentConfirmed extends Mailable implements ShouldQueue
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
                 'icsUrl' => $this->appointment->urlIcs(),   // ES: enlace firmado / EN: signed link
-                // ES: Enlace firmado a «gestionar mi cita» (null si está desactivado).
-                // EN: Signed "manage my booking" link (null if disabled).
-                'gestionarUrl' => $this->appointment->urlGestionar(),
+                // ES: Enlace firmado a «gestionar mi cita» (null si está desactivado
+                //     y nunca en la copia de los asistentes).
+                // EN: Signed "manage my booking" link (null if disabled and
+                //     never on the attendees' copy).
+                'gestionarUrl' => $this->paraAsistentes ? null : $this->appointment->urlGestionar(),
             ],
         );
     }

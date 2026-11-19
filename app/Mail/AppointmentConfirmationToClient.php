@@ -51,9 +51,20 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
     //    before upgrading is unserialized without it.
     public bool $reprogramada = false;
 
-    public function __construct(public Appointment $appointment, bool $reprogramada = false)
+    // ES: true en la copia para los asistentes extra: el mismo correo SIN el
+    //     enlace de «gestionar mi cita», que es solo del titular. Propiedad
+    //     normal con valor por defecto: un correo ya en cola antes de
+    //     actualizar se deserializa sin ella (y lleva el enlace, como antes).
+    // EN: true on the copy for the extra attendees: the same email WITHOUT
+    //     the "manage my booking" link, which belongs to the holder only.
+    //     Plain property with a default: an email queued before upgrading is
+    //     unserialized without it (and carries the link, as before).
+    public bool $paraAsistentes = false;
+
+    public function __construct(public Appointment $appointment, bool $reprogramada = false, bool $paraAsistentes = false)
     {
         $this->reprogramada = $reprogramada;
+        $this->paraAsistentes = $paraAsistentes;
     }
 
     // 2. ES: Asunto para el cliente. Traducido según el locale activo (fijado con
@@ -84,9 +95,11 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
                 'icsUrl' => $this->appointment->urlIcs(),   // ES: enlace firmado / EN: signed link
-                // ES: Enlace firmado a «gestionar mi cita» (null si está desactivado).
-                // EN: Signed "manage my booking" link (null if disabled).
-                'gestionarUrl' => $this->appointment->urlGestionar(),
+                // ES: Enlace firmado a «gestionar mi cita» (null si está desactivado
+                //     y nunca en la copia de los asistentes).
+                // EN: Signed "manage my booking" link (null if disabled and
+                //     never on the attendees' copy).
+                'gestionarUrl' => $this->paraAsistentes ? null : $this->appointment->urlGestionar(),
                 'reprogramada' => $this->reprogramada,
             ],
         );

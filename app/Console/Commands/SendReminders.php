@@ -4,11 +4,11 @@ namespace App\Console\Commands;
 
 use App\Mail\AppointmentReminder;
 use App\Models\Appointment;
+use App\Support\CorreoCliente;
 use App\Support\Horario;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
 
 /*
 |==============================================================================
@@ -129,10 +129,13 @@ class SendReminders extends Command
             }
 
             try {
-                Mail::to($cita->email)
-                    ->cc($cita->emailsAsistentesExtra())
-                    ->locale($cita->idiomaCita())
-                    ->sendNow(new AppointmentReminder($cita));
+                // ES: Titular con el enlace de gestionar; asistentes aparte y sin
+                //     él. Si solo falla la copia de los asistentes, no se suelta
+                //     la marca (el titular ya lo tiene).
+                // EN: Holder with the manage link; attendees separately without
+                //     it. If only the attendees' copy fails, the mark is not
+                //     released (the holder already has it).
+                CorreoCliente::enviar($cita, fn (bool $asistentes) => new AppointmentReminder($cita, paraAsistentes: $asistentes), ahora: true);
                 $enviados++;
             } catch (\Throwable $e) {
                 // ES: Se suelta para reintentar en la siguiente vuelta, pero SOLO si

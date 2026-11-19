@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Services\AvailabilityService;
 use App\Services\CaptchaService;
 use App\Services\TelegramNotifier;
+use App\Support\CorreoCliente;
 use App\Support\Eventos;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -613,14 +614,13 @@ class BookAppointment extends Component
             Mail::to(config('appointments.brand.owner_email'))
                 ->send(new AppointmentRequestedToOwner($appointment));
 
-            // ES: Cliente en To + asistentes extra en Cc: todos reciben el
-            //     "solicitud recibida", en el idioma del cliente.
-            // EN: Client in To + extra attendees in Cc: everyone gets the
-            //     "request received" email, in the client's language.
-            Mail::to($appointment->email)
-                ->cc($appointment->emailsAsistentesExtra())
-                ->locale($appointment->locale)
-                ->send(new AppointmentConfirmationToClient($appointment));
+            // ES: Todos reciben el "solicitud recibida", en el idioma del
+            //     cliente: el titular con el enlace de gestionar y los
+            //     asistentes extra en un envío aparte sin él.
+            // EN: Everyone gets the "request received" email, in the client's
+            //     language: the holder with the manage link and the extra
+            //     attendees in a separate send without it.
+            CorreoCliente::enviar($appointment, fn (bool $asistentes) => new AppointmentConfirmationToClient($appointment, paraAsistentes: $asistentes));
         } catch (\Throwable $e) {
             Log::error('Appointment '.$appointment->reference.' created, but the email failed ('.$e::class.').');
         }

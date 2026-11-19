@@ -10,6 +10,7 @@ use App\Mail\AppointmentChangedToOwner;
 use App\Mail\AppointmentConfirmationToClient;
 use App\Mail\AppointmentConfirmed;
 use App\Models\Appointment;
+use App\Support\CorreoCliente;
 use App\Support\Eventos;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
@@ -278,14 +279,13 @@ class GestionCitas
             Log::error('Reschedule of '.$cita->reference.': Telegram failed ('.$e::class.').');
         }
 
-        // ES: Aviso al cliente (y asistentes en Cc), en su idioma, con la cita nueva.
-        // EN: Notice to the client (and attendees in Cc), in their language, with the new booking.
+        // ES: Aviso al cliente, en su idioma, con la cita nueva: el titular con
+        //     el enlace NUEVO de gestionar; los asistentes, aparte y sin enlace.
+        // EN: Notice to the client, in their language, with the new booking:
+        //     the holder with the NEW manage link; attendees separately, no link.
         if ($cita->tieneEmail()) {
             try {
-                Mail::to($cita->email)
-                    ->cc($cita->emailsAsistentesExtra())
-                    ->locale($cita->idiomaCita())
-                    ->send(new AppointmentConfirmationToClient($cita, reprogramada: true));
+                CorreoCliente::enviar($cita, fn (bool $asistentes) => new AppointmentConfirmationToClient($cita, reprogramada: true, paraAsistentes: $asistentes));
             } catch (\Throwable $e) {
                 Log::error('Reschedule of '.$cita->reference.': client email failed ('.$e::class.').');
             }
