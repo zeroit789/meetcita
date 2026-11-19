@@ -110,6 +110,16 @@ return [
     // Duration labels (used across steps) / Etiquetas de duración (varios pasos)
     'dur_1hour' => '1 hora',
     'dur_30min' => '30 min',
+    // ES: Textos de calendario (.ics y Google), en el idioma de la cita.
+    // EN: Calendar texts (.ics and Google), in the booking's language.
+    'cal_location_online' => 'Online',
+    'cal_location_in_person' => 'Presencial',
+    'cal_desc_topic' => 'Asunto: :text',
+    'cal_desc_video' => 'Videollamada: :url',
+    'cal_desc_reference' => 'Referencia: :ref',
+    'cal_desc_requested_from' => 'Cita solicitada desde :host',
+    'cal_desc_attendees' => 'Asistentes: :text',
+    'cal_desc_modality' => 'Modalidad: :text',
     'dur_minutes' => ':min min',
     'dur_hours' => '{1} :h hora|[2,*] :h horas',
     'dur_hours_minutes' => ':h h :min min',

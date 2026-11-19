@@ -44,8 +44,11 @@ class AppointmentTest extends TestCase
 
     public function test_la_ubicacion_es_el_meet_si_es_online_y_hay_enlace(): void
     {
-        $cita = Appointment::factory()->make(['modality' => 'online']);
-        $this->assertSame('Presencial', $cita->ubicacionCalendario());
+        // ES: Online sin enlace (sin Google) sale «Online», no «Presencial» (F6).
+        // EN: Online without a link (no Google) shows "Online", not "In person" (F6).
+        $cita = Appointment::factory()->make(['modality' => 'online', 'locale' => 'es']);
+        $this->assertSame('Online', $cita->ubicacionCalendario());
+        $this->assertSame('Presencial', Appointment::factory()->make(['modality' => 'presencial', 'locale' => 'es'])->ubicacionCalendario());
 
         $cita->google_meet_url = 'https://meet.google.com/abc-defg-hij';
         $this->assertSame('https://meet.google.com/abc-defg-hij', $cita->ubicacionCalendario());

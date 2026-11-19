@@ -79,7 +79,13 @@ class AppointmentIcsController extends Controller
 
         // ES: Mapeamos el estado de la cita al STATUS del VEVENT.
         // EN: Map the booking status to the VEVENT STATUS.
-        $status = $cita->status === 'cancelada' ? 'CANCELLED' : 'CONFIRMED';
+        //     Pendiente = TENTATIVE (aún no está confirmada por el negocio).
+        //     Pending = TENTATIVE (not yet confirmed by the business).
+        $status = match ($cita->status) {
+            'cancelada' => 'CANCELLED',
+            'confirmada' => 'CONFIRMED',
+            default => 'TENTATIVE',
+        };
 
         // ES: Montamos el VCALENDAR (líneas separadas por CRLF como pide el RFC).
         // EN: Build the VCALENDAR (CRLF-separated lines as the RFC requires).

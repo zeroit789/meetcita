@@ -16,7 +16,7 @@ class AppointmentIcsTest extends TestCase
 
     public function test_descarga_el_ics_de_la_cita(): void
     {
-        $cita = Appointment::factory()->create(['date' => '2026-09-22', 'time' => '10:00', 'duration' => 30]);
+        $cita = Appointment::factory()->create(['date' => '2026-09-22', 'time' => '10:00', 'duration' => 30, 'status' => 'confirmada']);
 
         $respuesta = $this->get("/cita/{$cita->reference}/calendario.ics")->assertOk();
 
@@ -32,6 +32,38 @@ class AppointmentIcsTest extends TestCase
         $cita = Appointment::factory()->cancelada()->create();
 
         $this->assertStringContainsString('STATUS:CANCELLED', $this->get("/cita/{$cita->reference}/calendario.ics")->getContent());
+    }
+
+    public function test_una_cita_pendiente_sale_como_tentative(): void
+    {
+        // ES: Pendiente aún no es una cita confirmada: TENTATIVE, no CONFIRMED.
+        // EN: Pending is not a confirmed booking yet: TENTATIVE, not CONFIRMED.
+        $cita = Appointment::factory()->create(['status' => 'pendiente']);
+
+        $ics = $this->get("/cita/{$cita->reference}/calendario.ics")->getContent();
+
+        $this->assertStringContainsString('STATUS:TENTATIVE', $ics);
+        $this->assertStringNotContainsString('STATUS:CONFIRMED', $ics);
+    }
+
+    public function test_los_textos_del_calendario_van_en_el_idioma_de_la_cita(): void
+    {
+        // ES: Cita online sin enlace de Meet (sin Google) y en inglés.
+        // EN: Online booking without a Meet link (no Google), in English.
+        $cita = Appointment::factory()->create([
+            'locale' => 'en', 'modality' => 'online', 'google_meet_url' => null, 'message' => 'Budget review',
+        ]);
+
+        $this->assertSame('Online', $cita->ubicacionCalendario());
+        $this->assertStringContainsString('Topic: Budget review', $cita->descripcionCalendario());
+        $this->assertStringNotContainsString('Asunto', $cita->descripcionCalendario());
+    }
+
+    public function test_sin_mensaje_no_sale_la_linea_del_asunto(): void
+    {
+        $cita = Appointment::factory()->create(['message' => null, 'locale' => 'es']);
+
+        $this->assertStringNotContainsString('Asunto', $cita->descripcionCalendario());
     }
 
     public function test_una_referencia_inexistente_da_404(): void

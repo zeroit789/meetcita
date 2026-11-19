@@ -164,7 +164,7 @@
                                 {{-- ES: Personas asistentes / EN: Attendees --}}
                                 <tr>
                                     <td style="padding:14px 16px; background-color:#faf9fd; font-family:Arial,Helvetica,sans-serif; color:#6b7280; font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:0.4px; border-bottom:1px solid #ece9f5;">{{ __('emails.owner_label_attendees', [], $loc) }}</td>
-                                    <td style="padding:14px 16px; font-family:Arial,Helvetica,sans-serif; color:#1f2937; font-size:15px; border-bottom:1px solid #ece9f5;">{{ $appointment->attendees }}</td>
+                                    <td style="padding:14px 16px; font-family:Arial,Helvetica,sans-serif; color:#1f2937; font-size:15px; border-bottom:1px solid #ece9f5;">{{ $appointment->attendees ?: '—' }}</td>
                                 </tr>
                                 {{-- ES: Badge de estado / EN: Status badge --}}
                                 <tr>
@@ -187,7 +187,7 @@
                             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                                 <tr>
                                     <td style="padding:16px 18px; background-color:#faf9fd; border-left:4px solid #7c3aed; border-radius:0 8px 8px 0; font-family:Arial,Helvetica,sans-serif; color:#374151; font-size:15px; line-height:1.65;">
-                                        {{ $appointment->message }}
+                                        {{ $appointment->message ?: '—' }}
                                     </td>
                                 </tr>
                             </table>

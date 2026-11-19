@@ -201,9 +201,15 @@ class Appointment extends Model
      */
     public function ubicacionCalendario(): string
     {
-        return ($this->modality === 'online' && $this->google_meet_url)
-            ? $this->google_meet_url
-            : 'Presencial';
+        // ES: Textos en el idioma de la cita. Una cita online sin enlace de Meet
+        //     (sin Google) sale «Online», no «Presencial».
+        // EN: Texts in the booking's language. An online booking without a
+        //     Meet link (no Google) shows "Online", not "In person".
+        if ($this->modality === 'online') {
+            return $this->google_meet_url ?: __('citas.cal_location_online', [], $this->idiomaCita());
+        }
+
+        return __('citas.cal_location_in_person', [], $this->idiomaCita());
     }
 
     /**
@@ -214,12 +220,29 @@ class Appointment extends Model
      */
     public function descripcionCalendario(): string
     {
-        $desc = "Asunto: {$this->message}";
-        if ($this->modality === 'online' && $this->google_meet_url) {
-            $desc .= "\nVideollamada: {$this->google_meet_url}";
-        }
+        $idioma = $this->idiomaCita();
+        $lineas = [];
 
-        return $desc;
+        // ES: Sin mensaje (es opcional) no sale la línea del asunto.
+        // EN: Without a message (it is optional) the topic line is left out.
+        if (trim((string) $this->message) !== '') {
+            $lineas[] = __('citas.cal_desc_topic', ['text' => $this->message], $idioma);
+        }
+        if ($this->modality === 'online' && $this->google_meet_url) {
+            $lineas[] = __('citas.cal_desc_video', ['url' => $this->google_meet_url], $idioma);
+        }
+        $lineas[] = __('citas.cal_desc_reference', ['ref' => $this->reference], $idioma);
+
+        return implode("\n", $lineas);
+    }
+
+    /**
+     * ES: Idioma de la cita (el del cliente al reservar) o el de por defecto.
+     * EN: The booking's language (the client's when booking) or the default.
+     */
+    public function idiomaCita(): string
+    {
+        return $this->locale ?: (string) config('appointments.default_locale', 'es');
     }
 
     /**

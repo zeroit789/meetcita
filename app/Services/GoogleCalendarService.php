@@ -207,12 +207,21 @@ class GoogleCalendarService
                 ?: config('appointments.brand.website');
 
             // ES: Texto descriptivo del evento. EN: Event description text.
-            $modalidadTxt = $cita->modality === 'online' ? 'Online (videollamada)' : 'Presencial';
-            $descripcion = "Cita solicitada desde {$host}\n\n"
-                ."Asunto: {$cita->message}\n"
-                ."Asistentes: {$cita->attendees}\n"
-                ."Modalidad: {$modalidadTxt}\n"
-                ."Referencia: {$cita->reference}";
+            //     En el idioma de la cita y sin líneas vacías (mensaje y
+            //     asistentes son opcionales).
+            //     In the booking's language and without empty lines (message
+            //     and attendees are optional).
+            $idioma = $cita->idiomaCita();
+            $lineas = [__('citas.cal_desc_requested_from', ['host' => $host], $idioma), ''];
+            if (trim((string) $cita->message) !== '') {
+                $lineas[] = __('citas.cal_desc_topic', ['text' => $cita->message], $idioma);
+            }
+            if (trim((string) $cita->attendees) !== '') {
+                $lineas[] = __('citas.cal_desc_attendees', ['text' => $cita->attendees], $idioma);
+            }
+            $lineas[] = __('citas.cal_desc_modality', ['text' => $cita->ubicacionCalendario()], $idioma);
+            $lineas[] = __('citas.cal_desc_reference', ['ref' => $cita->reference], $idioma);
+            $descripcion = implode("\n", $lineas);
 
             // ES: Lista de invitados — siempre el cliente; más los emails extra válidos.
             // EN: Invitee list — always the client; plus extra valid emails.
