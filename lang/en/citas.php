@@ -35,6 +35,8 @@ return [
     'steps_01' => 'Day',
     'steps_02' => 'Time',
     'steps_03' => 'Your details',
+    // ES: Nombre de la lista de pasos para lectores de pantalla. EN: Step list name for screen readers.
+    'steps_aria' => 'Booking steps',
 
     // Step 1: pick a day / Paso 1: elegir día
     'step1_title' => 'Pick a day',
@@ -170,6 +172,7 @@ return [
     'panel_subtitle' => 'All appointment requests received.',
     'panel_logout' => 'Log out',
     'panel_empty' => 'No appointments registered yet.',
+    'panel_list_title' => 'Appointments received',
     // Table columns / Columnas de la tabla
     'col_ref' => 'Booking #',
     'col_date' => 'Date',

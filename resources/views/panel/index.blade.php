@@ -33,7 +33,7 @@
           @csrf
           <button type="submit"
                   class="inline-flex items-center gap-2 rounded-lg border border-brand/30 px-4 py-2 text-sm text-muted hover:text-brand-glow hover:border-brand transition-colors">
-            {{ __('citas.panel_logout') }} →
+            {{ __('citas.panel_logout') }} <span aria-hidden="true">→</span>
           </button>
         </form>
 

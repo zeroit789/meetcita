@@ -12,7 +12,7 @@
 
   INDEX / ÍNDICE
     1. HEAD ............. meta, title, vite, accent + favicon / cabeza del doc
-    2. CONTENT ......... @yield('content') / contenido del panel
+    2. CONTENT ......... <main> + @yield('content') / contenido del panel
   ============================================================================
 --}}
 <!DOCTYPE html>
@@ -88,6 +88,10 @@
   @if(config('appointments.demo.enabled'))
     <div role="note" class="bg-amber-100 text-amber-950 text-center text-sm px-4 py-2">{{ __('citas.demo_banner') }}</div>
   @endif
-  @yield('content')
+  {{-- ES: Landmark principal para saltar directo al contenido.
+       EN: Main landmark so assistive tech can jump to the content. --}}
+  <main id="contenido">
+    @yield('content')
+  </main>
 </body>
 </html>

@@ -35,6 +35,8 @@ return [
     'steps_01' => 'Día',
     'steps_02' => 'Hora',
     'steps_03' => 'Tus datos',
+    // ES: Nombre de la lista de pasos para lectores de pantalla. EN: Step list name for screen readers.
+    'steps_aria' => 'Pasos de la reserva',
 
     // Step 1: pick a day / Paso 1: elegir día
     'step1_title' => 'Elige un día',
@@ -172,6 +174,7 @@ return [
     'panel_subtitle' => 'Todas las solicitudes de cita recibidas.',
     'panel_logout' => 'Cerrar sesión',
     'panel_empty' => 'Todavía no hay citas registradas.',
+    'panel_list_title' => 'Citas recibidas',
     // Table columns / Columnas de la tabla
     'col_ref' => 'Nº Cita',
     'col_date' => 'Fecha',

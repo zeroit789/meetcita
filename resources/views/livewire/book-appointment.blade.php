@@ -33,14 +33,24 @@
     $durations   = config('appointments.schedule.durations', [30, 60]);
   @endphp
 
-  {{-- ── A. Breadcrumb EN / ES — step indicator / indicador de pasos ──────── --}}
-  <div class="flex items-center justify-center gap-2 mb-8 text-xs">
-    <span class="px-2 py-1 rounded {{ $step >= 1 ? 'text-brand-glow' : 'text-faint' }}">{{ __('citas.steps_01') }}</span>
-    <span class="text-faint">/</span>
-    <span class="px-2 py-1 rounded {{ $step >= 2 ? 'text-brand-glow' : 'text-faint' }}">{{ __('citas.steps_02') }}</span>
-    <span class="text-faint">/</span>
-    <span class="px-2 py-1 rounded {{ $step >= 3 ? 'text-brand-glow' : 'text-faint' }}">{{ __('citas.steps_03') }}</span>
-  </div>
+  {{-- ── A. Breadcrumb EN / ES — step indicator / indicador de pasos ────────
+       ES: Lista ordenada; el paso actual lleva aria-current="step" y negrita
+           (no se distingue solo por el color).
+       EN: Ordered list; the current step carries aria-current="step" and bold
+           (not told apart by colour alone). --}}
+  <ol class="flex items-center justify-center gap-2 mb-8 text-sm" aria-label="{{ __('citas.steps_aria') }}">
+    @foreach([1 => __('citas.steps_01'), 2 => __('citas.steps_02'), 3 => __('citas.steps_03')] as $n => $nombrePaso)
+      <li @if($step === $n) aria-current="step" @endif
+          @class([
+            'px-2 py-1 rounded',
+            'text-brand-glow font-semibold underline underline-offset-4' => $step === $n,
+            'text-muted' => $step !== $n,
+          ])>{{ $n }}. {{ $nombrePaso }}</li>
+      @if($n < 3)
+        <li aria-hidden="true" class="text-muted">/</li>
+      @endif
+    @endforeach
+  </ol>
 
   {{-- ══════════════════════════════════════════════════════════════════════
        1. STEP 1 EN / ES — PICK DAY / ELEGIR DÍA
@@ -49,13 +59,13 @@
     {{-- ES: Menos padding en móvil para que las celdas sigan siendo pulsables.
          EN: Smaller padding on mobile so calendar cells stay tappable. --}}
     <div class="glass p-3 sm:p-8">
-      <h2 class="font-sans font-bold text-2xl text-ink mb-6">{{ __('citas.step1_title') }}</h2>
+      <h2 id="paso-titulo" class="font-sans font-bold text-2xl text-ink mb-6" tabindex="-1" data-paso-titulo="1">{{ __('citas.step1_title') }}</h2>
 
       {{-- ── MONTHLY CALENDAR / CALENDARIO MENSUAL ─────────────────────────── --}}
       <div class="rounded-xl border border-[var(--card-border)] bg-base p-2 sm:p-5">
-
+        {{-- Header: month navigation + month/year (data-cal-nav: the JS keeps focus on the arrows) / Cabecera: navegación + mes/año (data-cal-nav: el JS mantiene el foco en las flechas) --}}
         {{-- Header: month navigation + month/year / Cabecera: navegación + mes/año --}}
-        <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center justify-between mb-4" data-cal-nav>
           {{-- Previous month / Mes anterior --}}
           <button type="button" wire:click="prevMonth" @disabled(! $canPrev)
                   class="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--card-border)] text-brand-glow transition-all hover:border-brand hover:bg-brand/10 disabled:opacity-30 disabled:cursor-not-allowed"
@@ -87,11 +97,13 @@
           @endforeach
         </div>
 
-        {{-- Day grid: one row per week. role="grid" exposes it as a calendar.
-             Rejilla de días: una fila por semana. role="grid" para a11y. --}}
-        <div class="space-y-1 sm:space-y-2" role="grid">
+        {{-- Day grid: one row per week. Plain buttons (no ARIA grid: that role
+             promises arrow-key navigation). Each day says its full date and state.
+             Rejilla de días: una fila por semana. Botones normales (sin rol grid,
+             que obliga a navegar con flechas). Cada día dice su fecha y estado. --}}
+        <div class="space-y-1 sm:space-y-2">
           @foreach($weeks as $week)
-            <div class="grid grid-cols-7 gap-1 sm:gap-2" role="row">
+            <div class="grid grid-cols-7 gap-1 sm:gap-2">
               @foreach($week as $cell)
                 {{-- Human-readable date for the aria-label, in the active locale.
                      Fecha legible para el aria-label, en el idioma activo. --}}
@@ -107,13 +119,11 @@
                        Día reservable: botón clicable. aria-label = fecha + "disponible". --}}
                   <button type="button"
                           wire:click="selectDate('{{ $cell['date'] }}')"
-                          role="gridcell"
                           aria-label="{{ $readableDate }}{{ $cell['isToday'] ? __('citas.cal_today_suffix') : '' }}{{ __('citas.cal_available') }}{{ $cell['isSelected'] ? __('citas.cal_selected') : '' }}"
-                          @if($cell['isSelected']) aria-pressed="true" @endif
                           @class([
                             // ES: min-h mantiene las celdas usables con el dedo.
                             // EN: min-h keeps cells finger-friendly on mobile.
-                            'aspect-square min-h-[40px] flex flex-col items-center justify-center rounded-lg border text-sm font-sans transition-all focus:outline-none',
+                            'aspect-square min-h-[40px] flex flex-col items-center justify-center rounded-lg border text-sm font-sans transition-all',
                             // Selected day: accent fill / Día seleccionado: relleno acento
                             'border-brand bg-brand text-white font-bold' => $cell['isSelected'],
                             // Normal bookable day: faint border + hover / Día normal
@@ -125,17 +135,22 @@
                       <span class="mt-0.5 h-1 w-1 rounded-full bg-success"></span>
                     @endif
                   </button>
-                @else
-                  {{-- Non-bookable day (weekend, past, out of range): dimmed.
-                       Color via inline rgba so the dimming is reliable.
-                       Día NO reservable (finde, pasado, fuera de rango): atenuado. --}}
-                  <div class="aspect-square min-h-[40px] flex items-center justify-center rounded-lg text-sm font-sans select-none"
-                       role="gridcell"
-                       aria-disabled="true"
-                       aria-label="{{ $readableDate }}{{ __('citas.cal_unavailable') }}"
-                       style="color: {{ $cell['isCurrent'] ? 'rgba(139,139,156,0.55)' : 'rgba(139,139,156,0.20)' }};">
+                @elseif($cell['isCurrent'])
+                  {{-- Non-bookable day of this month (weekend, past, blocked):
+                       disabled button, struck through so it isn't told apart by
+                       colour alone; it still reads its date and "unavailable".
+                       Día NO reservable de este mes (finde, pasado, bloqueado):
+                       botón desactivado y tachado (no solo por color); sigue
+                       diciendo su fecha y «no disponible». --}}
+                  <button type="button" disabled
+                          aria-label="{{ $readableDate }}{{ __('citas.cal_unavailable') }}"
+                          class="aspect-square min-h-[40px] flex items-center justify-center rounded-lg text-sm font-sans text-faint line-through cursor-not-allowed">
                     {{ $cell['day'] }}
-                  </div>
+                  </button>
+                @else
+                  {{-- Filler cell from another month: empty, hidden from screen readers.
+                       Hueco de otro mes: vacío y oculto a lectores de pantalla. --}}
+                  <div class="aspect-square min-h-[40px]" aria-hidden="true"></div>
                 @endif
               @endforeach
             </div>
@@ -161,7 +176,7 @@
        ══════════════════════════════════════════════════════════════════════ --}}
   @if($step === 2)
     <div class="glass p-6 sm:p-8">
-      <h2 class="font-sans font-bold text-2xl text-ink mb-2">{{ __('citas.step2_title') }}</h2>
+      <h2 id="paso-titulo" class="font-sans font-bold text-2xl text-ink mb-2" tabindex="-1" data-paso-titulo="2">{{ __('citas.step2_title') }}</h2>
       <p class="text-muted text-sm mb-5">
         {{ __('citas.step2_subtitle_pre') }}
         {{-- Fecha en el idioma activo (patrón natural de cada idioma)
@@ -176,8 +191,10 @@
            Selector de DURACIÓN — un botón por duración de config. Cambiarlo
            recalcula los huecos. --}}
       <div class="mb-6">
-        <p class="text-xs text-muted mb-2">{{ __('citas.step2_duration_label') }}</p>
-        <div class="inline-flex rounded-lg border border-[var(--card-border)] bg-base p-1 gap-1">
+        <p id="duracion-etiqueta" class="text-sm font-medium text-muted mb-2">{{ __('citas.step2_duration_label') }}</p>
+        {{-- ES: Grupo con nombre; cada botón dice si está elegido (aria-pressed).
+             EN: Named group; each button states whether it is chosen (aria-pressed). --}}
+        <div class="inline-flex rounded-lg border border-line bg-base p-1 gap-1" role="group" aria-labelledby="duracion-etiqueta">
           @foreach($durations as $dur)
             {{-- ES: Etiqueta: claves dedicadas para 30/60, genérica para otras.
                  EN: Label: dedicated keys for 30/60, generic for others. --}}
@@ -189,6 +206,7 @@
               };
             @endphp
             <button type="button" wire:click="setDuration({{ (int) $dur }})"
+                    aria-pressed="{{ $duration === (int) $dur ? 'true' : 'false' }}"
                     class="rounded-md px-4 py-2 text-sm transition-all
                            {{ $duration === (int) $dur ? 'bg-brand text-white' : 'text-muted hover:text-brand-glow' }}">
               {{ $durLabel }}
@@ -197,9 +215,13 @@
         </div>
       </div>
 
-      {{-- One-off error (slot taken between steps) / Error puntual (hueco ocupado) --}}
+      {{-- One-off error (slot taken between steps), announced on arrival.
+           Error puntual (hueco ocupado entre pasos), anunciado al aparecer. --}}
       @error('selectedTime')
-        <p class="text-xs text-danger mb-4">{{ $message }}</p>
+        <p class="text-sm text-danger mb-4" role="alert">{{ $message }}</p>
+      @enderror
+      @error('time')
+        <p class="text-sm text-danger mb-4" role="alert">{{ $message }}</p>
       @enderror
 
       @if(count($freeSlots) > 0)
@@ -208,7 +230,7 @@
           @foreach($freeSlots as $slot)
             <button type="button"
                     wire:click="selectTime('{{ $slot }}')"
-                    class="rounded-lg border border-[var(--card-border)] bg-base px-2 py-3 text-sm text-ink transition-all hover:border-brand hover:bg-brand/10 hover:-translate-y-0.5 focus:outline-none focus:border-brand">
+                    class="rounded-lg border border-[var(--card-border)] bg-base px-2 py-3 text-sm text-ink transition-all hover:border-brand hover:bg-brand/10 hover:-translate-y-0.5 focus:border-brand">
               {{ $slot }}
             </button>
           @endforeach
@@ -234,7 +256,7 @@
        ══════════════════════════════════════════════════════════════════════ --}}
   @if($step === 3)
     <div class="glass p-6 sm:p-8">
-      <h2 class="font-sans font-bold text-2xl text-ink mb-2">{{ __('citas.step3_title') }}</h2>
+      <h2 id="paso-titulo" class="font-sans font-bold text-2xl text-ink mb-2" tabindex="-1" data-paso-titulo="3">{{ __('citas.step3_title') }}</h2>
 
       {{-- Selected-appointment summary (date + time + duration) / Resumen de la cita --}}
       <p class="text-muted text-sm mb-6">
@@ -254,8 +276,8 @@
         {{-- Anti-spam honeypot: hidden to humans. If a bot fills it, max:0 fails.
              Honeypot anti-spam: oculto a humanos. Si un bot lo rellena, max:0 falla. --}}
         <div class="hidden" aria-hidden="true">
-          <label>{{ __('citas.honeypot_label') }}</label>
-          <input type="text" wire:model="website" tabindex="-1" autocomplete="off" />
+          <label for="appt-website">{{ __('citas.honeypot_label') }}</label>
+          <input type="text" id="appt-website" wire:model="website" tabindex="-1" autocomplete="off" />
         </div>
 
         {{-- ── MODALITY: online (video call) / in person ─────────────────────
@@ -269,12 +291,13 @@
                  style: the chosen one gets the accent. --}}
         @if($modOnline && $modInPerson)
           <div>
-            <label class="block text-xs text-muted mb-1.5">{{ __('citas.field_modality') }}</label>
-            <div class="grid grid-cols-2 gap-3">
+            <p id="modalidad-etiqueta" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.field_modality') }}</p>
+            <div class="grid grid-cols-2 gap-3" role="group" aria-labelledby="modalidad-etiqueta">
               {{-- Online (with Meet) / Online (con Meet) --}}
               <button type="button" wire:click="setModality('online')"
+                      aria-pressed="{{ $modality === 'online' ? 'true' : 'false' }}"
                       @class([
-                        'flex items-center gap-2 rounded-lg border px-3 py-3 font-sans text-sm transition-all focus:outline-none',
+                        'flex items-center gap-2 rounded-lg border px-3 py-3 font-sans text-sm transition-all',
                         'border-brand bg-brand/10 text-brand-glow font-medium' => $modality === 'online',
                         'border-line bg-base text-muted hover:border-brand hover:text-brand-glow' => $modality !== 'online',
                       ])>
@@ -289,8 +312,9 @@
 
               {{-- In person / Presencial --}}
               <button type="button" wire:click="setModality('presencial')"
+                      aria-pressed="{{ $modality === 'presencial' ? 'true' : 'false' }}"
                       @class([
-                        'flex items-center gap-2 rounded-lg border px-3 py-3 font-sans text-sm transition-all focus:outline-none',
+                        'flex items-center gap-2 rounded-lg border px-3 py-3 font-sans text-sm transition-all',
                         'border-brand bg-brand/10 text-brand-glow font-medium' => $modality === 'presencial',
                         'border-line bg-base text-muted hover:border-brand hover:text-brand-glow' => $modality !== 'presencial',
                       ])>
@@ -304,40 +328,44 @@
                 </span>
               </button>
             </div>
-            @error('modality') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
+            @error('modality') <p class="text-sm text-danger mt-1" role="alert" tabindex="-1" data-error-envio>{{ $message }}</p> @enderror
           </div>
         @endif
 
         {{-- Name / Nombre --}}
         <div>
-          <label for="appt-name" class="block text-xs text-muted mb-1.5">{{ __('citas.field_name') }}</label>
-          <input type="text" id="appt-name" wire:model="name" placeholder="{{ __('citas.ph_name') }}" required
-                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('name') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
+          <label for="appt-name" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.field_name') }}</label>
+          <input type="text" id="appt-name" wire:model="name" autocomplete="name"
+                 @error('name') aria-invalid="true" aria-describedby="appt-name-error" @else @enderror placeholder="{{ __('citas.ph_name') }}" required
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand transition-colors" />
+          @error('name') <p id="appt-name-error" class="text-sm text-danger mt-1" role="alert">{{ $message }}</p> @enderror
         </div>
 
         {{-- Email --}}
         <div>
-          <label for="appt-email" class="block text-xs text-muted mb-1.5">{{ __('citas.field_email') }}</label>
-          <input type="email" id="appt-email" wire:model="email" placeholder="{{ __('citas.ph_email') }}" required
-                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('email') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
+          <label for="appt-email" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.field_email') }}</label>
+          <input type="email" id="appt-email" wire:model="email" autocomplete="email"
+                 @error('email') aria-invalid="true" aria-describedby="appt-email-error" @else @enderror placeholder="{{ __('citas.ph_email') }}" required
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand transition-colors" />
+          @error('email') <p id="appt-email-error" class="text-sm text-danger mt-1" role="alert">{{ $message }}</p> @enderror
         </div>
 
         {{-- Phone (optional) / Teléfono (opcional) --}}
         <div>
-          <label for="appt-phone" class="block text-xs text-muted mb-1.5">{{ __('citas.field_phone') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
-          <input type="tel" id="appt-phone" wire:model="phone" placeholder="{{ __('citas.ph_phone') }}"
-                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('phone') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
+          <label for="appt-phone" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.field_phone') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <input type="tel" id="appt-phone" wire:model="phone" autocomplete="tel"
+                 @error('phone') aria-invalid="true" aria-describedby="appt-phone-error" @else @enderror placeholder="{{ __('citas.ph_phone') }}"
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand transition-colors" />
+          @error('phone') <p id="appt-phone-error" class="text-sm text-danger mt-1" role="alert">{{ $message }}</p> @enderror
         </div>
 
         {{-- People attending / Personas que asistirán --}}
         <div>
-          <label for="appt-attendees" class="block text-xs text-muted mb-1.5">{{ __('citas.field_attendees') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
-          <input type="text" id="appt-attendees" wire:model="attendees" placeholder="{{ __('citas.ph_attendees') }}"
-                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('attendees') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
+          <label for="appt-attendees" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.field_attendees') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <input type="text" id="appt-attendees" wire:model="attendees"
+                 @error('attendees') aria-invalid="true" aria-describedby="appt-attendees-error" @else @enderror placeholder="{{ __('citas.ph_attendees') }}"
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand transition-colors" />
+          @error('attendees') <p id="appt-attendees-error" class="text-sm text-danger mt-1" role="alert">{{ $message }}</p> @enderror
         </div>
 
         {{-- Attendee emails (OPTIONAL) — only meaningful for ONLINE meetings
@@ -348,21 +376,23 @@
              forma reactiva solo cuando modality === 'online'. --}}
         @if($modOnline && $modality === 'online')
           <div>
-            <label for="appt-attendee-emails" class="block text-xs text-muted mb-1.5">{{ __('citas.field_attendee_emails') }} <span class="text-faint">{{ __('citas.field_attendee_emails_optional') }}</span></label>
-            <input type="text" id="appt-attendee-emails" wire:model="attendeeEmails" placeholder="{{ __('citas.ph_attendee_emails') }}"
-                   class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-            <p class="text-xs text-faint mt-1">{{ __('citas.help_attendee_emails') }}</p>
-            @error('attendeeEmails') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
+            <label for="appt-attendee-emails" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.field_attendee_emails') }} <span class="text-faint">{{ __('citas.field_attendee_emails_optional') }}</span></label>
+            <input type="text" id="appt-attendee-emails" wire:model="attendeeEmails"
+                 @error('attendeeEmails') aria-invalid="true" aria-describedby="appt-attendee-emails-help appt-attendee-emails-error" @else aria-describedby="appt-attendee-emails-help" @enderror placeholder="{{ __('citas.ph_attendee_emails') }}"
+                   class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand transition-colors" />
+            <p id="appt-attendee-emails-help" class="text-xs text-faint mt-1">{{ __('citas.help_attendee_emails') }}</p>
+            @error('attendeeEmails') <p id="appt-attendee-emails-error" class="text-sm text-danger mt-1" role="alert">{{ $message }}</p> @enderror
           </div>
         @endif
 
         {{-- Message: what to discuss / Mensaje: qué tratar --}}
         <div>
-          <label for="appt-message" class="block text-xs text-muted mb-1.5">{{ __('citas.field_message') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
-          <textarea id="appt-message" wire:model="message" rows="4" placeholder="{{ __('citas.ph_message') }}"
-                    class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
-          <p class="text-xs text-faint mt-1">{{ __('citas.help_message') }}</p>
-          @error('message') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
+          <label for="appt-message" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.field_message') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <textarea id="appt-message" wire:model="message"
+                 @error('message') aria-invalid="true" aria-describedby="appt-message-help appt-message-error" @else aria-describedby="appt-message-help" @enderror rows="4" placeholder="{{ __('citas.ph_message') }}"
+                    class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand transition-colors resize-none"></textarea>
+          <p id="appt-message-help" class="text-xs text-faint mt-1">{{ __('citas.help_message') }}</p>
+          @error('message') <p id="appt-message-error" class="text-sm text-danger mt-1" role="alert">{{ $message }}</p> @enderror
         </div>
 
         {{-- First-layer data-protection notice (GDPR art. 13 / LOPDGDD art. 11), right before booking.
@@ -372,13 +402,13 @@
         {{-- Own ALTCHA captcha (no third parties) / Captcha propio ALTCHA (sin terceros) --}}
         @if(config('services.altcha.enabled', true))
           @include('partials.captcha')
-          @error('altcha') <p class="text-xs text-danger" role="alert">{{ $message }}</p> @enderror
+          @error('altcha') <p class="text-sm text-danger" role="alert" tabindex="-1" data-error-envio>{{ $message }}</p> @enderror
         @endif
 
         {{-- Booking-level notice (e.g. "try again in a moment") right above the button.
              Aviso de la reserva (p. ej. «inténtalo en un momento») justo encima del botón. --}}
         @error('selectedTime')
-          <p class="text-xs text-danger" role="alert">{{ $message }}</p>
+          <p class="text-sm text-danger" role="alert" tabindex="-1" data-error-envio>{{ $message }}</p>
         @enderror
 
         {{-- Actions: back + book / Acciones: atrás + reservar --}}
@@ -413,7 +443,7 @@
         </svg>
       </div>
 
-      <h2 class="font-sans font-bold text-2xl sm:text-3xl text-brand-glow mb-3">{{ __('citas.step4_title') }}</h2>
+      <h2 id="paso-titulo" class="font-sans font-bold text-2xl sm:text-3xl text-brand-glow mb-3" tabindex="-1" data-paso-titulo="4">{{ __('citas.step4_title') }}</h2>
 
       <p class="text-muted mb-2" style="line-height:1.7;">
         {{ __('citas.step4_summary_pre') }}

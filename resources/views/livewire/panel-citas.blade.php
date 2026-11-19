@@ -15,6 +15,9 @@
   {{-- Appointments table inside a glass card / Tabla de citas en una card glass --}}
   <div class="glass p-4 sm:p-6 overflow-x-auto">
 
+    {{-- ES: Título de la sección (nombra también la tabla). EN: Section heading (also names the table). --}}
+    <h2 id="citas-titulo" class="font-sans font-bold text-xl text-ink mb-4">{{ __('citas.panel_list_title') }}</h2>
+
     {{-- ES: Error controlado de una acción (p. ej. confirmar una cita que no está pendiente).
          EN: Handled action error (e.g. confirming a booking that is not pending). --}}
     @error('accion')
@@ -27,22 +30,24 @@
         <p class="text-sm text-muted">{{ __('citas.panel_empty') }}</p>
       </div>
     @else
-      <table class="w-full text-left border-collapse">
+      {{-- ES: La tabla toma su nombre del título de la sección (lectores de pantalla).
+           EN: The table takes its name from the section heading (screen readers). --}}
+      <table class="w-full text-left border-collapse" aria-labelledby="citas-titulo">
         {{-- Table header / Cabecera de la tabla --}}
         <thead>
           <tr class="text-xs uppercase tracking-wide text-faint border-b border-[var(--card-border)]">
-            <th class="py-3 px-2">{{ __('citas.col_ref') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_date') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_time') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_duration') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_modality') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_name') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_email') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_phone') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_people') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_message') }}</th>
-            <th class="py-3 px-2">{{ __('citas.col_status') }}</th>
-            <th class="py-3 px-2 text-right">{{ __('citas.col_actions') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_ref') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_date') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_time') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_duration') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_modality') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_name') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_email') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_phone') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_people') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_message') }}</th>
+            <th scope="col" class="py-3 px-2">{{ __('citas.col_status') }}</th>
+            <th scope="col" class="py-3 px-2 text-right">{{ __('citas.col_actions') }}</th>
           </tr>
         </thead>
 
@@ -120,7 +125,7 @@
                   @if($cita->status === 'pendiente')
                     <button type="button" wire:click="confirmar({{ $cita->id }})"
                             class="rounded-md border border-success/40 px-2 py-1 text-xs text-success hover:bg-success/10 transition-colors">
-                      ✓ {{ __('citas.action_confirm') }}
+                      <span aria-hidden="true">✓</span> {{ __('citas.action_confirm') }}
                     </button>
                   @endif
                   {{-- ES: Cancelar (oculto si ya está): abre el formulario del motivo.
@@ -128,7 +133,7 @@
                   @if($cita->status !== 'cancelada')
                     <button type="button" wire:click="pedirCancelacion({{ $cita->id }})"
                             class="rounded-md border border-danger/40 px-2 py-1 text-xs text-danger hover:bg-danger/10 transition-colors">
-                      ✕ {{ __('citas.action_cancel') }}
+                      <span aria-hidden="true">✕</span> {{ __('citas.action_cancel') }}
                     </button>
                   @endif
                 </div>
@@ -140,17 +145,22 @@
               <tr class="border-b border-[var(--card-border)] bg-danger/5">
                 <td colspan="12" class="py-3 px-2">
                   <form wire:submit="cancelar({{ $cita->id }})" class="flex flex-col gap-2 sm:flex-row sm:items-end">
-                    <label class="flex-1 text-xs text-muted">
-                      {{ __('citas.cancel_reason_label') }}
-                      <textarea wire:model="motivoCancelacion" rows="2" maxlength="1000"
+                    {{-- ES: Etiqueta ligada al campo por for/id; el JS lleva el foco al
+                             campo al abrirse (data-enfocar).
+                         EN: Label tied to the field by for/id; JS moves focus to the
+                             field when it opens (data-enfocar). --}}
+                    <div class="flex-1">
+                      <label for="cancel-reason-{{ $cita->id }}" class="block text-sm font-medium text-muted">{{ __('citas.cancel_reason_label') }}</label>
+                      <textarea id="cancel-reason-{{ $cita->id }}" data-enfocar wire:model="motivoCancelacion" rows="2" maxlength="1000"
+                                @error('motivoCancelacion') aria-invalid="true" aria-describedby="cancel-reason-error" @enderror
                                 placeholder="{{ __('citas.cancel_reason_placeholder') }}"
-                                class="mt-1 w-full rounded-md border border-[var(--card-border)] bg-base px-2 py-1 text-sm text-ink"></textarea>
-                      @error('motivoCancelacion') <span class="text-danger">{{ $message }}</span> @enderror
-                    </label>
+                                class="mt-1 w-full rounded-md border border-line bg-base px-2 py-1 text-sm text-ink focus:border-brand"></textarea>
+                      @error('motivoCancelacion') <p id="cancel-reason-error" class="text-sm text-danger mt-1" role="alert">{{ $message }}</p> @enderror
+                    </div>
                     <div class="inline-flex gap-1">
                       <button type="submit"
                               class="rounded-md border border-danger/40 px-2 py-1 text-xs text-danger hover:bg-danger/10 transition-colors">
-                        ✕ {{ __('citas.cancel_submit') }}
+                        <span aria-hidden="true">✕</span> {{ __('citas.cancel_submit') }}
                       </button>
                       <button type="button" wire:click="cerrarCancelacion"
                               class="rounded-md border border-brand/30 px-2 py-1 text-xs text-muted hover:bg-brand/10 transition-colors">

@@ -21,6 +21,7 @@
 |   4. THEME TOKENS ......... colors + fonts + shadows / colores, fuentes, sombra
 |   5. BASE ................. body background / fondo del body
 |   6. COMPONENTS ........... .glass + .btn-primary / clases reutilizables
+|   7. FOCUS + A11Y ......... visible focus, forced colours / foco visible, colores forzados
 |==============================================================================
 */
 
@@ -97,7 +98,7 @@
 
     /* ES: Estados (éxito / error) con contraste AA sobre fondo claro.
        EN: Status colours (success / error) with AA contrast on light. */
-    --success: #15803d;
+    --success: #166534;
     --danger: #b91c1c;
 
     /* ES: Borde gris neutro de las tarjetas (reposo / hover).
@@ -229,5 +230,50 @@ body {
     .btn-primary:hover {
         box-shadow: var(--shadow-glow-brand);
         transform: translateY(-1px);
+    }
+}
+
+/*
+| ─────────────────────────────────────────────────────────────────────────
+| 7. FOCUS + A11Y EN / ES — visible keyboard focus (WCAG 2.4.7)
+|    FOCO + A11Y — foco de teclado visible (WCAG 2.4.7)
+| ─────────────────────────────────────────────────────────────────────────
+| ES: Anillo de foco claro para TODO lo enfocable (enlaces, botones, campos,
+|     días del calendario, títulos de paso). Usa el texto de acento del tema,
+|     que contrasta al menos 3:1 con el fondo en claro y en oscuro. Ninguna
+|     vista quita el outline sin sustituto (no queda ningún focus:outline-none).
+| EN: Clear focus ring for EVERYTHING focusable (links, buttons, fields,
+|     calendar days, step headings). It uses the theme's accent text colour,
+|     which reaches at least 3:1 against the background in light and dark. No
+|     view removes the outline without a replacement (no focus:outline-none left).
+*/
+@layer base {
+    :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+        outline: 3px solid var(--accent-text);
+        outline-offset: 2px;
+    }
+
+    /* ES: Con «colores forzados» (alto contraste de Windows) el elegido de un
+          grupo (aria-pressed) se marca con borde del sistema, no solo con color.
+       EN: In forced-colors mode (Windows high contrast) the chosen option of a
+          group (aria-pressed) gets a system border, not colour alone. */
+    @media (forced-colors: active) {
+        [aria-pressed='true'] {
+            border: 2px solid Highlight;
+        }
+    }
+
+    /* ES: Con «reducir movimiento», sin desplazamientos al pasar el ratón.
+       EN: With reduced motion, no hover lifts. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            transition-duration: 0.01ms !important;
+        }
+        .btn-primary:hover,
+        [class*='hover:-translate-y']:hover {
+            transform: none !important;
+        }
     }
 }

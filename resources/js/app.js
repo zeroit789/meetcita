@@ -126,3 +126,80 @@ syncToggleIcons(currentTheme());
 document.addEventListener('livewire:navigated', () => {
     syncToggleIcons(currentTheme());
 });
+
+/*
+| ES: FOCO ACCESIBLE en los componentes Livewire (WCAG 2.4.3 y 3.3.1):
+|     · Al CAMBIAR de paso en la reserva (cambia data-paso-titulo), el foco va
+|       al título del paso nuevo: Livewire quita el botón pulsado y, sin esto,
+|       el foco caía al <body> y el lector de pantalla volvía al principio.
+|     · Al ENVIAR la reserva con errores, el foco va al primer error: un campo
+|       con aria-invalid o un aviso sin campo propio (data-error-envio).
+|     · Si aparece un campo marcado con data-enfocar (p. ej. el motivo de
+|       cancelación del panel), recibe el foco.
+|     · Si el foco se pierde en el mismo paso (p. ej. la flecha de mes se
+|       desactiva al llegar al límite), va a la otra flecha o al título.
+|     No hace nada en la carga inicial: solo tras cada respuesta de Livewire.
+| EN: ACCESSIBLE FOCUS in Livewire components (WCAG 2.4.3 and 3.3.1):
+|     · On a booking STEP change (data-paso-titulo changes), focus goes to the
+|       new step heading: Livewire removes the clicked button and, without
+|       this, focus fell to <body> and screen readers restarted from the top.
+|     · On SUBMITTING the booking with errors, focus goes to the first error: a
+|       field with aria-invalid or a field-less notice (data-error-envio).
+|     · When a field marked data-enfocar appears (e.g. the panel's cancellation
+|       reason), it receives focus.
+|     · If focus is lost within the same step (e.g. the month arrow becomes
+|       disabled at the limit), it goes to the other arrow or the heading.
+|     Does nothing on first load: only after each Livewire response.
+*/
+document.addEventListener('livewire:init', () => {
+    const lw = window.Livewire;
+    if (!lw || typeof lw.interceptMessage !== 'function') return;
+
+    lw.interceptMessage(({ message, onFinish }) => {
+        const raiz = message && message.component && message.component.el;
+        if (!raiz) return;
+
+        // ES: Estado ANTES de la respuesta. EN: State BEFORE the response.
+        const marcaAntes = raiz.querySelector('[data-paso-titulo]');
+        const pasoAntes = marcaAntes ? marcaAntes.dataset.pasoTitulo : null;
+        const enfocablesAntes = new Set(raiz.querySelectorAll('[data-enfocar]'));
+        const activoAntes = document.activeElement;
+        const focoDentro = raiz.contains(activoAntes);
+        const eraFlechaDeMes = focoDentro && activoAntes.closest('[data-cal-nav]') !== null;
+
+        onFinish(() => {
+            const acciones = message.actions ? Array.from(message.actions) : [];
+            const esEnvio = acciones.some((a) => a && a.name === 'reserve');
+
+            // ES: 1) Envío con errores → primer error. EN: 1) Submit with errors → first error.
+            const error = esEnvio ? raiz.querySelector('[aria-invalid="true"], [data-error-envio]') : null;
+            if (error) {
+                error.focus();
+                return;
+            }
+
+            // ES: 2) Cambio de paso → título del paso. EN: 2) Step change → step heading.
+            const marca = raiz.querySelector('[data-paso-titulo]');
+            if (marca && marca.dataset.pasoTitulo !== pasoAntes) {
+                marca.focus();
+                return;
+            }
+
+            // ES: 3) Campo nuevo marcado para enfocar. EN: 3) New field marked for focus.
+            const nuevo = Array.from(raiz.querySelectorAll('[data-enfocar]')).find((el) => !enfocablesAntes.has(el));
+            if (nuevo) {
+                nuevo.focus();
+                return;
+            }
+
+            // ES: 4) Foco perdido en el mismo paso → otra flecha de mes o título.
+            // EN: 4) Focus lost within the same step → other month arrow or heading.
+            const foco = document.activeElement;
+            if (focoDentro && (foco === document.body || (foco && foco.matches(':disabled')))) {
+                const otraFlecha = eraFlechaDeMes ? raiz.querySelector('[data-cal-nav] button:not(:disabled)') : null;
+                const destino = activoAntes.isConnected && !activoAntes.disabled ? activoAntes : (otraFlecha || marca);
+                if (destino) destino.focus();
+            }
+        });
+    });
+});

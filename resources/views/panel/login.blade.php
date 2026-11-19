@@ -21,7 +21,7 @@
 
         {{-- Wrong-password error / Error de contraseña incorrecta --}}
         @if($errors->any())
-          <p class="text-xs text-danger mb-4">{{ $errors->first() }}</p>
+          <p id="panel-password-error" class="text-sm text-danger mb-4" role="alert">{{ $errors->first() }}</p>
         @endif
 
         {{-- ES: En la demo se enseña la contraseña. EN: The demo shows the password. --}}
@@ -34,11 +34,12 @@
 
           {{-- Password field. Label tied by for/id (a11y). / Campo contraseña con label. --}}
           <div>
-            <label for="panel-password" class="block text-xs text-muted mb-1.5">{{ __('citas.login_password') }}</label>
+            <label for="panel-password" class="block text-sm font-medium text-muted mb-1.5">{{ __('citas.login_password') }}</label>
             {{-- ES: Foco accesible: borde de acento + anillo al enfocar.
                  EN: Accessible focus: accent border + ring on focus. --}}
             <input type="password" id="panel-password" name="password" autofocus autocomplete="current-password" required
-                   class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand focus:ring-2 focus:ring-brand-glow/60 focus:outline-none transition-colors" />
+                   @if($errors->any()) aria-invalid="true" aria-describedby="panel-password-error" @endif
+                   class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:border-brand transition-colors" />
           </div>
 
           {{-- Submit / Botón entrar --}}
