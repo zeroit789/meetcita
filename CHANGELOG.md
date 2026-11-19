@@ -23,6 +23,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** Each rate-limited route has its own per-IP counter. They used to share one: opening the `.ics` a few times or fetching captcha challenges used up the panel login's 5 attempts.
 - **ES:** Bloquear un día en el panel toma el mismo bloqueo por día que las reservas y comprueba y guarda dentro de él. Antes, una reserva hecha justo a la vez podía quedarse activa en un día bloqueado.
   **EN:** Blocking a day in the panel takes the same per-day lock as bookings and checks and stores inside it. Before, a booking made at that very moment could stay active on a blocked day.
+- **ES:** Las llamadas a Google Calendar tienen tiempo límite (5 s para conectar, 10 s en total): algunas se hacen con el bloqueo del día tomado y una llamada colgada podía durar más que el bloqueo.
+  **EN:** Google Calendar calls have a time limit (5 s to connect, 10 s in total): some run while holding the day lock and a hung call could outlast the lock.
+- **ES:** El correo de «cita confirmada» no se envía si la cita cambió mientras esperaba en la cola (por ejemplo, el cliente la reprogramó): ya no anuncia como confirmada una hora pendiente.
+  **EN:** The "booking confirmed" email isn't sent if the booking changed while it waited in the queue (e.g. the client rescheduled it): it no longer announces a pending time as confirmed.
 
 ### Cambiado · Changed
 
