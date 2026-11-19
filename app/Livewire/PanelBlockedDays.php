@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Http\Middleware\AdminPanelPassword;
 use App\Models\Appointment;
 use App\Models\BlockedDay;
+use App\Services\GestionCitas;
 use Carbon\Carbon;
 use Livewire\Component;
 
@@ -69,49 +70,77 @@ class PanelBlockedDays extends Component
         // EN: Inline rules + localised messages (Livewire requires explicit
         //     rules here, else it throws MissingRulesException).
         $this->validate([
-            'newDate' => 'required|date|after_or_equal:today',
+            // ES: date_format exacto: "2026-9-24" daría otra clave de bloqueo
+            //     ('reserva-dia:FECHA') que la que usan las reservas.
+            // EN: Exact date_format: "2026-9-24" would give a different lock
+            //     key ('reserva-dia:DATE') than the one the bookings use.
+            'newDate' => 'required|date_format:Y-m-d|after_or_equal:today',
             'newReason' => 'nullable|string|max:120',
         ], [
             'newDate.required' => __('citas.blocked_err_required'),
-            'newDate.date' => __('citas.blocked_err_invalid'),
+            'newDate.date_format' => __('citas.blocked_err_invalid'),
             'newDate.after_or_equal' => __('citas.blocked_err_past'),
             'newReason.max' => __('citas.blocked_err_reason_long'),
         ]);
 
-        // ES: ¿Ya está bloqueado? La regla unique comparaba "2026-09-24" con el
-        //     valor guardado "2026-09-24 00:00:00", no lo detectaba y el índice
-        //     único de la tabla acababa en un 500. whereDate compara solo la fecha.
-        // EN: Already blocked? The unique rule compared "2026-09-24" with the
-        //     stored "2026-09-24 00:00:00", missed it and the table's unique
-        //     index ended in a 500. whereDate compares the date only.
-        if (BlockedDay::whereDate('date', $this->newDate)->exists()) {
-            $this->addError('newDate', __('citas.blocked_err_duplicate'));
+        // ES: Comprobar y guardar DENTRO del bloqueo 'reserva-dia:FECHA', el
+        //     mismo que toman la reserva pública, la reprogramación y el alta
+        //     manual. Sin él, una reserva podía colarse entre «no hay citas» y
+        //     el guardado y dejar una cita activa en un día bloqueado. Con él,
+        //     o la reserva termina antes (y aquí se ve su cita) o empieza
+        //     después (y su re-comprobación ve el día bloqueado).
+        // EN: Check and store INSIDE the 'reserva-dia:DATE' lock, the same one
+        //     the public booking, the reschedule and the manual entry take.
+        //     Without it, a booking could slip in between "no bookings" and
+        //     the save and leave an active booking on a blocked day. With it,
+        //     the booking either finishes first (and its booking is seen here)
+        //     or starts after (and its re-check sees the day blocked).
+        $fecha = $this->newDate;
+        $error = app(GestionCitas::class)->conBloqueosDeDias([$fecha], function () use ($fecha) {
+            // ES: ¿Ya está bloqueado? La regla unique comparaba "2026-09-24" con el
+            //     valor guardado "2026-09-24 00:00:00", no lo detectaba y el índice
+            //     único de la tabla acababa en un 500. whereDate compara solo la fecha.
+            // EN: Already blocked? The unique rule compared "2026-09-24" with the
+            //     stored "2026-09-24 00:00:00", missed it and the table's unique
+            //     index ended in a 500. whereDate compares the date only.
+            if (BlockedDay::whereDate('date', $fecha)->exists()) {
+                return 'citas.blocked_err_duplicate';
+            }
+
+            // ES: Antes de bloquear, comprobamos que el día no tenga citas activas.
+            //     Si las hay, bloquear dejaría esas citas huérfanas: avisamos y NO
+            //     bloqueamos.
+            // EN: Before blocking, ensure the day has no active appointments. If it
+            //     does, blocking would orphan those bookings: warn and DON'T block.
+            $hasAppointments = Appointment::query()
+                ->whereDate('date', $fecha)
+                ->where('status', '!=', 'cancelada')
+                ->exists();
+
+            if ($hasAppointments) {
+                return 'citas.blocked_err_has_appointments';
+            }
+
+            // ES: Día libre de citas: lo guardamos como bloqueado.
+            // EN: Day has no bookings: store it as blocked.
+            BlockedDay::create([
+                'date' => $fecha,
+                'reason' => $this->newReason ?: null,
+            ]);
+
+            return null;
+        });
+
+        // ES: Otra operación tenía el día bloqueado demasiado tiempo: reintentar.
+        // EN: Another operation held the day for too long: try again.
+        if ($error === GestionCitas::REINTENTAR) {
+            $error = 'citas.blocked_err_retry';
+        }
+        if ($error !== null) {
+            $this->addError('newDate', __($error));
 
             return;
         }
-
-        // ES: Antes de bloquear, comprobamos que el día no tenga citas activas.
-        //     Si las hay, bloquear dejaría esas citas huérfanas: avisamos y NO
-        //     bloqueamos.
-        // EN: Before blocking, ensure the day has no active appointments. If it
-        //     does, blocking would orphan those bookings: warn and DON'T block.
-        $hasAppointments = Appointment::query()
-            ->whereDate('date', $this->newDate)
-            ->where('status', '!=', 'cancelada')
-            ->exists();
-
-        if ($hasAppointments) {
-            $this->addError('newDate', __('citas.blocked_err_has_appointments'));
-
-            return;
-        }
-
-        // ES: Día libre de citas: lo guardamos como bloqueado.
-        // EN: Day has no bookings: store it as blocked.
-        BlockedDay::create([
-            'date' => $this->newDate,
-            'reason' => $this->newReason ?: null,
-        ]);
 
         // ES: Limpiamos el formulario. / EN: Clear the form for the next one.
         $this->reset(['newDate', 'newReason']);

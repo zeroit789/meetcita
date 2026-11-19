@@ -225,6 +225,7 @@ return [
     'blocked_err_duplicate' => 'That day is already blocked.',
     'blocked_err_reason_long' => 'The reason is too long.',
     'blocked_err_has_appointments' => 'That day has booked appointments; handle them before blocking it.',
+    'blocked_err_retry' => 'A booking for that day is in progress right now. Please try again in a few seconds.',
 
     // ── 8. LOGIN / LOGIN DEL PANEL ────────────────────────────────────────
     'login_title' => 'Panel access',

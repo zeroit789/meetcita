@@ -227,6 +227,7 @@ return [
     'blocked_err_duplicate' => 'Ese día ya está bloqueado.',
     'blocked_err_reason_long' => 'El motivo es demasiado largo.',
     'blocked_err_has_appointments' => 'Ese día tiene citas reservadas; gestiónalas antes de bloquearlo.',
+    'blocked_err_retry' => 'Ahora mismo hay una reserva en curso ese día. Inténtalo de nuevo en unos segundos.',
 
     // ── 8. LOGIN / LOGIN DEL PANEL ────────────────────────────────────────
     'login_title' => 'Acceso al panel',

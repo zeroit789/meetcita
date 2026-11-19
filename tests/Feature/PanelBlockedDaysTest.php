@@ -6,6 +6,7 @@ use App\Livewire\PanelBlockedDays;
 use App\Models\Appointment;
 use App\Models\BlockedDay;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 use Tests\TestCase;
 
@@ -75,6 +76,37 @@ class PanelBlockedDaysTest extends TestCase
         $this->entrarAlPanel();
 
         Livewire::test(PanelBlockedDays::class)->call('unblock', $dia->id);
+
+        $this->assertSame(0, BlockedDay::count());
+    }
+
+    public function test_bloquear_espera_al_bloqueo_del_dia_que_usan_las_reservas(): void
+    {
+        // ES: Una reserva o reprogramación de ese día está en curso (tiene el bloqueo).
+        // EN: A booking or reschedule for that day is in progress (it holds the lock).
+        config(['appointments.booking.lock_wait_seconds' => 0]);
+        Cache::lock('reserva-dia:2026-09-24', 10)->get();
+
+        $this->entrarAlPanel();
+
+        Livewire::test(PanelBlockedDays::class)
+            ->set('newDate', '2026-09-24')
+            ->call('block')
+            ->assertHasErrors('newDate');
+
+        $this->assertSame(0, BlockedDay::count());
+    }
+
+    public function test_una_fecha_mal_escrita_no_se_bloquea(): void
+    {
+        // ES: "2026-9-24" daría otra clave de bloqueo que la de las reservas.
+        // EN: "2026-9-24" would give a different lock key than the bookings'.
+        $this->entrarAlPanel();
+
+        Livewire::test(PanelBlockedDays::class)
+            ->set('newDate', '2026-9-24')
+            ->call('block')
+            ->assertHasErrors('newDate');
 
         $this->assertSame(0, BlockedDay::count());
     }
