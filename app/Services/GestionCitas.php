@@ -76,6 +76,16 @@ class GestionCitas
 
     public const NO_VALIDO = 'no_valido';            // ES: estado o datos no válidos · EN: invalid state or data
 
+    // ES: Token nuevo del enlace de gestionar tras la última cancelación o
+    //     reprogramación hecha con ESTA instancia (null si no hubo). La página
+    //     del cliente lo usa para seguir funcionando con su propio cambio, sin
+    //     leerlo de la base de datos (allí pudo cambiar ya otra vez).
+    // EN: New manage-link token after the last cancellation or reschedule
+    //     made with THIS instance (null if none). The client page uses it to
+    //     keep working after its own change, without reading it from the
+    //     database (it may have changed again there).
+    public ?string $tokenNuevo = null;
+
     // ── Cancelar / Cancel ───────────────────────────────────────────────────
 
     /**
@@ -86,40 +96,45 @@ class GestionCitas
      *     ATOMIC transition via conditional UPDATE: 0 rows = already
      *     cancelled, and then nobody is told and no event is fired.
      */
-    public function cancelarPorCliente(Appointment $cita): string
+    public function cancelarPorCliente(Appointment $cita, ?string $token = null): string
     {
-        // ES: El estado y el plazo se miran sobre la cita RELEÍDA con la fila
-        //     bloqueada, no sobre la copia que trae quien llama: una
-        //     reprogramación a la vez pudo moverla dentro del plazo. El UPDATE
-        //     exige además la misma revisión leída, así que en motores que no
-        //     respetan lockForUpdate (SQLite) un cambio entre medias también
-        //     deja 0 filas.
-        // EN: State and notice are checked on the booking RE-READ with the row
-        //     locked, not on the copy the caller brings: a concurrent
-        //     reschedule may have moved it inside the notice period. The
-        //     UPDATE also requires the same revision just read, so on engines
-        //     that ignore lockForUpdate (SQLite) a change in between also
-        //     leaves 0 rows.
-        $resultado = DB::transaction(function () use ($cita) {
-            $actual = Appointment::whereKey($cita->id)->lockForUpdate()->first();
-            if (! $actual || $actual->status === 'cancelada') {
-                return self::NO_VALIDO;
-            }
-            if (! $actual->puedeAutogestionarse()) {
-                return self::FUERA_DE_PLAZO;
-            }
-
-            $filas = Appointment::whereKey($actual->id)
-                ->where('status', '!=', 'cancelada')
-                ->where('revision', $actual->revision)
-                ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente(), 'manage_token' => Appointment::nuevoTokenGestion()]);
-
-            return $filas === 1 ? self::OK : self::NO_VALIDO;
-        });
-
-        if ($resultado !== self::OK) {
-            return $resultado;
+        // ES: Estado, token y plazo se miran sobre la cita RELEÍDA, no sobre la
+        //     copia que trae quien llama: una reprogramación a la vez pudo
+        //     moverla dentro del plazo o cambiar su token. El UPDATE exige la
+        //     misma revisión leída (control optimista): si algo cambió entre
+        //     la lectura y la escritura, 0 filas y no se cancela. Sin
+        //     transacción a propósito: en SQLite, leer y luego escribir dentro
+        //     de una transacción DEFERRED puede fallar con SQLITE_BUSY, y la
+        //     condición de la revisión ya basta en todos los motores.
+        //     $token = el del enlace de la página (null desde código propio).
+        // EN: State, token and notice are checked on the RE-READ booking, not
+        //     on the copy the caller brings: a concurrent reschedule may have
+        //     moved it inside the notice period or changed its token. The
+        //     UPDATE requires the same revision just read (optimistic
+        //     control): if anything changed between read and write, 0 rows
+        //     and nothing is cancelled. No transaction on purpose: on SQLite,
+        //     reading then writing inside a DEFERRED transaction can fail with
+        //     SQLITE_BUSY, and the revision condition is enough on every engine.
+        //     $token = the page link's one (null from our own code).
+        $actual = Appointment::find($cita->id);
+        if (! $actual || $actual->status === 'cancelada'
+            || ($token !== null && ! $actual->tokenGestionValido($token))) {
+            return self::NO_VALIDO;
         }
+        if (! $actual->puedeAutogestionarse()) {
+            return self::FUERA_DE_PLAZO;
+        }
+
+        $nuevoToken = Appointment::nuevoTokenGestion();
+        $filas = Appointment::whereKey($actual->id)
+            ->where('status', '!=', 'cancelada')
+            ->where('revision', $actual->revision)
+            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente(), 'manage_token' => $nuevoToken]);
+
+        if ($filas === 0) {
+            return self::NO_VALIDO;
+        }
+        $this->tokenNuevo = $nuevoToken;
 
         $cita->refresh();
 
@@ -147,7 +162,7 @@ class GestionCitas
      * ES: El cliente cambia su cita a otro día y hora libres (misma duración).
      * EN: The client moves their booking to another free day and time (same duration).
      */
-    public function reprogramar(Appointment $cita, string $fecha, string $hora): string
+    public function reprogramar(Appointment $cita, string $fecha, string $hora, ?string $token = null): string
     {
         if (! $cita->puedeAutogestionarse()) {
             return $cita->status === 'cancelada' ? self::NO_VALIDO : self::FUERA_DE_PLAZO;
@@ -183,9 +198,13 @@ class GestionCitas
         //     (if the panel confirms right after and creates another, it isn't touched).
         $eventoViejo = null;
 
-        $resultado = $this->conBloqueosDeDias($dias, function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, &$eventoViejo) {
+        // ES: Token nuevo del enlace (se guarda en la misma escritura).
+        // EN: New link token (stored in the same write).
+        $nuevoToken = Appointment::nuevoTokenGestion();
+
+        $resultado = $this->conBloqueosDeDias($dias, function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, $token, $nuevoToken, &$eventoViejo) {
             try {
-                return DB::transaction(function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, &$eventoViejo) {
+                return DB::transaction(function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, $token, $nuevoToken, &$eventoViejo) {
                     // ES: Relectura con la cita bloqueada: si cambió o se canceló
                     //     mientras esperábamos, no seguimos.
                     // EN: Re-read with the booking locked: if it changed or was
@@ -194,7 +213,14 @@ class GestionCitas
                     if (! $actual
                         || $actual->status === 'cancelada'
                         || $actual->date->toDateString() !== $fechaAntes
-                        || (string) $actual->time !== $horaAntes) {
+                        || (string) $actual->time !== $horaAntes
+                        // ES: El token del enlace se vuelve a mirar con la fila
+                        //     bloqueada: si otra pestaña cambió la cita (aunque
+                        //     haya vuelto al mismo día y hora), este ya no vale.
+                        // EN: The link token is checked again with the row
+                        //     locked: if another tab changed the booking (even
+                        //     back to the same day and time), this one is void.
+                        || ($token !== null && ! $actual->tokenGestionValido($token))) {
                         return self::NO_VALIDO;
                     }
 
@@ -231,7 +257,7 @@ class GestionCitas
                     //     recibe el nuevo en el correo de la cita cambiada.
                     // EN: New token: the old time's link stops working; the client gets
                     //     the new one in the changed-booking email.
-                    $actual->manage_token = Appointment::nuevoTokenGestion();
+                    $actual->manage_token = $nuevoToken;
                     $eventoViejo = $actual->google_event_id;
                     $actual->google_event_id = null;
                     $actual->google_meet_url = null;
@@ -253,6 +279,7 @@ class GestionCitas
         if ($resultado !== self::OK) {
             return $resultado;
         }
+        $this->tokenNuevo = $nuevoToken;
 
         // ── Después de la transacción y del bloqueo / After the transaction and the lock ──
         $cita->refresh();

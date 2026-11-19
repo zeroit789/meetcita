@@ -43,7 +43,9 @@ class GestionarCitaController extends Controller
 
         $cita = Appointment::where('reference', $reference)->firstOrFail();
         $token = (string) $request->query('token', '');
-        abort_unless($cita->tokenGestionValido($token), 403);
+        // ES: Una cita cancelada ya no se gestiona: 403 aunque el token coincida.
+        // EN: A cancelled booking is no longer managed: 403 even if the token matches.
+        abort_unless($cita->tokenGestionValido($token) && $cita->status !== 'cancelada', 403);
 
         return response()
             ->view('cita.gestionar', ['cita' => $cita, 'token' => $token])

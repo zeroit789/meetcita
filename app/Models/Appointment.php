@@ -353,7 +353,11 @@ class Appointment extends Model
      */
     public function urlGestionar(): ?string
     {
-        if (! self::autogestionActiva()) {
+        // ES: Una cita cancelada no tiene nada que gestionar (un correo viejo
+        //     procesado tarde no debe traer un enlace válido).
+        // EN: A cancelled booking has nothing to manage (an old email
+        //     processed late must not bring a valid link).
+        if (! self::autogestionActiva() || $this->status === 'cancelada') {
             return null;
         }
 

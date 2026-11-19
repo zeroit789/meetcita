@@ -100,23 +100,31 @@ class GestionarCita extends Component
      */
     protected function cita(): Appointment
     {
+        // ES: Igual que el enlace: sin autogestión o con la cita ya empezada,
+        //     una pestaña que siguiera abierta deja de servir.
+        // EN: Like the link: without self-service or once the booking has
+        //     started, a tab left open stops working.
+        abort_unless(Appointment::autogestionActiva(), 403);
+
         $cita = Appointment::findOrFail($this->citaId);
-        abort_unless($cita->tokenGestionValido($this->token), 403);
+        abort_unless($cita->tokenGestionValido($this->token) && $cita->inicioLocal()->isFuture(), 403);
 
         return $cita;
     }
 
     /**
      * ES: Tras cancelar o reprogramar desde ESTA página, el token de la cita
-     *     cambia: la página se queda con el nuevo para poder mostrar el
-     *     resultado (quien la usa ya demostró tener el enlace válido).
+     *     cambia: la página se queda con el que generó su propio cambio (el
+     *     que devuelve GestionCitas), no con el que haya en la base de datos,
+     *     que otra operación pudo cambiar ya otra vez.
      * EN: After cancelling or rescheduling from THIS page, the booking's
-     *     token changes: the page keeps the new one so it can show the result
-     *     (whoever uses it already proved to hold the valid link).
+     *     token changes: the page keeps the one its own change generated
+     *     (returned by GestionCitas), not whatever is in the database, which
+     *     another operation may have changed again already.
      */
-    protected function seguirConElTokenNuevo(): void
+    protected function seguirConElTokenNuevo(GestionCitas $servicio): void
     {
-        $this->token = (string) Appointment::whereKey($this->citaId)->value('manage_token');
+        $this->token = (string) $servicio->tokenNuevo;
     }
 
     // ── 2. VIEWS ─────────────────────────────────────────────────────────
@@ -219,9 +227,10 @@ class GestionarCita extends Component
         }
         RateLimiter::hit($clave, 3600);
 
-        $resultado = app(GestionCitas::class)->reprogramar($this->cita(), $this->nuevaFecha, $this->nuevaHora);
+        $servicio = app(GestionCitas::class);
+        $resultado = $servicio->reprogramar($this->cita(), $this->nuevaFecha, $this->nuevaHora, $this->token);
         if ($resultado === GestionCitas::OK) {
-            $this->seguirConElTokenNuevo();
+            $this->seguirConElTokenNuevo($servicio);
         }
 
         match ($resultado) {
@@ -241,9 +250,10 @@ class GestionarCita extends Component
      */
     public function cancelar(): void
     {
-        $resultado = app(GestionCitas::class)->cancelarPorCliente($this->cita());
+        $servicio = app(GestionCitas::class);
+        $resultado = $servicio->cancelarPorCliente($this->cita(), $this->token);
         if ($resultado === GestionCitas::OK) {
-            $this->seguirConElTokenNuevo();
+            $this->seguirConElTokenNuevo($servicio);
         }
 
         $resultado === GestionCitas::OK

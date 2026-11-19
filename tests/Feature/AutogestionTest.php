@@ -388,4 +388,35 @@ class AutogestionTest extends TestCase
 
         $this->post('/panel/login', ['password' => 'mala'])->assertStatus(302);
     }
+
+    public function test_el_token_viejo_se_comprueba_otra_vez_al_escribir(): void
+    {
+        // ES: Una pestaña validó su token y, antes de cancelar, otra pestaña
+        //     reprogramó la cita (token nuevo): la cancelación vieja no vale.
+        // EN: A tab validated its token and, before cancelling, another tab
+        //     rescheduled the booking (new token): the old cancellation fails.
+        $cita = $this->cita();
+        $viejo = $cita->fresh()->manage_token;
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+
+        $this->assertSame(GestionCitas::NO_VALIDO, app(GestionCitas::class)->cancelarPorCliente($cita->fresh(), $viejo));
+        $this->assertSame(GestionCitas::NO_VALIDO, app(GestionCitas::class)->reprogramar($cita->fresh(), '2026-09-25', '12:00', $viejo));
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
+        $this->assertSame('2026-09-24', $cita->fresh()->date->toDateString());
+    }
+
+    public function test_una_cita_cancelada_no_tiene_enlace_ni_pagina(): void
+    {
+        $cita = Appointment::factory()->cancelada()->create(['date' => '2026-09-23', 'time' => '10:00']);
+
+        $this->assertNull($cita->urlGestionar());
+
+        // ES: Aunque alguien tenga un enlace firmado con su token actual.
+        // EN: Even if someone has a link signed with its current token.
+        $enlace = URL::temporarySignedRoute('cita.gestionar', now()->addDay(), [
+            'reference' => $cita->reference, 'token' => $cita->fresh()->manage_token,
+        ], absolute: false);
+        $this->get($enlace)->assertForbidden();
+    }
 }
