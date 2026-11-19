@@ -156,4 +156,23 @@ class TelegramWebhookTest extends TestCase
         $this->assertSame('pendiente', $cita->fresh()->status);
         Mail::assertNotQueued(AppointmentRejected::class);
     }
+
+    public function test_un_boton_con_version_de_una_cita_ya_confirmada_dice_su_estado(): void
+    {
+        $cita = Appointment::factory()->create();
+        $version = $cita->updated_at->timestamp;
+
+        $this->travel(5)->seconds();
+        $this->webhook($this->boton("ac:{$cita->id}:{$version}"))->assertOk();
+        $this->assertSame('confirmada', $cita->fresh()->status);
+
+        // ES: Segundo toque: avisa de que ya está confirmada y edita el mensaje.
+        // EN: Second tap: says it is already confirmed and edits the message.
+        $this->travel(5)->seconds();
+        $this->webhook($this->boton("ac:{$cita->id}:{$version}"))->assertOk();
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'answerCallbackQuery') && str_contains((string) $r['text'], 'confirmada'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'editMessageText'));
+        Mail::assertQueued(AppointmentConfirmed::class, 1);
+    }
 }

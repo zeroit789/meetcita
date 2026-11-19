@@ -94,23 +94,15 @@ class TelegramWebhookController extends Controller
                     return response('ok');
                 }
 
-                // ES: callback_data tiene la forma "accion:id" (ac = aceptar, ar = rechazar).
-                // EN: callback_data looks like "action:id" (ac = accept, ar = reject).
-                // ES: "accion:id:version"; los avisos anteriores a la 1.0.0 no llevan versión.
-                // EN: "action:id:version"; notices from before 1.0.0 carry no version.
+                // ES: callback_data = "accion:id:version" (ac = aceptar, ar = rechazar);
+                //     los avisos anteriores a la 1.0.0 no llevan versión.
+                // EN: callback_data = "action:id:version" (ac = accept, ar = reject);
+                //     notices from before 1.0.0 carry no version.
                 [$accion, $citaId, $version] = array_pad(explode(':', $data, 3), 3, null);
                 $cita = Appointment::find((int) $citaId);
 
                 if (! $cita) {
                     $tg->responderCallback($cb['id'], 'Esa cita ya no existe.');
-
-                    return response('ok');
-                }
-
-                // ES: El cliente cambió la cita después de este aviso: sus botones ya no valen.
-                // EN: The client changed the booking after this notice: its buttons no longer work.
-                if ($version !== null && $version !== TelegramNotifier::version($cita)) {
-                    $tg->responderCallback($cb['id'], 'Esa cita ha cambiado: usa el aviso más reciente.');
 
                     return response('ok');
                 }
@@ -124,6 +116,18 @@ class TelegramWebhookController extends Controller
                     if ($messageId) {
                         $tg->editarMensaje((int) $messageId, $this->resumen($cita, 'ℹ️ Ya estaba <b>'.mb_strtoupper($cita->status).'</b>'));
                     }
+
+                    return response('ok');
+                }
+
+                // ES: Pendiente, pero el cliente la cambió después de este aviso: sus botones
+                //     ya no valen. Va DESPUÉS del estado: confirmar o cancelar también
+                //     cambian updated_at y ahí debe salir «ya está confirmada».
+                // EN: Pending, but the client changed it after this notice: its buttons no
+                //     longer work. Goes AFTER the state: confirming or cancelling also
+                //     changes updated_at and there it must say "already confirmed".
+                if ($version !== null && $version !== TelegramNotifier::version($cita)) {
+                    $tg->responderCallback($cb['id'], 'Esa cita ha cambiado: usa el aviso más reciente.');
 
                     return response('ok');
                 }
