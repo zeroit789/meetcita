@@ -76,6 +76,16 @@ class GestionCitas
 
     public const NO_VALIDO = 'no_valido';            // ES: estado o datos no válidos · EN: invalid state or data
 
+    // ES: Vida del bloqueo 'reserva-dia:FECHA' (segundos). Cubre con margen la
+    //     espera del segundo día (lock_wait_seconds) y las llamadas a Google
+    //     que puede haber dentro (tope de 15 s cada una, ver
+    //     GoogleCalendarService). Si el proceso muere, caduca solo.
+    // EN: Lifetime of the 'reserva-dia:DATE' lock (seconds). It covers with
+    //     margin the wait for the second day (lock_wait_seconds) and the
+    //     Google calls that may happen inside (15 s cap each, see
+    //     GoogleCalendarService). If the process dies, it expires by itself.
+    public const SEGUNDOS_BLOQUEO_DIA = 60;
+
     // ES: Token nuevo del enlace de gestionar tras la última cancelación o
     //     reprogramación hecha con ESTA instancia (null si no hubo). La página
     //     del cliente lo usa para seguir funcionando con su propio cambio, sin
@@ -444,7 +454,7 @@ class GestionCitas
 
         try {
             foreach ($dias as $dia) {
-                $bloqueo = Cache::lock('reserva-dia:'.$dia, 30);
+                $bloqueo = Cache::lock('reserva-dia:'.$dia, self::SEGUNDOS_BLOQUEO_DIA);
                 $bloqueo->block((int) config('appointments.booking.lock_wait_seconds', 5));
                 $tomados[] = $bloqueo;
             }

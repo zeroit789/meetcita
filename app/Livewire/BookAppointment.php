@@ -8,6 +8,7 @@ use App\Mail\AppointmentRequestedToOwner;
 use App\Models\Appointment;
 use App\Services\AvailabilityService;
 use App\Services\CaptchaService;
+use App\Services\GestionCitas;
 use App\Services\TelegramNotifier;
 use App\Support\CorreoCliente;
 use App\Support\Eventos;
@@ -510,11 +511,13 @@ class BookAppointment extends Component
         //     overlap that a partial unique index alone can't detect).
         //   - Inside the lock: open a tx, re-check the slot, only then create.
         //     The finally releases the lock no matter what.
-        //   - 30 s de vida: de sobra para comprobar y guardar; si el proceso
-        //     muere, el bloqueo caduca solo.
-        //   - 30 s lifetime: plenty to check and save; if the process dies,
+        //   - Vida de GestionCitas::SEGUNDOS_BLOQUEO_DIA (60 s): de sobra para
+        //     comprobar (incluida una consulta a Google) y guardar; si el
+        //     proceso muere, el bloqueo caduca solo.
+        //   - Lifetime GestionCitas::SEGUNDOS_BLOQUEO_DIA (60 s): plenty to
+        //     check (including a Google query) and save; if the process dies,
         //     the lock expires by itself.
-        $lock = Cache::lock('reserva-dia:'.$this->selectedDate, 30);
+        $lock = Cache::lock('reserva-dia:'.$this->selectedDate, GestionCitas::SEGUNDOS_BLOQUEO_DIA);
 
         // ES: Si en 5 s no conseguimos el lock, pedimos reintentar en un momento.
         //     block() LANZA LockTimeoutException (no devuelve false): antes la
