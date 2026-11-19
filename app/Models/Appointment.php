@@ -144,24 +144,29 @@ class Appointment extends Model
     }
 
     /**
-     * ES: Genera una referencia pública única tipo "APT-K7P3Q". Alfabeto sin
-     *     caracteres ambiguos (sin 0/O, 1/I) para dictarla por teléfono. El
-     *     prefijo sale de config('appointments.reference_prefix').
-     * EN: Generate a unique public reference like "APT-K7P3Q". Alphabet without
-     *     ambiguous chars (no 0/O, 1/I) so it can be dictated over the phone.
-     *     The prefix comes from config('appointments.reference_prefix').
+     * ES: Genera una referencia pública única y fácil de dictar, tipo
+     *     "APT-K7P-3QX": dos grupos de tres y un alfabeto sin caracteres que se
+     *     confunden al leer o al decirlos por teléfono (0/O, 1/I/L, 2/Z, 5/S,
+     *     8/B, U/V). 23^6 ≈ 148 millones de combinaciones. Las referencias
+     *     antiguas ("APT-K7P3Q") siguen valiendo: se buscan tal cual.
+     * EN: Generates a unique public reference that is easy to read out, like
+     *     "APT-K7P-3QX": two groups of three and an alphabet without characters
+     *     that get mixed up when read or said over the phone (0/O, 1/I/L, 2/Z,
+     *     5/S, 8/B, U/V). 23^6 ≈ 148 million combinations. Old references
+     *     ("APT-K7P3Q") keep working: they are looked up as they are.
      */
     public static function generarReferencia(): string
     {
-        $alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $alfabeto = 'ACDEFGHJKMNPQRTWXY34679';
 
         // ES: Prefijo de marca configurable. EN: Configurable brand prefix (e.g. "APT").
         $prefijo = config('appointments.reference_prefix', 'APT').'-';
 
         do {
             $codigo = '';
-            for ($i = 0; $i < 5; $i++) {
-                $codigo .= $alfabeto[random_int(0, strlen($alfabeto) - 1)];
+            for ($i = 0; $i < 6; $i++) {
+                // ES: Guion en medio: "K7P-3QX". EN: Hyphen in the middle: "K7P-3QX".
+                $codigo .= ($i === 3 ? '-' : '').$alfabeto[random_int(0, strlen($alfabeto) - 1)];
             }
             $referencia = $prefijo.$codigo;
         } while (self::where('reference', $referencia)->exists()); // ES: garantiza unicidad · EN: guarantees uniqueness

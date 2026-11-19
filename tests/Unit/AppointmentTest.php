@@ -22,7 +22,8 @@ class AppointmentTest extends TestCase
 
         $cita = Appointment::factory()->create();
 
-        $this->assertMatchesRegularExpression('/^MC-[A-HJ-NP-Z2-9]{5}$/', $cita->reference);
+        // ES: Dos grupos de tres, sin caracteres que se confundan. EN: Two groups of three, no look-alikes.
+        $this->assertMatchesRegularExpression('/^MC-[ACDEFGHJKMNPQRTWXY34679]{3}-[ACDEFGHJKMNPQRTWXY34679]{3}$/', $cita->reference);
     }
 
     public function test_el_estado_no_se_puede_asignar_en_masa(): void
