@@ -141,4 +141,16 @@ class EmailsTest extends TestCase
         Mail::to('cliente@example.com')->sendNow($correo);
         $this->assertCount(1, app('mail.manager')->mailer()->getSymfonyTransport()->messages());
     }
+
+    public function test_el_aviso_de_solicitud_o_cambio_no_sale_si_la_cita_ya_esta_cancelada(): void
+    {
+        // ES: Encolado al reprogramar; la cita se cancela antes de que salga.
+        // EN: Queued on reschedule; the booking is cancelled before it goes out.
+        $cita = Appointment::factory()->create(['email' => 'cliente@example.com']);
+        $correo = new AppointmentConfirmationToClient($cita, reprogramada: true);
+        $cita->forceFill(['status' => 'cancelada']);
+
+        Mail::to('cliente@example.com')->sendNow($correo);
+        $this->assertCount(0, app('mail.manager')->mailer()->getSymfonyTransport()->messages());
+    }
 }

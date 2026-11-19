@@ -102,6 +102,11 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
                 //     never on the attendees' copy).
                 'gestionarUrl' => $this->enlaceGestionSoloTitular(),
                 'reprogramada' => $this->reprogramada,
+                // ES: Si la cita ya está cancelada cuando el worker lo envía, el
+                //     aviso ya no es verdad y no sale (AppServiceProvider).
+                // EN: If the booking is already cancelled when the worker sends
+                //     it, the notice is no longer true and isn't sent (AppServiceProvider).
+                'citaCambiada' => $this->appointment->status === 'cancelada',
             ],
         );
     }
