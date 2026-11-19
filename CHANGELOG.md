@@ -27,6 +27,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** Google Calendar calls have a time limit (5 s to connect, 10 s in total): some run while holding the day lock and a hung call could outlast the lock.
 - **ES:** El correo de «cita confirmada» no se envía si la cita cambió mientras esperaba en la cola (por ejemplo, el cliente la reprogramó): ya no anuncia como confirmada una hora pendiente.
   **EN:** The "booking confirmed" email isn't sent if the booking changed while it waited in the queue (e.g. the client rescheduled it): it no longer announces a pending time as confirmed.
+- **ES:** Un enlace de gestionar caducado, revocado o mal copiado muestra una página propia, en el idioma de la cita, que explica por qué y da el contacto del negocio (antes, un 403 sin más).
+  **EN:** An expired, revoked or miscopied manage link shows its own page, in the booking's language, explaining why and giving the business contact (before, a bare 403).
+- **ES:** Quedan dos casos raros documentados en «Limitaciones» del README: la invitación de Google puede salir aunque el cliente cancele o cambie la cita justo mientras se crea el evento, y el correo de «cita confirmada» puede salir si la cita cambia en el instante exacto entre su última comprobación y el envío.
+  **EN:** Two rare cases remain, documented under "Limitations" in the README: the Google invitation may go out even if the client cancels or changes the booking right while the event is being created, and the "booking confirmed" email may go out if the booking changes in the exact instant between its last check and the send.
 
 ### Cambiado · Changed
 
