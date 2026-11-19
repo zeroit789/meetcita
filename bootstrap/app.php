@@ -28,18 +28,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        // ES: Confiar solo en el proxy inverso real (red Docker interna de Coolify:
-        //     10.0.1.0/24). Antes se usaba '*' (todos los proxies), lo que permitía
-        //     falsificar X-Forwarded-For y evadir los rate limits por IP.
-        //     Con el CIDR concreto, solo Caddy puede inyectar esa cabecera.
-        //     Si despliegas en otra red, cambia este CIDR por el de tu proxy.
-        // EN: Only trust the real reverse proxy (Coolify's internal Docker network:
-        //     10.0.1.0/24). It used to be '*' (every proxy), which allowed spoofing
-        //     X-Forwarded-For and bypassing the per-IP rate limits.
-        //     With the exact CIDR, only Caddy can inject that header.
-        //     If you deploy on another network, change this CIDR to your proxy's.
+        // ES: Proxies de confianza: las IPs salen de config/trustedproxy.php
+        //     (TRUSTED_PROXIES en el .env), no del código. Antes estaba fija la
+        //     red de un despliegue concreto (10.0.1.0/24) y, detrás de otro
+        //     proxy, el límite de reservas por IP se volvía común para todos.
+        //     Aquí solo se eligen las cabeceras X-Forwarded-* que se aceptan.
+        // EN: Trusted proxies: the IPs come from config/trustedproxy.php
+        //     (TRUSTED_PROXIES in .env), not from the code. It used to hard-code
+        //     one deployment's network (10.0.1.0/24) and, behind another proxy,
+        //     the per-IP booking limit became shared by everyone.
+        //     Here we only choose which X-Forwarded-* headers are accepted.
         $middleware->trustProxies(
-            at: '10.0.1.0/24',
             headers: Request::HEADER_X_FORWARDED_FOR
                 | Request::HEADER_X_FORWARDED_HOST
                 | Request::HEADER_X_FORWARDED_PORT
