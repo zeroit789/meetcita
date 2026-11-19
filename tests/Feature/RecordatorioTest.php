@@ -75,7 +75,10 @@ class RecordatorioTest extends TestCase
         // EN: While the 10:00 one is being sent, the client moves the booking
         //     to 12:00, the owner confirms it and another process already
         //     claims ITS reminder. Then the old send fails.
-        Mail::shouldReceive('to')->andReturnUsing(function () use ($cita) {
+        Mail::shouldReceive('to')->once()->andReturnUsing(function () use ($cita) {
+            // ES: Llega aquí con la marca ya puesta (reclamada antes de enviar).
+            // EN: It gets here with the mark already set (claimed before sending).
+            $this->assertNotNull($cita->fresh()->reminded_at);
             Appointment::whereKey($cita->id)->update(['time' => '12:00', 'revision' => 2, 'reminded_at' => now()]);
 
             throw new \RuntimeException('SMTP caído');
@@ -91,7 +94,11 @@ class RecordatorioTest extends TestCase
     public function test_un_envio_fallido_se_suelta_para_reintentar(): void
     {
         $cita = Appointment::factory()->confirmada()->create(['date' => '2026-09-22', 'time' => '10:00']);
-        Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP caído'));
+        Mail::shouldReceive('to')->once()->andReturnUsing(function () use ($cita) {
+            $this->assertNotNull($cita->fresh()->reminded_at);
+
+            throw new \RuntimeException('SMTP caído');
+        });
 
         $this->artisan('citas:recordar')->assertSuccessful();
 

@@ -94,23 +94,30 @@ class SendReminders extends Command
 
         // ES: Candidatas: confirmadas de mañana, sin recordatorio y con correo.
         // EN: Candidates: confirmed for tomorrow, no reminder yet and with an email.
-        $ids = Appointment::query()
+        //     Con su revisión: se reclama ESA versión de la cita, no otra.
+        //     With its revision: THAT version of the booking is claimed, no other.
+        $candidatas = Appointment::query()
             ->whereDate('date', $manana)
             ->where('status', 'confirmada')
             ->whereNull('reminded_at')
             ->where('email', '!=', '')
             ->orderBy('time')
-            ->pluck('id');
+            ->pluck('revision', 'id');
 
         $enviados = 0;
-        foreach ($ids as $id) {
+        foreach ($candidatas as $id => $revision) {
             // ES: Reclamar ANTES de enviar: 0 filas = otro proceso ya la cogió
             //     (o cambió de estado entre medias).
             // EN: Claim BEFORE sending: 0 rows = another process took it (or
             //     its state changed meanwhile).
             //     También tiene que seguir siendo de mañana (pudo reprogramarse).
             //     It must also still be for tomorrow (it may have been rescheduled).
+            //     Y con la misma revisión: si se reprogramó y se confirmó entre
+            //     medias, esta reclamación no vale (la nueva la cogerá otra vuelta).
+            //     And with the same revision: if it was rescheduled and confirmed
+            //     meanwhile, this claim doesn't count (another run will take it).
             $reclamada = Appointment::whereKey($id)
+                ->where('revision', $revision)
                 ->whereNull('reminded_at')
                 ->where('status', 'confirmada')
                 ->whereDate('date', $manana)
@@ -122,9 +129,11 @@ class SendReminders extends Command
 
             // ES: Se relee y se vuelve a comprobar justo antes de enviar.
             // EN: Re-read and re-checked right before sending.
+            //     Si ya no es la revisión reclamada, la marca es de otro: no se envía.
+            //     If it is no longer the claimed revision, the mark is someone else's: not sent.
             $cita = Appointment::find($id);
             if (! $cita || ! $cita->tieneEmail() || $cita->status !== 'confirmada'
-                || $cita->date->toDateString() !== $manana) {
+                || $cita->date->toDateString() !== $manana || $cita->revision !== (int) $revision) {
                 continue;
             }
 
