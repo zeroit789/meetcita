@@ -1,6 +1,6 @@
 # Meetcita
 
-**[ES](#español) | [EN](#english)**
+**[Español](#español) | [English](#english)**
 
 [![CI](https://github.com/zeroit789/meetcita/actions/workflows/ci.yml/badge.svg)](https://github.com/zeroit789/meetcita/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/github/license/zeroit789/meetcita)](LICENSE)
@@ -9,84 +9,121 @@
 ![Livewire 4.4](https://img.shields.io/badge/Livewire-4.4-4E56A6?logo=livewire&logoColor=white)
 ![Tailwind CSS 4.3](https://img.shields.io/badge/Tailwind%20CSS-4.3-06B6D4?logo=tailwindcss&logoColor=white)
 
-![Booking wizard — dark theme / Asistente de reserva — tema oscuro](docs/img/wizard.png)
+![Asistente de reserva, paso 2 / Booking wizard, step 2](docs/img/wizard-light.png)
 
 ---
 
 ## Español
 
-- [Qué es](#qué-es)
-- [Funcionalidades](#funcionalidades)
-- [Capturas](#capturas)
-- [Stack tecnológico](#stack-tecnológico)
+**Si tienes un negocio**
+
+- [Qué es Meetcita](#qué-es-meetcita)
+- [Qué hace por ti](#qué-hace-por-ti)
+- [Cómo pide cita tu cliente](#cómo-pide-cita-tu-cliente)
+- [Cómo gestionas las citas](#cómo-gestionas-las-citas)
+- [Tus datos y los de tus clientes](#tus-datos-y-los-de-tus-clientes)
+- [¿Cómo lo pongo en marcha?](#cómo-lo-pongo-en-marcha)
+
+**Si eres desarrollador**
+
+- [Stack y versiones](#stack-y-versiones)
 - [Requisitos](#requisitos)
-- [Instalación](#instalación)
+- [Instalación en local](#instalación-en-local)
 - [Configuración (.env)](#configuración-env)
+- [Despliegue en producción](#despliegue-en-producción)
+- [Docker (pendiente de probar)](#docker-pendiente-de-probar)
+- [Google Calendar + Meet (opcional)](#google-calendar--meet-opcional)
+- [Bot de Telegram (opcional)](#bot-de-telegram-opcional)
+- [Personalización](#personalización)
+- [Modo demo](#modo-demo)
 - [Comandos](#comandos)
 - [Rutas](#rutas)
 - [Estructura de carpetas](#estructura-de-carpetas)
-- [Google Calendar + Meet (opcional)](#google-calendar--meet-opcional)
-- [Bot de Telegram (opcional)](#bot-de-telegram-opcional)
-- [Despliegue en producción](#despliegue-en-producción)
-- [Personalización](#personalización)
 - [Tests e integración continua](#tests-e-integración-continua)
+- [Seguridad](#seguridad)
 - [Limitaciones conocidas](#limitaciones-conocidas)
-- [Licencia](#licencia)
-- [Créditos](#créditos)
+- [Licencia y créditos](#licencia-y-créditos)
 
-### Qué es
+### Qué es Meetcita
 
-Meetcita es un sistema de **reserva de citas** open source y autoalojado, hecho con Laravel y Livewire. El cliente elige día, duración y hora en un asistente de cuatro pasos. Tú recibes el aviso por email y, si lo configuras, por Telegram, y confirmas o rechazas desde el móvil o desde un panel web con contraseña. Las citas online confirmadas se crean en tu Google Calendar con enlace de Google Meet.
+Meetcita es una página para que tus clientes te pidan cita por internet. Está pensada para asesorías, gestorías, consultas y despachos: negocios que atienden con cita previa, en persona o por videollamada.
 
-Salió del módulo de citas de [danimefle.com](https://danimefle.com) y se publicó como proyecto independiente: es una aplicación Laravel completa que se clona, se configura con el `.env` y funciona.
+El cliente elige día y hora en tu web y te deja sus datos. Tú recibes el aviso y decides si confirmas o no. El cliente recibe un correo en cada paso.
 
-### Funcionalidades
+Es software libre (licencia MIT). No se paga una cuota por usuario ni por cita: se instala en tu propio servidor y los datos se quedan allí.
 
-Todo lo de esta lista existe en el código actual:
+### Qué hace por ti
 
-- **Asistente de reserva en 4 pasos** (`/citas`, componente Livewire `BookAppointment`):
-  1. Día, en un calendario mensual.
-  2. Duración (30 o 60 minutos) y hora libre.
-  3. Datos: modalidad, nombre, email, teléfono (opcional), personas que asisten, emails de invitados (opcional, hasta `APPOINTMENTS_MAX_ATTENDEES`) y mensaje.
-  4. Pantalla final con el código público de la cita (por ejemplo `APT-K7P3Q`).
-- **Disponibilidad real** (`AvailabilityService`): ofrece los próximos N días laborables (`APPOINTMENTS_DAYS_AHEAD`) con huecos de 30 minutos entre la apertura y el cierre. Quita las horas ya pasadas (en la zona horaria del negocio), los días bloqueados, las citas no canceladas y, si Google está configurado, los eventos de tu propio Google Calendar. Una cita de 60 minutos ocupa dos huecos seguidos y nunca termina después del cierre.
-- **Sin dobles reservas**: bloqueo por día (`Cache::lock`), transacción que vuelve a comprobar el hueco y, en SQLite y PostgreSQL, un índice único parcial sobre `(date, time)` para las citas no canceladas.
-- **Antispam**: campo trampa (honeypot) y un máximo de 5 reservas por hora e IP.
-- **Online o presencial**: tú eliges qué modalidades se ofrecen. Las online reciben enlace de Meet al confirmarse (si Google está configurado).
-- **Emails en cola** (los cuatro Mailables implementan `ShouldQueue`):
-  - al dueño: nueva solicitud;
-  - al cliente: solicitud recibida, con botones para añadirla al calendario;
-  - al cliente: cita confirmada, con enlace de Meet, botón de Google Calendar y descarga `.ics`;
-  - al cliente: cita rechazada o cancelada, con el motivo que escribes en Telegram o en el panel (en el panel es opcional).
-  
-  Los invitados extra van en copia y los emails al cliente salen en su idioma.
-- **Bot de Telegram** (opcional): cada reserva llega con dos botones, **✅ Confirm** y **❌ Reject**. Al rechazar, el bot te pide el motivo y tu siguiente mensaje (en menos de 15 minutos) cancela la cita y se envía al cliente. El webhook exige un secreto (403 si falta o no coincide) y solo atiende al chat del dueño.
-- **Panel de administración** (`/panel`): contraseña única compartida (sin tabla de usuarios), máximo 5 intentos de login por minuto e IP. Lista paginada de citas (30 por página) con acciones de **confirmar** (solo las pendientes: email + evento en Google) y **cancelar** (pide un motivo opcional, borra el evento de Google y manda al cliente el email de cancelación). También gestiona los **días bloqueados**, y no deja bloquear un día que ya tiene citas activas.
-- **Google Calendar + Meet** (opcional): crea el evento al confirmar, invita al cliente y a los invitados, lo borra al cancelar y lee tus eventos para no ofrecer huecos ocupados.
-- **Archivo `.ics`**: `/cita/{reference}/calendario.ics` para Outlook o Apple Calendar (máximo 20 descargas por minuto e IP).
-- **Bilingüe ES / EN**: el idioma sale, por este orden, de la cookie del selector (`/lang/{locale}`), del navegador en la primera visita (cabecera `Accept-Language`; `en-US` cuenta como `en`) y, si ninguno encaja, de `default_locale` en `config/appointments.php`. Cada cita guarda el idioma del cliente para sus emails.
-- **Tema claro y oscuro**, con botón sol/luna que recuerda la elección. El tema por defecto se fija con `APPOINTMENTS_THEME`.
-- **Todo configurable** desde `config/appointments.php` y el `.env`: marca, horario, días laborables, duraciones, modalidades, zona horaria, prefijo del código y tema.
-- **Funciona sin Google ni Telegram**: sin ellos las reservas siguen funcionando y se gestionan desde el panel, aunque no habrá enlace de Meet automático.
+- **Solo ofrece las horas libres.** Respeta tu horario, tus días de trabajo y los días que bloquees (vacaciones, festivos). Si conectas tu Google Calendar, tampoco ofrece las horas en las que ya tienes algo.
+- **No hay dos citas a la vez.** Aunque dos personas pulsen «Reservar» en el mismo segundo, solo una se queda con la hora.
+- **Confirmas o rechazas desde el panel o desde el móvil.** El panel es una página privada con contraseña. Si quieres, también te llega cada cita por Telegram con dos botones.
+- **El cliente recibe sus correos.** Uno al pedir la cita, otro cuando la confirmas (con el archivo para añadirla a su calendario) y otro si la cancelas, con el motivo si lo escribes.
+- **Videollamada automática (opcional).** Si conectas Google Calendar, cada cita online confirmada se crea en tu calendario con un enlace de Google Meet.
+- **En español y en inglés.** La página y los correos salen en el idioma del cliente.
+- **Con tu nombre y tu color.** El nombre del negocio, el horario, las duraciones y el color de los botones se cambian en la configuración.
 
-### Capturas
+### Cómo pide cita tu cliente
 
-![Asistente de reserva — tema oscuro](docs/img/wizard.png)
-*Asistente de reserva (`/citas`), tema oscuro.*
+Son cuatro pasos y funciona igual en el móvil:
 
-![Asistente de reserva — tema claro](docs/img/wizard-light.png)
-*El mismo asistente en tema claro.*
+1. Elige el día en un calendario. Los días que no se pueden reservar salen tachados.
+2. Elige cuánto dura la cita (por ejemplo, 30 minutos o 1 hora) y la hora.
+3. Escribe su nombre y su correo. Teléfono, acompañantes y mensaje son opcionales. Justo encima del botón de reservar ve la información básica de protección de datos.
+4. Recibe un código de cita, por ejemplo `APT-K7P-3QX`, que se lee y se dicta sin confusiones.
 
-### Stack tecnológico
+| Paso 1 en el móvil | Paso 3: datos y protección de datos |
+|---|---|
+| ![Paso 1 en el móvil](docs/img/booking-step1-mobile.png) | ![Paso 3 con la información de protección de datos](docs/img/booking-step3-privacy.png) |
 
-Versiones exactas del `composer.lock` y del `pnpm-lock.yaml`:
+![Paso 4: cita solicitada con su código](docs/img/booking-step4-confirmation.png)
+
+### Cómo gestionas las citas
+
+En el **panel** (`/panel`) ves todas las citas con su estado: pendiente, confirmada o cancelada. Desde ahí confirmas, cancelas (con un motivo opcional que le llega al cliente) y bloqueas los días en que no trabajas.
+
+![Panel de citas](docs/img/panel.png)
+
+Con el **bot de Telegram** (opcional) cada cita nueva te llega al móvil con dos botones: confirmar y rechazar. Si rechazas, el bot te pide el motivo y se lo envía al cliente.
+
+La página tiene tema claro y oscuro. El cliente cambia con el botón del sol y la luna.
+
+![Calendario en tema oscuro](docs/img/wizard.png)
+
+### Tus datos y los de tus clientes
+
+- Todo se queda en tu servidor. No hay un servicio de terceros guardando tus citas. Google Calendar y Telegram solo se usan si tú los activas.
+- El formulario muestra la primera capa de información del RGPD: responsable, finalidad, base legal, destinatarios y derechos, con enlace a tu política de privacidad. El texto legal final es responsabilidad de tu negocio: revísalo con quien te lleve la protección de datos.
+- Cada noche se borran las citas que pasaron hace más de 12 meses. El plazo se puede cambiar o desactivar.
+- Contra el spam lleva un captcha propio, sin servicios de terceros ni cookies de seguimiento: el navegador del cliente resuelve un pequeño cálculo antes de enviar. También limita las reservas por conexión y las citas activas de un mismo correo.
+
+### ¿Cómo lo pongo en marcha?
+
+Meetcita se instala en un servidor; no es una aplicación que se descarga y se abre. Hay dos caminos:
+
+- **Te lo monta tu desarrollador o tu proveedor de hosting.** Todo lo técnico está más abajo, en la parte para desarrolladores.
+- **Te lo monto yo.** Si no tienes a nadie, escríbeme desde [danimefle.com](https://danimefle.com) y lo vemos.
+
+Necesitarás:
+
+- un servidor o hosting con PHP 8.4 o superior (o con Docker);
+- un dominio con HTTPS, por ejemplo `citas.tunegocio.es`;
+- una cuenta de correo para enviar los avisos (los datos SMTP te los da tu proveedor de correo);
+- si los quieres, una cuenta de Google (Calendar y Meet) y Telegram en el móvil.
+
+---
+
+### Stack y versiones
+
+Versiones exactas de `composer.lock` y `pnpm-lock.yaml`:
 
 | Pieza | Versión |
 |---|---|
-| PHP | ≥ 8.4.1 (lo exigen las dependencias de Symfony 8 del lockfile) |
+| PHP | ≥ 8.4.1 (`composer.json`; lo piden también los paquetes de Symfony 8 del lockfile) |
 | laravel/framework | 13.43.0 |
 | livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.1 |
+| altcha-org/altcha (captcha, servidor) | 2.4.0 |
+| altcha (captcha, navegador) | 3.6.0 |
 | laravel/tinker | 3.2.0 |
 | laravel/pint (dev) | 1.32.3 |
 | phpunit/phpunit (dev) | 12.5.44 |
@@ -95,106 +132,228 @@ Versiones exactas del `composer.lock` y del `pnpm-lock.yaml`:
 | vite | 8.3.8 |
 | laravel-vite-plugin | 3.2.1 |
 | concurrently (dev) | 9.2.5 |
+| pnpm (`packageManager`) | 12.5.1 |
 
 Base de datos: SQLite por defecto. También funciona con PostgreSQL y MySQL/MariaDB (ver [Limitaciones conocidas](#limitaciones-conocidas)).
 
 ### Requisitos
 
-- **PHP 8.4.1 o superior**, con las extensiones habituales de Laravel y el driver PDO de tu base de datos (`pdo_sqlite` para la configuración por defecto).
+- **PHP 8.4.1 o superior**, con las extensiones habituales de Laravel y el driver PDO de tu base de datos (`pdo_sqlite` en la configuración por defecto).
 - **Composer 2**.
-- **Node.js 20.19+ o 22.12+** (lo pide Vite 8) y **pnpm** (la versión está fijada en `packageManager` de `package.json`; con Corepack basta `corepack enable`) para compilar el CSS y el JS.
+- **Node.js 20.19+ o 22.12+** (lo pide Vite 8) y **pnpm** (la versión está fijada en `packageManager` de `package.json`; con Corepack basta `corepack enable`).
 - Opcional: un proyecto de **Google Cloud** (Calendar + Meet) y un **bot de Telegram**.
 
-### Instalación
+### Instalación en local
 
 ```bash
-# 1. Clona el repositorio
 git clone https://github.com/zeroit789/meetcita.git meetcita
 cd meetcita
+composer setup
+```
 
-# 2. Dependencias PHP
-composer install
+`composer setup` hace todo lo necesario: `composer install`, copia `.env.example` a `.env` si no existe, genera `APP_KEY`, crea la base de datos SQLite y las tablas (`migrate --force`), y ejecuta `pnpm install` y `pnpm run build`.
 
-# 3. Crea el .env a partir del ejemplo y genera la clave
-cp .env.example .env
-php artisan key:generate
+Después pon una contraseña en `APPOINTMENTS_PANEL_PASSWORD` dentro del `.env` y arranca:
 
-# 4. Crea la base de datos SQLite (driver por defecto)
-#    En PowerShell: New-Item database/database.sqlite -ItemType File
-touch database/database.sqlite
-
-# 5. Crea las tablas
-php artisan migrate
-
-# 6. Dependencias del front y compilación de assets
-pnpm install
-pnpm run build
-
-# 7. Arranca el servidor
+```bash
+composer dev        # servidor, cola, logs (Pail) y Vite a la vez
+# o solo el servidor:
 php artisan serve
 ```
 
-Abre **http://localhost:8000/citas** para reservar y **http://localhost:8000/panel** para el panel. Antes de entrar al panel pon una contraseña en `APPOINTMENTS_PANEL_PASSWORD`.
+Abre **http://localhost:8000/citas** para reservar y **http://localhost:8000/panel** para el panel. Con el `.env` de ejemplo los correos no se envían: se escriben en `storage/logs/laravel.log` (`MAIL_MAILER=log`).
 
 Sin `pnpm run build` las páginas dan error 500, porque falta el manifiesto de Vite.
 
 ### Configuración (.env)
 
-`.env.example` trae todas las variables comentadas. Ninguna de las propias es obligatoria para arrancar, pero sin contraseña no se puede entrar al panel. Los valores se leen en `config/appointments.php` y `config/services.php`.
+`.env.example` trae todas las variables comentadas. Ninguna de las propias es obligatoria para arrancar, pero sin contraseña no se puede entrar al panel. Se leen en `config/appointments.php`, `config/services.php` y `config/trustedproxy.php`.
 
-| Variable | Qué hace | Ejemplo |
+**Laravel**
+
+| Variable | Qué hace | Valor de ejemplo |
 |---|---|---|
-| `APP_NAME` | Nombre de la app (remitente de los emails). | `"Appointments"` |
+| `APP_NAME` | Nombre de la app (remitente de los correos). | `"Appointments"` |
 | `APP_ENV` / `APP_DEBUG` | Entorno y errores detallados. En producción: `production` y `false`. | `local` / `true` |
-| `APP_URL` | URL pública. En producción, tu dominio HTTPS (la usa el webhook de Telegram). | `http://localhost` |
-| `APP_LOCALE` | Idioma interno de Laravel (mensajes del framework). No decide el idioma de la web de reservas: ese sale de la cookie del selector, del navegador o de `default_locale` en `config/appointments.php`. | `es` |
+| `APP_URL` | URL pública. En producción, tu dominio HTTPS (la usan los enlaces de los correos y el webhook de Telegram). | `http://localhost` |
+| `APP_LOCALE` | Idioma interno de Laravel. No decide el idioma de la web de reservas (ver `default_locale` más abajo). | `es` |
+| `TRUSTED_PROXIES` | IP o rangos CIDR del proxy inverso, separados por comas. Vacío = no confía en ninguno. `*` solo si la app es accesible únicamente a través del proxy. | *(vacío)*; en Coolify, `10.0.1.0/24` |
 | `DB_CONNECTION` | `sqlite`, `pgsql` o `mysql`. | `sqlite` |
-| `SESSION_DRIVER` / `QUEUE_CONNECTION` / `CACHE_STORE` | Todo en base de datos por defecto (sesión del panel, cola de emails, locks y caché). | `database` |
-| `MAIL_MAILER` / `MAIL_FROM_ADDRESS` | Transporte y remitente. `log` escribe los emails en el log. | `log` |
-| `APPOINTMENTS_BRAND` | Nombre de tu marca (emails y eventos). | `"Acme Inc."` |
-| `APPOINTMENTS_OWNER_NAME` / `APPOINTMENTS_OWNER_ROLE` | Nombre y cargo de la firma de los emails. | `"Jane Doe"` / `"Founder"` |
-| `APPOINTMENTS_OWNER_EMAIL` | Recibe los avisos de nueva cita y es el Reply-To. | `"hello@example.com"` |
-| `APPOINTMENTS_WEBSITE` / `APPOINTMENTS_LINKEDIN` | Enlaces de la firma. LinkedIn vacío = oculto. | `"https://example.com"` |
+| `SESSION_DRIVER` | Dónde se guarda la sesión del panel. Usa `database`, `redis` o `file`; **nunca `cookie`** (ver [Seguridad](#seguridad)). | `database` |
+| `QUEUE_CONNECTION` / `CACHE_STORE` | Cola de correos y caché (bloqueos, límites, retos del captcha). | `database` |
+| `MAIL_MAILER` / `MAIL_FROM_ADDRESS` | Transporte y remitente. `log` escribe los correos en el log; en producción, `smtp` con los datos de tu proveedor. | `log` |
+
+**Negocio y reservas**
+
+| Variable | Qué hace | Por defecto |
+|---|---|---|
+| `APPOINTMENTS_BRAND` | Nombre del negocio (página, correos y eventos). | `"Acme Inc."` |
+| `APPOINTMENTS_OWNER_NAME` / `APPOINTMENTS_OWNER_ROLE` | Nombre y cargo de la firma de los correos. | `"Jane Doe"` / `"Founder"` |
+| `APPOINTMENTS_OWNER_EMAIL` | Recibe los avisos de cita nueva y es el Reply-To de los correos al cliente. | `"hello@example.com"` |
+| `APPOINTMENTS_WEBSITE` / `APPOINTMENTS_LINKEDIN` | Enlaces de la firma. LinkedIn vacío = oculto. | `"https://example.com"` / *(vacío)* |
 | `APPOINTMENTS_REF_PREFIX` | Prefijo del código de cita (2-4 letras). | `APT` |
+| `APPOINTMENTS_ICS_UNSIGNED_UNTIL` | Solo si actualizas desde una versión anterior a la 1.0.0: los enlaces `.ics` sin firma ya enviados siguen valiendo para citas creadas antes de esta fecha (`YYYY-MM-DD`, pon el día en que actualizas). Vacío = ninguno. | *(vacío)* |
 | `APPOINTMENTS_TIMEZONE` | Zona horaria del negocio. Todas las horas se calculan en ella. | `Europe/Madrid` |
 | `APPOINTMENTS_DAYS_AHEAD` | Días laborables que se ofrecen. | `14` |
-| `APPOINTMENTS_OPEN` / `APPOINTMENTS_CLOSE` | Apertura y cierre (el cierre es exclusivo). | `09:30` / `18:00` |
-| `APPOINTMENTS_MAX_ATTENDEES` | Máximo de emails de invitados por cita. | `10` |
-| `APPOINTMENTS_MODALITY_ONLINE` / `APPOINTMENTS_MODALITY_IN_PERSON` | Modalidades ofrecidas (al menos una a `true`). | `true` |
-| `APPOINTMENTS_PANEL_PASSWORD` | Contraseña de `/panel`. No tiene valor por defecto. | *(vacía: ponla tú)* |
-| `APPOINTMENTS_THEME` | Tema por defecto: `dark`, `light` o `auto`. | `dark` |
+| `APPOINTMENTS_OPEN` / `APPOINTMENTS_CLOSE` | Apertura y cierre (el cierre es exclusivo: ninguna cita termina después). El texto del horario de la página sale de aquí. | `09:30` / `18:00` |
+| `APPOINTMENTS_MAX_ATTENDEES` | Máximo de correos de invitados por cita. | `10` |
+| `APPOINTMENTS_MAX_ACTIVE_PER_EMAIL` | Citas activas (sin cancelar, de hoy en adelante) que puede tener a la vez un mismo correo. `0` = sin tope. | `2` |
+| `APPOINTMENTS_MODALITY_ONLINE` / `APPOINTMENTS_MODALITY_IN_PERSON` | Modalidades ofrecidas (al menos una a `true`). | `true` / `true` |
+| `APPOINTMENTS_PANEL_PASSWORD` | Contraseña de `/panel`. No tiene valor por defecto. Cambiarla cierra todas las sesiones abiertas. | *(vacía: ponla tú)* |
+
+**Privacidad (RGPD)**
+
+| Variable | Qué hace | Por defecto |
+|---|---|---|
+| `APPOINTMENTS_PRIVACY_CONTROLLER` | Responsable del tratamiento que sale en la primera capa. | *(vacío = el nombre del negocio)* |
+| `APPOINTMENTS_PRIVACY_URL` | Enlace a tu política de privacidad completa. | *(vacío = sin enlace)* |
+| `APPOINTMENTS_PRIVACY_RECIPIENTS` | Destinatarios de los datos (proveedores). | *(vacío = texto genérico traducido)* |
+| `APPOINTMENTS_RETENTION_MONTHS` | Meses que se guardan las citas pasadas; después, `citas:purgar` las borra cada noche a las 03:30. `0` = no borrar nunca. | `12` |
+
+**Aspecto**
+
+| Variable | Qué hace | Por defecto |
+|---|---|---|
+| `APPOINTMENTS_THEME` | Tema con el que se abre la página: `light`, `dark` o `auto` (el del sistema). El visitante puede cambiarlo. | `light` |
+| `APPOINTMENTS_ACCENT` | Color de los botones, el día elegido y los enlaces, en hex `#rrggbb`. Lleva texto blanco encima: si no llega a un contraste de 4,5:1 con el blanco, se usa el de por defecto. **Entre comillas**: sin ellas, el `#` se lee como comentario. | `"#1d4ed8"` |
+| `APPOINTMENTS_ACCENT_GLOW` | Opcional: tono claro del acento para los textos del tema oscuro. | *(vacío = se calcula solo)* |
+
+**Integraciones, captcha y demo**
+
+| Variable | Qué hace | Por defecto |
+|---|---|---|
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Credenciales OAuth de Google (opcional). | *(vacío)* |
 | `GOOGLE_REFRESH_TOKEN` | Lo da `php artisan google:auth`. | *(vacío)* |
 | `GOOGLE_CALENDAR_ID` / `GOOGLE_REDIRECT_URI` | Calendario destino y URI de redirección OAuth. | `primary` / `http://localhost` |
 | `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Bot y chat donde llegan los avisos (opcional). | *(vacío)* |
 | `TELEGRAM_WEBHOOK_SECRET` | Cadena aleatoria que protege el webhook. Obligatoria si usas el bot. | *(vacío)* |
+| `ALTCHA_ENABLED` | Captcha propio en la reserva. `false` lo quita (por ejemplo, en una intranet). | `true` |
+| `ALTCHA_HMAC_KEY` | Clave HMAC propia del captcha. | *(vacío = deriva de `APP_KEY`)* |
+| `MEETCITA_DEMO` | Convierte la instalación en una demo pública (ver [Modo demo](#modo-demo)). **Nunca en una instalación real.** | `false` |
+| `MEETCITA_DEMO_PANEL_PASSWORD` | Contraseña del panel en modo demo. | `demo` |
 
-Lo que no está en el `.env` se cambia en `config/appointments.php`: duración del hueco (`slot_minutes`, 30), duraciones ofrecidas (`durations`, `[30, 60]`), días laborables (`weekdays`, ISO 1 = lunes … 7 = domingo, por defecto de lunes a viernes) e idiomas (`locales`, `default_locale`).
+Ajustes avanzados que no vienen en `.env.example`: `CSP_ENABLED` (pon `false` solo para depurar la CSP) y `ALTCHA_COST`, `ALTCHA_COUNTER_MIN`, `ALTCHA_COUNTER_MAX` y `ALTCHA_EXPIRES` (dificultad y vida del reto del captcha, en `config/services.php`).
+
+Lo que no está en el `.env` se cambia en `config/appointments.php`:
+
+- `schedule.durations`: duraciones que puede elegir el cliente, en minutos (por defecto `[30, 60]`). Valen otras, como 90 o 120, siempre que sean múltiplos del hueco: la cita no pisa la siguiente ni pasa del cierre.
+- `schedule.slot_minutes`: tamaño del hueco (30).
+- `schedule.weekdays`: días laborables en formato ISO (1 = lunes … 7 = domingo; por defecto, de lunes a viernes).
+- `locales` y `default_locale`: idiomas. El de cada visita sale de la cookie del selector, si no del navegador (`Accept-Language`) y si no de `default_locale` (`es`).
+
+### Despliegue en producción
+
+1. `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` con tu dominio HTTPS, una `APPOINTMENTS_PANEL_PASSWORD` larga y el correo SMTP de tu proveedor.
+2. Dependencias y assets: `composer install --no-dev --optimize-autoloader`, `pnpm install --frozen-lockfile` y `pnpm run build`.
+3. Tablas: `php artisan migrate --force`.
+4. **Scheduler (obligatorio).** Los correos van en cola y el borrado de datos antiguos es una tarea programada. Sin el scheduler no sale ningún correo. Basta con una línea de cron:
+
+   ```bash
+   * * * * * cd /ruta/al/proyecto && php artisan schedule:run >> /dev/null 2>&1
+   ```
+
+   `routes/console.php` programa:
+   - `queue:work --stop-when-empty --max-time=55 --tries=3` cada minuto (envía los correos);
+   - `citas:purgar` cada día a las 03:30 (borra los datos caducados);
+   - `citas:demo` cada hora, **solo** con `MEETCITA_DEMO=true`.
+
+   Si prefieres un worker permanente para la cola: `php artisan queue:work --tries=3`.
+5. **HTTPS.** Sirve la web solo por HTTPS. La cabecera HSTS se envía cuando la petición llega por HTTPS.
+6. **Proxy inverso.** Pon en `TRUSTED_PROXIES` la IP o el rango de tu proxy (en Coolify, `10.0.1.0/24`). Si lo dejas vacío detrás de un proxy, Laravel no verá la IP real ni el HTTPS del cliente, y el límite de reservas por IP se aplicará a la IP del proxy, común para todos.
+7. **Sesiones en el servidor.** `SESSION_DRIVER=database` (el valor de `.env.example`), `redis` o `file`. No uses `cookie`.
+8. **No cambies `APP_KEY`** una vez en marcha: firma los enlaces `.ics` de los correos, y con otra clave los enlaces ya enviados dejan de valer.
+9. **Borrado de datos antiguos.** Está activado por defecto (12 meses). Si actualizas una instalación y quieres conservarlo todo, pon `APPOINTMENTS_RETENTION_MONTHS=0` **antes** de que corra el scheduler. Para ver qué se borraría: `php artisan citas:purgar --simular`.
+10. **Telegram.** El webhook necesita HTTPS público. Tras el despliegue, ejecuta `php artisan telegram:set-webhook`.
+
+### Docker (pendiente de probar)
+
+> ⚠️ **Pendiente de probar.** El `Dockerfile` y el `compose.yaml` aún no se han construido ni se prueban en la integración continua. Úsalos como punto de partida y revisa el resultado antes de llevarlos a producción.
+
+El `Dockerfile` tiene tres etapas: compila el CSS y el JS con pnpm, instala las dependencias de PHP sin las de desarrollo y monta la imagen final con FrankenPHP (`dunglas/frankenphp:1.13.4-php8.5`, fijada por digest).
+
+- Escucha en el puerto **8080** y corre como **`www-data`** (sin root).
+- La base de datos SQLite va en **`/data/database.sqlite`**, dentro del volumen `datos`, fuera del código.
+- Al arrancar, el contenedor crea el fichero de SQLite si falta, migra, cachea la configuración, las rutas y las vistas, y lanza el servidor.
+- `compose.yaml` levanta dos servicios con la misma imagen: `web` (la página, con healthcheck en `/up`) y `scheduler` (`php artisan schedule:work`: cola de correos y borrado de datos antiguos). El scheduler espera a que la web esté sana y no migra.
+
+Pasos (los de la cabecera de `compose.yaml`):
+
+```bash
+# 1. Crea el .env y rellénalo (marca, correo, contraseña del panel…)
+cp .env.example .env
+# 2. Construye la imagen
+docker compose build
+# 3. Genera la clave y pega el resultado en APP_KEY del .env
+docker compose run --rm web php artisan key:generate --show
+# 4. Arranca
+docker compose up -d
+```
+
+La web queda en **http://localhost:8080**. Detrás de tu proxy (Caddy, Traefik, Coolify…) pon `TRUSTED_PROXIES`.
+
+### Google Calendar + Meet (opcional)
+
+Con Google conectado, cada cita confirmada se crea en tu calendario (con enlace de Meet si es online), se borra al cancelarla, y tus propios eventos bloquean las horas en que ya estás ocupado. Sin Google todo sigue funcionando, solo que sin sincronización ni Meet automático.
+
+Guía paso a paso: [docs/GOOGLE.md](docs/GOOGLE.md).
+
+### Bot de Telegram (opcional)
+
+El bot te avisa de cada reserva con los botones **✅ Confirm** y **❌ Reject**. Al rechazar, te pide el motivo: tu siguiente mensaje (en menos de 15 minutos) cancela la cita y se envía al cliente. El aviso solo lleva el código, el nombre, el día y la hora. El webhook exige un secreto (403 si falta o no coincide) y solo atiende al chat del dueño. Sin bot, todo se gestiona desde `/panel`.
+
+Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
+
+### Personalización
+
+- **Marca, horario y comportamiento**: variables del `.env` o `config/appointments.php` (cada opción está comentada).
+- **Color**: `APPOINTMENTS_ACCENT` (y opcionalmente `APPOINTMENTS_ACCENT_GLOW`). No hace falta recompilar: el color llega a la página como variables CSS desde `resources/views/partials/theme-vars.blade.php`.
+- **Tema por defecto**: `APPOINTMENTS_THEME`. Las paletas de cada tema están en `resources/css/app.css` (sección «SURFACES»); si las cambias, ejecuta `pnpm run build`.
+- **Textos**: `lang/es/*.php` y `lang/en/*.php` (`citas.php` para la página, `emails.php` para los correos).
+- **Página de inicio**: `resources/views/welcome.blade.php` es una portada de ejemplo; cámbiala por la tuya.
+- **Incrustar en tu web con un iframe**: añade tu dominio a `frame-ancestors` en `config/csp.php`.
+
+### Modo demo
+
+`MEETCITA_DEMO=true` convierte la instalación en una demo pública:
+
+- los correos van al log y no se envía ninguno;
+- Telegram y Google quedan desactivados;
+- sale un aviso de demo en las páginas;
+- la contraseña del panel es `MEETCITA_DEMO_PANEL_PASSWORD` (`demo` por defecto) y se muestra en el login;
+- cada hora el scheduler ejecuta `citas:demo`, que borra todas las citas y los días bloqueados y deja datos de ejemplo.
+
+`citas:demo` se niega a ejecutarse fuera del modo demo y no borra nada. Aun así, **no actives nunca el modo demo en una instalación con clientes reales.**
 
 ### Comandos
 
 | Comando | Para qué |
 |---|---|
+| `composer setup` | Instalación inicial completa (ver [Instalación en local](#instalación-en-local)). |
 | `composer dev` | Servidor, cola, logs (Pail) y Vite a la vez. |
-| `composer test` / `php artisan test` | Tests con PHPUnit (ver [Tests e integración continua](#tests-e-integración-continua)). |
+| `composer test` / `php artisan test` | Tests con PHPUnit. |
 | `./vendor/bin/pint` | Formato del código PHP (preset de Laravel). |
 | `pnpm run dev` / `pnpm run build` | Vite en desarrollo / compilación para producción. |
+| `php artisan schedule:work` | Scheduler en primer plano (cola de correos cada minuto, purga nocturna). |
+| `php artisan citas:purgar` | Borra las citas y los registros técnicos caducados. Con `--simular` solo cuenta lo que borraría. |
+| `php artisan citas:demo` | Reinicia la demo con datos de ejemplo. Solo funciona con `MEETCITA_DEMO=true`. |
 | `php artisan google:auth` | Paso 1 del OAuth de Google: imprime la URL de autorización. |
 | `php artisan google:auth --code=CODIGO` | Paso 2: canjea el código e imprime el `GOOGLE_REFRESH_TOKEN`. |
 | `php artisan telegram:set-webhook [--url=...]` | Registra el webhook del bot (por defecto `APP_URL/telegram/webhook`). |
 | `php artisan telegram:test` | Envía un mensaje de prueba a tu chat. |
-| `php artisan schedule:work` | Ejecuta el scheduler en primer plano (procesa la cola de emails cada minuto). |
+
+`citas:purgar` borra: las citas cuya fecha y último cambio tienen más de `APPOINTMENTS_RETENTION_MONTHS` meses (una cita futura nunca se borra), las sesiones sin actividad desde hace más de 30 días, las entradas de caché caducadas y los trabajos fallidos de la cola de más de 30 días. Fuera de la app quedan el buzón de correo, el chat de Telegram, los eventos de Google Calendar, los logs del proxy y las copias de seguridad.
 
 ### Rutas
 
 | Método | Ruta | Qué hace |
 |---|---|---|
-| GET | `/` | Página de inicio de demostración. |
+| GET | `/` | Portada de ejemplo. |
 | GET | `/citas` | Asistente de reserva. |
 | GET | `/lang/{locale}` | Cambia el idioma (`es` / `en`). |
-| GET | `/cita/{reference}/calendario.ics` | Descarga el `.ics` de una cita. |
+| GET | `/cita/{reference}/calendario.ics` | Descarga el `.ics` de una cita. Exige el enlace firmado de los correos (máximo 20 descargas por minuto e IP). |
+| GET | `/altcha/challenge` | Reto del captcha, en JSON (máximo 30 por minuto e IP). |
 | POST | `/telegram/webhook` | Webhook del bot (sin CSRF, protegido por secreto). |
-| GET / POST | `/panel/login` | Login del panel. |
+| GET / POST | `/panel/login` | Login del panel (máximo 5 intentos por minuto e IP). |
 | POST | `/panel/logout` | Cerrar sesión del panel. |
 | GET | `/panel` | Panel de citas y días bloqueados. |
 | GET | `/up` | Health check de Laravel. |
@@ -203,62 +362,32 @@ Lo que no está en el `.env` se cambia en `config/appointments.php`: duración d
 
 ```text
 app/
-├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test
+├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:demo
 ├── Http/Controllers/    PanelController, AppointmentIcsController, TelegramWebhookController
-├── Http/Middleware/     AdminPanelPassword (panel), SetLocale (idioma)
+├── Http/Middleware/     AdminPanelPassword (panel), SecurityHeaders (CSP y cabeceras), SetLocale (idioma)
 ├── Livewire/            BookAppointment (asistente), PanelCitas, PanelBlockedDays
-├── Mail/                los 4 emails de la cita (en cola)
+├── Mail/                los 4 correos de la cita (en cola)
 ├── Models/              Appointment, BlockedDay, User (del esqueleto, sin uso)
-└── Services/            AvailabilityService, GoogleCalendarService, TelegramNotifier
-bootstrap/app.php        middleware, proxy de confianza, CSRF del webhook
+├── Services/            AvailabilityService, CaptchaService, GoogleCalendarService, TelegramNotifier
+└── Support/             Duracion (texto de una duración), ModoDemo
+bootstrap/app.php        middleware, proxies de confianza, CSRF del webhook
 config/appointments.php  configuración del sistema de citas
-config/services.php      credenciales de Telegram y Google
+config/csp.php           directivas de la Content Security Policy
+config/services.php      Telegram, Google y captcha
+config/trustedproxy.php  proxies de confianza (TRUSTED_PROXIES)
 database/migrations/     tablas base de Laravel + appointments + blocked_days
+docker/entrypoint.sh     arranque del contenedor
 docs/                    GOOGLE.md, TELEGRAM.md e img/
 lang/{es,en}/            citas.php (interfaz) y emails.php (correos)
-resources/css/app.css    Tailwind 4 y temas (sección RE-THEME)
-resources/js/app.js      botón de tema claro/oscuro
-resources/views/         layouts, asistente, panel y plantillas de email
+resources/css/app.css    Tailwind 4 y paletas de los temas
+resources/js/            botón de tema y captcha
+resources/views/         layouts, asistente, panel, partials y plantillas de correo
 routes/web.php           rutas web
-routes/console.php       worker de la cola programado cada minuto
-tests/                   tests unitarios (servicios, modelo) y de funcionalidad (reservas, panel, Telegram, idioma, emails)
+routes/console.php       tareas programadas (cola, purga, demo)
+tests/                   tests unitarios y de funcionalidad
+Dockerfile, compose.yaml imagen de producción y ejemplo con Docker Compose
 .github/workflows/ci.yml integración continua (GitHub Actions)
 ```
-
-### Google Calendar + Meet (opcional)
-
-Con Google conectado, cada cita confirmada se crea en tu calendario (con Meet si es online), se borra al cancelarla y tus eventos bloquean los huecos en los que ya estás ocupado. Sin Google todo sigue funcionando, solo que sin sincronización ni Meet automático.
-
-Guía paso a paso: [docs/GOOGLE.md](docs/GOOGLE.md).
-
-### Bot de Telegram (opcional)
-
-El bot te avisa de cada reserva con los botones **✅ Confirm** y **❌ Reject**. Las etiquetas de los botones están en inglés y los mensajes del bot, en español. Sin bot, todo se gestiona desde `/panel`.
-
-Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
-
-### Despliegue en producción
-
-1. `APP_ENV=production`, `APP_DEBUG=false` y `APP_URL` con tu dominio HTTPS.
-2. `composer install --no-dev --optimize-autoloader`, `pnpm install --frozen-lockfile` y `pnpm run build`.
-3. `php artisan migrate --force`.
-4. **Cola de emails**: los emails se encolan, así que hay que procesar la cola. `routes/console.php` ya programa `queue:work --stop-when-empty --max-time=55 --tries=3` cada minuto; basta con una entrada de cron para el scheduler:
-
-   ```bash
-   * * * * * cd /ruta/al/proyecto && php artisan schedule:run >> /dev/null 2>&1
-   ```
-
-   También puedes tener un worker permanente con `php artisan queue:work --tries=3`.
-5. **Proxy inverso**: pon en `TRUSTED_PROXIES` (`.env`) la IP o el rango CIDR de tu proxy (por ejemplo `10.0.1.0/24` en Coolify). Vacío no confía en ninguno: detrás de un proxy, Laravel no verá la IP real ni el HTTPS del cliente, y el límite de reservas por IP se aplicará a la IP del proxy, común para todos.
-6. **Borrado de datos antiguos**: `citas:purgar` se ejecuta cada noche con el scheduler y borra las citas que pasaron hace más de `APPOINTMENTS_RETENTION_MONTHS` meses (12 por defecto). Ponlo a `0` si no quieres que se borre nada.
-7. El webhook de Telegram necesita HTTPS público. Después del despliegue, ejecuta `php artisan telegram:set-webhook`.
-
-### Personalización
-
-- **Marca y comportamiento**: `config/appointments.php` (cada opción está comentada) o su variable del `.env`.
-- **Color de acento**: `resources/css/app.css`, sección **RE-THEME** (marcada con ⭐). Por ejemplo, azul: `--accent: #2563eb; --accent-glow: #3b82f6;`. Luego, `pnpm run build`.
-- **Textos**: `lang/es/*.php` y `lang/en/*.php`.
-- **Página de inicio**: `resources/views/welcome.blade.php` es una demo; cámbiala por la tuya.
 
 ### Tests e integración continua
 
@@ -266,102 +395,153 @@ Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 php artisan test
 ```
 
-Los tests usan SQLite en memoria, congelan el reloj en un día laborable fijo y apagan Google y Telegram (la API de Google se simula con Mockery y la de Telegram con `Http::fake`), así que no necesitan red ni credenciales:
+Hay 146 tests. Usan SQLite en memoria, congelan el reloj en un día laborable fijo y apagan Google, Telegram y el captcha (la API de Google se simula con Mockery y la de Telegram con `Http::fake`), así que no necesitan red ni credenciales.
 
-- **Unitarios** (`tests/Unit`): `AvailabilityService` (días ofrecidos, franjas, inicios de 1 hora, días bloqueados, horas pasadas, ocupación de Google), `GoogleCalendarService` (ventana de consulta, agrupado en medios-slots, fallos) y el modelo `Appointment`.
-- **De funcionalidad** (`tests/Feature`): el asistente de reserva (días y franjas, reservar, doble reserva, validación del formulario), el panel (acceso, confirmar, cancelar con motivo, días bloqueados), el webhook de Telegram, el idioma, la descarga `.ics` y el renderizado de los emails.
+- **Unitarios** (`tests/Unit`): disponibilidad (días, huecos, duraciones, días bloqueados, horas pasadas, ocupación de Google), el servicio de Google Calendar y el modelo `Appointment`.
+- **De funcionalidad** (`tests/Feature`): el asistente de reserva y la integridad de las reservas, el panel (acceso, seguridad de la sesión, confirmar, cancelar, días bloqueados), el webhook de Telegram, el idioma, el `.ics` firmado, los correos, el captcha, el modo demo, la purga, las cabeceras de seguridad, los proxies de confianza y el tema y la accesibilidad de las vistas.
 
-El workflow `.github/workflows/ci.yml` se ejecuta en cada push y pull request con PHP 8.4 y 8.5: instala dependencias, pasa Pint (`--test`), compila el front con pnpm, lanza los tests y ejecuta `composer audit` y `pnpm audit`. Las actions están fijadas por SHA.
+El workflow `.github/workflows/ci.yml` se ejecuta en cada push y pull request con PHP 8.4 y 8.5: instala las dependencias, pasa Pint (`--test`), compila el front con pnpm, lanza los tests y ejecuta `composer audit` y `pnpm audit`. Las actions están fijadas por SHA. La imagen de Docker no se construye en CI.
+
+### Seguridad
+
+Para informar de una vulnerabilidad, **no abras un issue público**: sigue [SECURITY.md](SECURITY.md).
+
+Lo que trae Meetcita:
+
+- Content Security Policy con nonce por petición, sin scripts ni fuentes de terceros (`config/csp.php`), y cabeceras `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options` y HSTS (solo por HTTPS).
+- Panel con una sola contraseña, límite de intentos y sesión comprobada en cada petición de Livewire. Cerrar sesión invalida la sesión entera y cambiar la contraseña cierra todas las abiertas.
+- La duración, el día y la hora de una reserva los fija el servidor. Sin dobles reservas: bloqueo por día, transacción que vuelve a comprobar el hueco y, en SQLite y PostgreSQL, un índice único parcial.
+- Antispam: captcha propio (ALTCHA), campo trampa, máximo 5 reservas por hora e IP y tope de citas activas por correo.
+- Enlaces `.ics` firmados. El secreto del webhook de Telegram se compara en tiempo constante.
+
+Buenas prácticas al instalar: las de [SECURITY.md](SECURITY.md#buenas-prácticas-al-instalar-meetcita).
 
 ### Limitaciones conocidas
 
 - **MySQL/MariaDB**: no admiten índices parciales, así que ahí no hay índice único en base de datos. La doble reserva la evitan solo el bloqueo y la transacción de la aplicación.
-- Los mensajes del bot de Telegram y algunos textos del panel (errores de login) están solo en español.
+- Los mensajes del bot de Telegram están en español y sus botones en inglés. El error de contraseña del login del panel sale siempre en español.
+- El uso único de cada solución del captcha depende de la caché compartida: con varios servidores, usa una caché común (`database`, que es la de por defecto, o `redis`).
+- Docker: ver el aviso de [Docker (pendiente de probar)](#docker-pendiente-de-probar).
 
-### Licencia
+### Licencia y créditos
 
-[MIT](LICENSE) © Daniel Castaños Mefle.
-
-### Créditos
-
-Hecho por **Daniel Castaños Mefle (ZeroIT)**: [danimefle.com](https://danimefle.com).
+[MIT](LICENSE) © Daniel Castaños Mefle. Hecho por Daniel Castaños Mefle: [danimefle.com](https://danimefle.com).
 
 ---
 
 ## English
 
-- [What it is](#what-it-is)
-- [Features](#features)
-- [Screenshots](#screenshots)
-- [Tech stack](#tech-stack)
+**If you run a business**
+
+- [What Meetcita is](#what-meetcita-is)
+- [What it does for you](#what-it-does-for-you)
+- [How your clients book](#how-your-clients-book)
+- [How you manage bookings](#how-you-manage-bookings)
+- [Your data and your clients' data](#your-data-and-your-clients-data)
+- [How do I get it running?](#how-do-i-get-it-running)
+
+**If you are a developer**
+
+- [Stack and versions](#stack-and-versions)
 - [Requirements](#requirements)
-- [Installation](#installation)
+- [Local installation](#local-installation)
 - [Configuration (.env)](#configuration-env)
+- [Production deployment](#production-deployment)
+- [Docker (not yet tested)](#docker-not-yet-tested)
+- [Google Calendar + Meet (optional)](#google-calendar--meet-optional)
+- [Telegram bot (optional)](#telegram-bot-optional)
+- [Customization](#customization)
+- [Demo mode](#demo-mode)
 - [Commands](#commands)
 - [Routes](#routes)
 - [Folder structure](#folder-structure)
-- [Google Calendar + Meet (optional)](#google-calendar--meet-optional)
-- [Telegram bot (optional)](#telegram-bot-optional)
-- [Production deployment](#production-deployment)
-- [Customization](#customization)
 - [Tests and CI](#tests-and-ci)
+- [Security](#security)
 - [Known limitations](#known-limitations)
-- [License](#license)
-- [Credits](#credits)
+- [License and credits](#license-and-credits)
 
-### What it is
+### What Meetcita is
 
-Meetcita is an open-source, self-hosted **appointment booking system** built with Laravel and Livewire. Clients pick a day, a duration and a time in a four-step wizard. You get notified by email (and by Telegram, if you set it up), then confirm or reject from your phone or from a password-protected web panel. Confirmed online meetings are added to your Google Calendar with a Google Meet link.
+Meetcita is a web page where your clients book appointments with you online. It is made for advisory firms, accountants, practices and law offices: businesses that see people by appointment, in person or over a video call.
 
-It started as the booking module of [danimefle.com](https://danimefle.com) and was released as a standalone project: a complete Laravel app you clone, configure through `.env`, and run.
+The client picks a day and a time on your site and leaves their details. You get notified and decide whether to confirm. The client gets an email at every step.
 
-### Features
+It is free software (MIT licence). There is no fee per user or per booking: it runs on your own server and the data stays there.
 
-Everything below exists in the current code:
+### What it does for you
 
-- **Four-step booking wizard** (`/citas`, Livewire component `BookAppointment`):
-  1. Day, on a monthly calendar.
-  2. Duration (30 or 60 minutes) and a free time slot.
-  3. Details: meeting type, name, email, phone (optional), who is attending, guest emails (optional, up to `APPOINTMENTS_MAX_ATTENDEES`) and a message.
-  4. Final screen with the public booking code (e.g. `APT-K7P3Q`).
-- **Real availability** (`AvailabilityService`): offers the next N business days (`APPOINTMENTS_DAYS_AHEAD`) in 30-minute slots between opening and closing time. It drops past times (in the business time zone), blocked days, non-cancelled bookings and, when Google is set up, the events on your own Google Calendar. A 60-minute meeting takes two back-to-back slots and never runs past closing time.
-- **No double bookings**: a per-day lock (`Cache::lock`), a transaction that re-checks the slot, and, on SQLite and PostgreSQL, a partial unique index on `(date, time)` for non-cancelled bookings.
-- **Spam protection**: a honeypot field and a limit of 5 bookings per hour per IP.
-- **Online or in person**: you choose which meeting types are offered. Online meetings get a Meet link once confirmed (when Google is set up).
-- **Queued emails** (all four Mailables implement `ShouldQueue`):
-  - to the owner: new request;
-  - to the client: request received, with add-to-calendar buttons;
-  - to the client: booking confirmed, with the Meet link, a Google Calendar button and an `.ics` download;
-  - to the client: booking rejected or cancelled, with the reason you typed in Telegram or in the panel (optional in the panel).
+- **It only offers free times.** It follows your hours, your working days and the days you block (holidays, days off). If you connect your Google Calendar, it also skips the times when you already have something on.
+- **No two bookings at once.** Even if two people press "Book" in the same second, only one of them gets the time.
+- **You confirm or reject from the panel or from your phone.** The panel is a private, password-protected page. If you want, every booking also reaches you on Telegram with two buttons.
+- **The client gets their emails.** One when they book, another when you confirm (with a file to add it to their calendar) and another if you cancel, with the reason if you write one.
+- **Automatic video calls (optional).** If you connect Google Calendar, every confirmed online booking is added to your calendar with a Google Meet link.
+- **In Spanish and English.** The page and the emails use the client's language.
+- **With your name and your colour.** The business name, the hours, the durations and the button colour are set in the configuration.
 
-  Extra guests are CC'd, and client emails go out in the client's language.
-- **Telegram bot** (optional): every booking arrives with two buttons, **✅ Confirm** and **❌ Reject**. On reject, the bot asks for a reason, and your next message (within 15 minutes) cancels the booking and is emailed to the client. The webhook requires a secret (403 if it's missing or wrong) and only responds to the owner's chat.
-- **Admin panel** (`/panel`): a single shared password (no users table), with at most 5 login attempts per minute per IP. Paginated booking list (30 per page) with **confirm** (pending bookings only: email + Google event) and **cancel** (asks for an optional reason, deletes the Google event and emails the client the cancellation) actions. It also manages **blocked days** and won't block a day that already has active bookings.
-- **Google Calendar + Meet** (optional): creates the event on confirmation, invites the client and guests, deletes it on cancellation, and reads your events so busy times aren't offered.
-- **`.ics` file**: `/cita/{reference}/calendario.ics` for Outlook or Apple Calendar (at most 20 downloads per minute per IP).
-- **Bilingual ES / EN**: the language comes, in this order, from the switcher cookie (`/lang/{locale}`), from the browser on the first visit (`Accept-Language` header; `en-US` counts as `en`) and, if nothing matches, from `default_locale` in `config/appointments.php`. Each booking stores the client's language for its emails.
-- **Light and dark themes**, with a sun/moon toggle that remembers the choice. The default theme is set with `APPOINTMENTS_THEME`.
-- **Fully configurable** through `config/appointments.php` and `.env`: branding, hours, business days, durations, meeting types, time zone, booking code prefix and theme.
-- **Works without Google or Telegram**: bookings still work and you manage them from the panel; you just don't get automatic Meet links.
+### How your clients book
 
-### Screenshots
+It takes four steps and works the same on a phone:
 
-![Booking wizard — dark theme](docs/img/wizard.png)
-*Booking wizard (`/citas`), dark theme.*
+1. They pick a day on a calendar. Days that can't be booked are crossed out.
+2. They pick how long the meeting lasts (for example 30 minutes or 1 hour) and the time.
+3. They enter their name and email. Phone, other attendees and a message are optional. Right above the booking button they see the basic data-protection information.
+4. They get a booking code, for example `APT-K7P-3QX`, which is easy to read out without mix-ups.
 
-![Booking wizard — light theme](docs/img/wizard-light.png)
-*The same wizard in light theme.*
+| Step 1 on a phone | Step 3: details and data protection |
+|---|---|
+| ![Step 1 on a phone](docs/img/booking-step1-mobile.png) | ![Step 3 with the data-protection notice](docs/img/booking-step3-privacy.png) |
 
-### Tech stack
+![Step 4: booking requested, with its code](docs/img/booking-step4-confirmation.png)
+
+*The screenshots show the Spanish interface; the English one is the same.*
+
+### How you manage bookings
+
+The **panel** (`/panel`) lists every booking with its status: pending, confirmed or cancelled. From there you confirm, cancel (with an optional reason that is sent to the client) and block the days you don't work.
+
+![Bookings panel](docs/img/panel.png)
+
+With the **Telegram bot** (optional) every new booking reaches your phone with two buttons: confirm and reject. If you reject, the bot asks for the reason and sends it to the client.
+
+The page has a light and a dark theme. Clients switch with the sun and moon button.
+
+![Calendar in the dark theme](docs/img/wizard.png)
+
+### Your data and your clients' data
+
+- Everything stays on your server. No third-party service stores your bookings. Google Calendar and Telegram are only used if you turn them on.
+- The form shows the first layer of GDPR information: controller, purpose, legal basis, recipients and rights, with a link to your privacy policy. The final legal text is your business's responsibility: check it with whoever handles data protection for you.
+- Every night, bookings that took place more than 12 months ago are deleted. The period can be changed or turned off.
+- Spam is stopped by its own captcha, with no third-party services and no tracking cookies: the client's browser solves a small calculation before sending. It also limits bookings per connection and active bookings per email.
+
+### How do I get it running?
+
+Meetcita is installed on a server; it is not an app you download and open. There are two ways:
+
+- **Your developer or hosting provider sets it up.** All the technical details are below, in the developer section.
+- **I set it up for you.** If you have nobody to do it, get in touch through [danimefle.com](https://danimefle.com) and we'll look at it.
+
+You will need:
+
+- a server or hosting with PHP 8.4 or later (or with Docker);
+- a domain with HTTPS, for example `booking.yourbusiness.com`;
+- an email account to send the notifications (your email provider gives you the SMTP details);
+- if you want them, a Google account (Calendar and Meet) and Telegram on your phone.
+
+---
+
+### Stack and versions
 
 Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 
 | Component | Version |
 |---|---|
-| PHP | ≥ 8.4.1 (required by the Symfony 8 packages in the lockfile) |
+| PHP | ≥ 8.4.1 (`composer.json`; also required by the Symfony 8 packages in the lockfile) |
 | laravel/framework | 13.43.0 |
 | livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.1 |
+| altcha-org/altcha (captcha, server) | 2.4.0 |
+| altcha (captcha, browser) | 3.6.0 |
 | laravel/tinker | 3.2.0 |
 | laravel/pint (dev) | 1.32.3 |
 | phpunit/phpunit (dev) | 12.5.44 |
@@ -370,6 +550,7 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 | vite | 8.3.8 |
 | laravel-vite-plugin | 3.2.1 |
 | concurrently (dev) | 9.2.5 |
+| pnpm (`packageManager`) | 12.5.1 |
 
 Database: SQLite by default. PostgreSQL and MySQL/MariaDB also work (see [Known limitations](#known-limitations)).
 
@@ -377,99 +558,220 @@ Database: SQLite by default. PostgreSQL and MySQL/MariaDB also work (see [Known 
 
 - **PHP 8.4.1 or later**, with the usual Laravel extensions and the PDO driver for your database (`pdo_sqlite` for the default setup).
 - **Composer 2**.
-- **Node.js 20.19+ or 22.12+** (required by Vite 8) and **pnpm** (the version is pinned in `packageManager` in `package.json`; with Corepack, `corepack enable` is enough) to build the CSS and JS.
+- **Node.js 20.19+ or 22.12+** (required by Vite 8) and **pnpm** (the version is pinned in `packageManager` in `package.json`; with Corepack, `corepack enable` is enough).
 - Optional: a **Google Cloud** project (Calendar + Meet) and a **Telegram bot**.
 
-### Installation
+### Local installation
 
 ```bash
-# 1. Clone the repository
 git clone https://github.com/zeroit789/meetcita.git meetcita
 cd meetcita
+composer setup
+```
 
-# 2. PHP dependencies
-composer install
+`composer setup` does everything needed: `composer install`, copies `.env.example` to `.env` if it doesn't exist, generates `APP_KEY`, creates the SQLite database and the tables (`migrate --force`), and runs `pnpm install` and `pnpm run build`.
 
-# 3. Create .env from the example and generate the app key
-cp .env.example .env
-php artisan key:generate
+Then set a password in `APPOINTMENTS_PANEL_PASSWORD` in `.env` and start it:
 
-# 4. Create the SQLite database (default driver)
-#    In PowerShell: New-Item database/database.sqlite -ItemType File
-touch database/database.sqlite
-
-# 5. Create the tables
-php artisan migrate
-
-# 6. Front-end dependencies and asset build
-pnpm install
-pnpm run build
-
-# 7. Start the server
+```bash
+composer dev        # server, queue, logs (Pail) and Vite together
+# or just the server:
 php artisan serve
 ```
 
-Open **http://localhost:8000/citas** to book and **http://localhost:8000/panel** for the panel. Set `APPOINTMENTS_PANEL_PASSWORD` before logging in to the panel.
+Open **http://localhost:8000/citas** to book and **http://localhost:8000/panel** for the panel. With the example `.env`, emails are not sent: they are written to `storage/logs/laravel.log` (`MAIL_MAILER=log`).
 
 Without `pnpm run build`, pages return a 500 error because the Vite manifest is missing.
 
 ### Configuration (.env)
 
-`.env.example` lists every variable with comments. None of the project's own variables are required to boot, but you can't log in to the panel without a password. Values are read in `config/appointments.php` and `config/services.php`.
+`.env.example` lists every variable with comments. None of the project's own variables are required to boot, but you can't log in to the panel without a password. They are read in `config/appointments.php`, `config/services.php` and `config/trustedproxy.php`.
 
-| Variable | What it does | Example |
+**Laravel**
+
+| Variable | What it does | Example value |
 |---|---|---|
 | `APP_NAME` | App name (email sender name). | `"Appointments"` |
 | `APP_ENV` / `APP_DEBUG` | Environment and detailed errors. In production: `production` and `false`. | `local` / `true` |
-| `APP_URL` | Public URL. In production, your HTTPS domain (the Telegram webhook uses it). | `http://localhost` |
-| `APP_LOCALE` | Laravel's internal locale (framework messages). It does not decide the booking site language: that comes from the switcher cookie, the browser or `default_locale` in `config/appointments.php`. | `es` |
+| `APP_URL` | Public URL. In production, your HTTPS domain (used by the email links and the Telegram webhook). | `http://localhost` |
+| `APP_LOCALE` | Laravel's internal locale. It does not decide the booking site language (see `default_locale` below). | `es` |
+| `TRUSTED_PROXIES` | Reverse proxy IPs or CIDR ranges, comma-separated. Empty = trust none. `*` only if the app can be reached exclusively through the proxy. | *(empty)*; on Coolify, `10.0.1.0/24` |
 | `DB_CONNECTION` | `sqlite`, `pgsql` or `mysql`. | `sqlite` |
-| `SESSION_DRIVER` / `QUEUE_CONNECTION` / `CACHE_STORE` | All database-backed by default (panel session, email queue, locks and cache). | `database` |
-| `MAIL_MAILER` / `MAIL_FROM_ADDRESS` | Mail transport and sender. `log` writes emails to the log. | `log` |
-| `APPOINTMENTS_BRAND` | Your brand name (emails and events). | `"Acme Inc."` |
+| `SESSION_DRIVER` | Where the panel session is stored. Use `database`, `redis` or `file`; **never `cookie`** (see [Security](#security)). | `database` |
+| `QUEUE_CONNECTION` / `CACHE_STORE` | Email queue and cache (locks, limits, captcha challenges). | `database` |
+| `MAIL_MAILER` / `MAIL_FROM_ADDRESS` | Mail transport and sender. `log` writes emails to the log; in production, `smtp` with your provider's details. | `log` |
+
+**Business and bookings**
+
+| Variable | What it does | Default |
+|---|---|---|
+| `APPOINTMENTS_BRAND` | Business name (page, emails and events). | `"Acme Inc."` |
 | `APPOINTMENTS_OWNER_NAME` / `APPOINTMENTS_OWNER_ROLE` | Name and title in the email signature. | `"Jane Doe"` / `"Founder"` |
-| `APPOINTMENTS_OWNER_EMAIL` | Gets the new-booking alerts and is used as Reply-To. | `"hello@example.com"` |
-| `APPOINTMENTS_WEBSITE` / `APPOINTMENTS_LINKEDIN` | Signature links. Empty LinkedIn = hidden. | `"https://example.com"` |
+| `APPOINTMENTS_OWNER_EMAIL` | Gets the new-booking alerts and is the Reply-To of the client emails. | `"hello@example.com"` |
+| `APPOINTMENTS_WEBSITE` / `APPOINTMENTS_LINKEDIN` | Signature links. Empty LinkedIn = hidden. | `"https://example.com"` / *(empty)* |
 | `APPOINTMENTS_REF_PREFIX` | Booking code prefix (2-4 letters). | `APT` |
+| `APPOINTMENTS_ICS_UNSIGNED_UNTIL` | Only when upgrading from a version before 1.0.0: unsigned `.ics` links already emailed keep working for bookings created before this date (`YYYY-MM-DD`, use the day you upgrade). Empty = none. | *(empty)* |
 | `APPOINTMENTS_TIMEZONE` | Business time zone. All times are computed in it. | `Europe/Madrid` |
 | `APPOINTMENTS_DAYS_AHEAD` | Number of business days offered. | `14` |
-| `APPOINTMENTS_OPEN` / `APPOINTMENTS_CLOSE` | Opening and closing time (closing is exclusive). | `09:30` / `18:00` |
+| `APPOINTMENTS_OPEN` / `APPOINTMENTS_CLOSE` | Opening and closing time (closing is exclusive: no meeting ends after it). The page's schedule text comes from here. | `09:30` / `18:00` |
 | `APPOINTMENTS_MAX_ATTENDEES` | Max guest emails per booking. | `10` |
-| `APPOINTMENTS_MODALITY_ONLINE` / `APPOINTMENTS_MODALITY_IN_PERSON` | Meeting types offered (at least one must be `true`). | `true` |
-| `APPOINTMENTS_PANEL_PASSWORD` | Password for `/panel`. There is no default. | *(empty: set one)* |
-| `APPOINTMENTS_THEME` | Default theme: `dark`, `light` or `auto`. | `dark` |
+| `APPOINTMENTS_MAX_ACTIVE_PER_EMAIL` | Active bookings (not cancelled, from today on) one email may hold at once. `0` = no cap. | `2` |
+| `APPOINTMENTS_MODALITY_ONLINE` / `APPOINTMENTS_MODALITY_IN_PERSON` | Meeting types offered (at least one must be `true`). | `true` / `true` |
+| `APPOINTMENTS_PANEL_PASSWORD` | Password for `/panel`. There is no default. Changing it closes every open session. | *(empty: set one)* |
+
+**Privacy (GDPR)**
+
+| Variable | What it does | Default |
+|---|---|---|
+| `APPOINTMENTS_PRIVACY_CONTROLLER` | Data controller shown in the first-layer notice. | *(empty = the business name)* |
+| `APPOINTMENTS_PRIVACY_URL` | Link to your full privacy policy. | *(empty = no link)* |
+| `APPOINTMENTS_PRIVACY_RECIPIENTS` | Data recipients (providers). | *(empty = generic translated text)* |
+| `APPOINTMENTS_RETENTION_MONTHS` | Months past bookings are kept; after that, `citas:purgar` deletes them every night at 03:30. `0` = never delete. | `12` |
+
+**Look and feel**
+
+| Variable | What it does | Default |
+|---|---|---|
+| `APPOINTMENTS_THEME` | Theme the page opens with: `light`, `dark` or `auto` (the system's). Visitors can switch. | `light` |
+| `APPOINTMENTS_ACCENT` | Colour of the buttons, the chosen day and the links, as `#rrggbb` hex. White text goes on top: if it doesn't reach a 4.5:1 contrast against white, the default is used. **Keep the quotes**: without them, the `#` is read as a comment. | `"#1d4ed8"` |
+| `APPOINTMENTS_ACCENT_GLOW` | Optional: light shade of the accent for text in the dark theme. | *(empty = derived automatically)* |
+
+**Integrations, captcha and demo**
+
+| Variable | What it does | Default |
+|---|---|---|
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google OAuth credentials (optional). | *(empty)* |
 | `GOOGLE_REFRESH_TOKEN` | Printed by `php artisan google:auth`. | *(empty)* |
 | `GOOGLE_CALENDAR_ID` / `GOOGLE_REDIRECT_URI` | Target calendar and OAuth redirect URI. | `primary` / `http://localhost` |
-| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Bot and chat that receives the alerts (optional). | *(empty)* |
+| `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` | Bot and chat that receive the alerts (optional). | *(empty)* |
 | `TELEGRAM_WEBHOOK_SECRET` | Random string that protects the webhook. Required if you use the bot. | *(empty)* |
+| `ALTCHA_ENABLED` | Own captcha on the booking form. `false` removes it (for example, on an intranet). | `true` |
+| `ALTCHA_HMAC_KEY` | Own HMAC key for the captcha. | *(empty = derived from `APP_KEY`)* |
+| `MEETCITA_DEMO` | Turns the install into a public demo (see [Demo mode](#demo-mode)). **Never on a real installation.** | `false` |
+| `MEETCITA_DEMO_PANEL_PASSWORD` | Panel password in demo mode. | `demo` |
 
-Anything not in `.env` is changed in `config/appointments.php`: slot length (`slot_minutes`, 30), offered durations (`durations`, `[30, 60]`), business days (`weekdays`, ISO 1 = Monday … 7 = Sunday, Monday to Friday by default) and languages (`locales`, `default_locale`).
+Advanced settings not in `.env.example`: `CSP_ENABLED` (set `false` only to debug the CSP) and `ALTCHA_COST`, `ALTCHA_COUNTER_MIN`, `ALTCHA_COUNTER_MAX` and `ALTCHA_EXPIRES` (captcha challenge difficulty and lifetime, in `config/services.php`).
+
+Anything not in `.env` is changed in `config/appointments.php`:
+
+- `schedule.durations`: durations the client can pick, in minutes (`[30, 60]` by default). Others such as 90 or 120 work too, as long as they are multiples of the slot: the booking neither overlaps the next one nor runs past closing time.
+- `schedule.slot_minutes`: slot length (30).
+- `schedule.weekdays`: business days in ISO format (1 = Monday … 7 = Sunday; Monday to Friday by default).
+- `locales` and `default_locale`: languages. Each visit's language comes from the switcher cookie, then the browser (`Accept-Language`), then `default_locale` (`es`).
+
+### Production deployment
+
+1. `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` set to your HTTPS domain, a long `APPOINTMENTS_PANEL_PASSWORD` and your provider's SMTP settings.
+2. Dependencies and assets: `composer install --no-dev --optimize-autoloader`, `pnpm install --frozen-lockfile` and `pnpm run build`.
+3. Tables: `php artisan migrate --force`.
+4. **Scheduler (required).** Emails are queued and the old-data purge is a scheduled task. Without the scheduler, no email goes out. A single cron line is enough:
+
+   ```bash
+   * * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
+   ```
+
+   `routes/console.php` schedules:
+   - `queue:work --stop-when-empty --max-time=55 --tries=3` every minute (sends the emails);
+   - `citas:purgar` every day at 03:30 (deletes expired data);
+   - `citas:demo` every hour, **only** with `MEETCITA_DEMO=true`.
+
+   If you prefer a long-lived queue worker: `php artisan queue:work --tries=3`.
+5. **HTTPS.** Serve the site over HTTPS only. The HSTS header is sent when the request comes in over HTTPS.
+6. **Reverse proxy.** Set `TRUSTED_PROXIES` to your proxy's IP or range (on Coolify, `10.0.1.0/24`). If you leave it empty behind a proxy, Laravel won't see the client's real IP or HTTPS, and the per-IP booking limit will apply to the proxy's IP, shared by everyone.
+7. **Server-side sessions.** `SESSION_DRIVER=database` (the `.env.example` value), `redis` or `file`. Don't use `cookie`.
+8. **Don't change `APP_KEY`** once live: it signs the `.ics` links in the emails, and with a different key the links already sent stop working.
+9. **Old-data purge.** It is on by default (12 months). If you upgrade an existing install and want to keep everything, set `APPOINTMENTS_RETENTION_MONTHS=0` **before** the scheduler runs. To see what would be deleted: `php artisan citas:purgar --simular`.
+10. **Telegram.** The webhook needs public HTTPS. After deploying, run `php artisan telegram:set-webhook`.
+
+### Docker (not yet tested)
+
+> ⚠️ **Not yet tested.** The `Dockerfile` and `compose.yaml` have not been built yet and are not tested in CI. Use them as a starting point and check the result before taking them to production.
+
+The `Dockerfile` has three stages: it builds the CSS and JS with pnpm, installs the PHP dependencies without the dev ones, and assembles the final image with FrankenPHP (`dunglas/frankenphp:1.13.4-php8.5`, pinned by digest).
+
+- It listens on port **8080** and runs as **`www-data`** (no root).
+- The SQLite database lives at **`/data/database.sqlite`**, on the `datos` volume, outside the code.
+- On start-up the container creates the SQLite file if it's missing, migrates, caches the config, routes and views, and starts the server.
+- `compose.yaml` starts two services from the same image: `web` (the site, with a healthcheck on `/up`) and `scheduler` (`php artisan schedule:work`: email queue and old-data purge). The scheduler waits until the web service is healthy and does not migrate.
+
+Steps (the ones in the `compose.yaml` header):
+
+```bash
+# 1. Create .env and fill it in (brand, email, panel password…)
+cp .env.example .env
+# 2. Build the image
+docker compose build
+# 3. Generate the key and paste the result into APP_KEY in .env
+docker compose run --rm web php artisan key:generate --show
+# 4. Start it
+docker compose up -d
+```
+
+The site is then at **http://localhost:8080**. Behind your proxy (Caddy, Traefik, Coolify…) set `TRUSTED_PROXIES`.
+
+### Google Calendar + Meet (optional)
+
+With Google connected, every confirmed booking is added to your calendar (with a Meet link if it's online), removed when cancelled, and your own events block the times you're already busy. Without Google everything still works, just without calendar sync or automatic Meet links.
+
+Step-by-step guide: [docs/GOOGLE.md](docs/GOOGLE.md).
+
+### Telegram bot (optional)
+
+The bot pings you for every booking with **✅ Confirm** and **❌ Reject** buttons. On reject, it asks for the reason: your next message (within 15 minutes) cancels the booking and is emailed to the client. The notice only carries the code, name, day and time. The webhook requires a secret (403 if it's missing or wrong) and only responds to the owner's chat. Without the bot, you manage everything from `/panel`.
+
+Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
+
+### Customization
+
+- **Branding, hours and behaviour**: `.env` variables or `config/appointments.php` (every option is commented).
+- **Colour**: `APPOINTMENTS_ACCENT` (and optionally `APPOINTMENTS_ACCENT_GLOW`). No rebuild needed: the colour reaches the page as CSS variables from `resources/views/partials/theme-vars.blade.php`.
+- **Default theme**: `APPOINTMENTS_THEME`. Each theme's palette is in `resources/css/app.css` ("SURFACES" section); if you change it, run `pnpm run build`.
+- **Copy**: `lang/es/*.php` and `lang/en/*.php` (`citas.php` for the page, `emails.php` for the emails).
+- **Home page**: `resources/views/welcome.blade.php` is a sample landing page; replace it with your own.
+- **Embedding in your site with an iframe**: add your domain to `frame-ancestors` in `config/csp.php`.
+
+### Demo mode
+
+`MEETCITA_DEMO=true` turns the install into a public demo:
+
+- emails go to the log and none is sent;
+- Telegram and Google are turned off;
+- a demo notice is shown on the pages;
+- the panel password is `MEETCITA_DEMO_PANEL_PASSWORD` (`demo` by default) and it is shown on the login page;
+- every hour the scheduler runs `citas:demo`, which deletes every booking and blocked day and puts sample data back.
+
+`citas:demo` refuses to run outside demo mode and deletes nothing. Even so, **never turn demo mode on in an installation with real clients.**
 
 ### Commands
 
 | Command | What it's for |
 |---|---|
+| `composer setup` | Full first-time setup (see [Local installation](#local-installation)). |
 | `composer dev` | Server, queue, logs (Pail) and Vite together. |
-| `composer test` / `php artisan test` | PHPUnit tests (see [Tests and CI](#tests-and-ci)). |
+| `composer test` / `php artisan test` | PHPUnit tests. |
 | `./vendor/bin/pint` | PHP code formatting (Laravel preset). |
 | `pnpm run dev` / `pnpm run build` | Vite dev server / production build. |
+| `php artisan schedule:work` | Scheduler in the foreground (email queue every minute, nightly purge). |
+| `php artisan citas:purgar` | Deletes expired bookings and technical records. With `--simular` it only counts what it would delete. |
+| `php artisan citas:demo` | Resets the demo with sample data. Only works with `MEETCITA_DEMO=true`. |
 | `php artisan google:auth` | Google OAuth step 1: prints the authorization URL. |
 | `php artisan google:auth --code=CODE` | Step 2: exchanges the code and prints `GOOGLE_REFRESH_TOKEN`. |
 | `php artisan telegram:set-webhook [--url=...]` | Registers the bot webhook (defaults to `APP_URL/telegram/webhook`). |
 | `php artisan telegram:test` | Sends a test message to your chat. |
-| `php artisan schedule:work` | Runs the scheduler in the foreground (processes the email queue every minute). |
+
+`citas:purgar` deletes: bookings whose date and last change are older than `APPOINTMENTS_RETENTION_MONTHS` months (a future booking is never deleted), sessions idle for more than 30 days, expired cache entries and queue failed jobs older than 30 days. Outside the app remain the mailbox, the Telegram chat, the Google Calendar events, the proxy logs and the backups.
 
 ### Routes
 
 | Method | Path | What it does |
 |---|---|---|
-| GET | `/` | Demo home page. |
+| GET | `/` | Sample home page. |
 | GET | `/citas` | Booking wizard. |
 | GET | `/lang/{locale}` | Switches the language (`es` / `en`). |
-| GET | `/cita/{reference}/calendario.ics` | Downloads a booking's `.ics`. |
+| GET | `/cita/{reference}/calendario.ics` | Downloads a booking's `.ics`. Requires the signed link from the emails (at most 20 downloads per minute per IP). |
+| GET | `/altcha/challenge` | Captcha challenge, as JSON (at most 30 per minute per IP). |
 | POST | `/telegram/webhook` | Bot webhook (no CSRF, protected by a secret). |
-| GET / POST | `/panel/login` | Panel login. |
+| GET / POST | `/panel/login` | Panel login (at most 5 attempts per minute per IP). |
 | POST | `/panel/logout` | Panel logout. |
 | GET | `/panel` | Bookings and blocked days panel. |
 | GET | `/up` | Laravel health check. |
@@ -478,62 +780,32 @@ Anything not in `.env` is changed in `config/appointments.php`: slot length (`sl
 
 ```text
 app/
-├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test
+├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:demo
 ├── Http/Controllers/    PanelController, AppointmentIcsController, TelegramWebhookController
-├── Http/Middleware/     AdminPanelPassword (panel), SetLocale (language)
+├── Http/Middleware/     AdminPanelPassword (panel), SecurityHeaders (CSP and headers), SetLocale (language)
 ├── Livewire/            BookAppointment (wizard), PanelCitas, PanelBlockedDays
 ├── Mail/                the 4 booking emails (queued)
 ├── Models/              Appointment, BlockedDay, User (from the skeleton, unused)
-└── Services/            AvailabilityService, GoogleCalendarService, TelegramNotifier
-bootstrap/app.php        middleware, trusted proxy, webhook CSRF exemption
+├── Services/            AvailabilityService, CaptchaService, GoogleCalendarService, TelegramNotifier
+└── Support/             Duracion (duration label), ModoDemo (demo mode)
+bootstrap/app.php        middleware, trusted proxies, webhook CSRF exemption
 config/appointments.php  booking system settings
-config/services.php      Telegram and Google credentials
+config/csp.php           Content Security Policy directives
+config/services.php      Telegram, Google and captcha
+config/trustedproxy.php  trusted proxies (TRUSTED_PROXIES)
 database/migrations/     Laravel base tables + appointments + blocked_days
+docker/entrypoint.sh     container start-up
 docs/                    GOOGLE.md, TELEGRAM.md and img/
 lang/{es,en}/            citas.php (UI) and emails.php (emails)
-resources/css/app.css    Tailwind 4 and themes (RE-THEME section)
-resources/js/app.js      light/dark theme toggle
-resources/views/         layouts, wizard, panel and email templates
+resources/css/app.css    Tailwind 4 and theme palettes
+resources/js/            theme toggle and captcha
+resources/views/         layouts, wizard, panel, partials and email templates
 routes/web.php           web routes
-routes/console.php       queue worker scheduled every minute
-tests/                   unit tests (services, model) and feature tests (booking, panel, Telegram, language, emails)
+routes/console.php       scheduled tasks (queue, purge, demo)
+tests/                   unit and feature tests
+Dockerfile, compose.yaml production image and Docker Compose example
 .github/workflows/ci.yml continuous integration (GitHub Actions)
 ```
-
-### Google Calendar + Meet (optional)
-
-With Google connected, every confirmed booking is added to your calendar (with Meet if it's online), removed when cancelled, and your own events block the times you're already busy. Without Google everything still works, just without calendar sync or automatic Meet links.
-
-Step-by-step guide: [docs/GOOGLE.md](docs/GOOGLE.md).
-
-### Telegram bot (optional)
-
-The bot pings you for every booking with **✅ Confirm** and **❌ Reject** buttons. The button labels are in English; the bot's messages are in Spanish. Without the bot, you manage everything from `/panel`.
-
-Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
-
-### Production deployment
-
-1. Set `APP_ENV=production`, `APP_DEBUG=false` and `APP_URL` to your HTTPS domain.
-2. Run `composer install --no-dev --optimize-autoloader`, `pnpm install --frozen-lockfile` and `pnpm run build`.
-3. Run `php artisan migrate --force`.
-4. **Email queue**: emails are queued, so something has to process the queue. `routes/console.php` already schedules `queue:work --stop-when-empty --max-time=55 --tries=3` every minute, so a single cron entry for the scheduler is enough:
-
-   ```bash
-   * * * * * cd /path/to/project && php artisan schedule:run >> /dev/null 2>&1
-   ```
-
-   You can also run a long-lived worker with `php artisan queue:work --tries=3`.
-5. **Reverse proxy**: set `TRUSTED_PROXIES` (`.env`) to your proxy's IP or CIDR range (for example `10.0.1.0/24` on Coolify). Empty trusts none: behind a proxy, Laravel won't see the client's real IP or HTTPS, and the per-IP booking limit will apply to the proxy's IP, shared by everyone.
-6. **Old data purge**: `citas:purgar` runs every night through the scheduler and deletes the bookings that took place more than `APPOINTMENTS_RETENTION_MONTHS` months ago (12 by default). Set it to `0` if you don't want anything deleted.
-7. The Telegram webhook needs public HTTPS. After deploying, run `php artisan telegram:set-webhook`.
-
-### Customization
-
-- **Branding and behavior**: `config/appointments.php` (every option is commented) or its `.env` variable.
-- **Accent color**: `resources/css/app.css`, **RE-THEME** section (marked with ⭐). For example, blue: `--accent: #2563eb; --accent-glow: #3b82f6;`. Then run `pnpm run build`.
-- **Copy**: `lang/es/*.php` and `lang/en/*.php`.
-- **Home page**: `resources/views/welcome.blade.php` is a demo; replace it with your own.
 
 ### Tests and CI
 
@@ -541,22 +813,34 @@ Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 php artisan test
 ```
 
-The tests use in-memory SQLite, freeze the clock on a fixed business day and turn Google and Telegram off (the Google API is mocked with Mockery and Telegram's with `Http::fake`), so they need no network or credentials:
+There are 146 tests. They use in-memory SQLite, freeze the clock on a fixed business day and turn Google, Telegram and the captcha off (the Google API is mocked with Mockery and Telegram's with `Http::fake`), so they need no network or credentials.
 
-- **Unit** (`tests/Unit`): `AvailabilityService` (offered days, slots, one-hour starts, blocked days, past times, Google occupancy), `GoogleCalendarService` (query window, half-slot grouping, failures) and the `Appointment` model.
-- **Feature** (`tests/Feature`): the booking wizard (days and slots, booking, double booking, form validation), the panel (access, confirm, cancel with a reason, blocked days), the Telegram webhook, the language, the `.ics` download and email rendering.
+- **Unit** (`tests/Unit`): availability (days, slots, durations, blocked days, past times, Google occupancy), the Google Calendar service and the `Appointment` model.
+- **Feature** (`tests/Feature`): the booking wizard and booking integrity, the panel (access, session security, confirm, cancel, blocked days), the Telegram webhook, the language, the signed `.ics`, the emails, the captcha, demo mode, the purge, the security headers, trusted proxies, and the theme and accessibility of the views.
 
-The `.github/workflows/ci.yml` workflow runs on every push and pull request with PHP 8.4 and 8.5: it installs dependencies, runs Pint (`--test`), builds the front end with pnpm, runs the tests, and runs `composer audit` and `pnpm audit`. Actions are pinned by SHA.
+The `.github/workflows/ci.yml` workflow runs on every push and pull request with PHP 8.4 and 8.5: it installs dependencies, runs Pint (`--test`), builds the front end with pnpm, runs the tests, and runs `composer audit` and `pnpm audit`. Actions are pinned by SHA. The Docker image is not built in CI.
+
+### Security
+
+To report a vulnerability, **don't open a public issue**: follow [SECURITY.md](SECURITY.md).
+
+What Meetcita ships with:
+
+- A Content Security Policy with a per-request nonce and no third-party scripts or fonts (`config/csp.php`), plus `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, `X-Frame-Options` and HSTS (over HTTPS only).
+- A panel with a single password, a login attempt limit and the session checked on every Livewire request. Logging out invalidates the whole session and changing the password closes every open one.
+- A booking's duration, day and time are set by the server. No double bookings: a per-day lock, a transaction that re-checks the slot and, on SQLite and PostgreSQL, a partial unique index.
+- Spam protection: own captcha (ALTCHA), a honeypot field, at most 5 bookings per hour per IP and a cap on active bookings per email.
+- Signed `.ics` links. The Telegram webhook secret is compared in constant time.
+
+Good practices when installing: see [SECURITY.md](SECURITY.md#good-practices-when-installing-meetcita).
 
 ### Known limitations
 
 - **MySQL/MariaDB**: they don't support partial indexes, so there's no database-level unique index there. Double bookings are prevented only by the app's lock and transaction.
-- The Telegram bot's messages and some panel text (login errors) are Spanish-only.
+- The Telegram bot's messages are in Spanish and its buttons in English. The panel login's wrong-password error is always in Spanish.
+- Single use of each captcha solution relies on the shared cache: with several servers, use a common cache (`database`, the default, or `redis`).
+- Docker: see the note in [Docker (not yet tested)](#docker-not-yet-tested).
 
-### License
+### License and credits
 
-[MIT](LICENSE) © Daniel Castaños Mefle.
-
-### Credits
-
-Built by **Daniel Castaños Mefle (ZeroIT)**: [danimefle.com](https://danimefle.com).
+[MIT](LICENSE) © Daniel Castaños Mefle. Built by Daniel Castaños Mefle: [danimefle.com](https://danimefle.com).
