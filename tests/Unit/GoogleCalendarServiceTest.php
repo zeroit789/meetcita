@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\Appointment;
 use App\Models\BlockedDay;
 use App\Services\GoogleCalendarService;
 use Google\Client;
@@ -179,5 +180,26 @@ class GoogleCalendarServiceTest extends TestCase
         $this->assertSame(['10:00', '10:30'], $servicio->eventosOcupados('2026-09-22'));
         // ES: Sin el propio solo queda el otro evento. EN: Without the own one only the other remains.
         $this->assertSame(['10:30'], $servicio->eventosOcupados('2026-09-22', 'evento-propio'));
+    }
+
+    public function test_si_la_cita_cambia_mientras_se_crea_el_evento_se_borra_el_evento_nuevo(): void
+    {
+        $this->configurarGoogle();
+        $cita = Appointment::factory()->confirmada()->create(['date' => '2026-09-23', 'time' => '10:00']);
+
+        // ES: Mientras Google crea el evento, el cliente cancela la cita.
+        // EN: While Google creates the event, the client cancels the booking.
+        $eventos = Mockery::mock(EventsResource::class);
+        $eventos->shouldReceive('insert')->once()->andReturnUsing(function () use ($cita) {
+            Appointment::whereKey($cita->id)->update(['status' => 'cancelada']);
+
+            return new Event(['id' => 'evento-huerfano', 'hangoutLink' => 'https://meet.google.com/abc']);
+        });
+        $eventos->shouldReceive('delete')->once()->withArgs(fn ($cal, $id) => $id === 'evento-huerfano');
+
+        $this->servicioConEventos($eventos)->crearEvento($cita);
+
+        $this->assertNull($cita->fresh()->google_event_id);
+        $this->assertSame('cancelada', $cita->fresh()->status);
     }
 }

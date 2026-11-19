@@ -24,7 +24,9 @@ use Illuminate\Support\Facades\Mail;
 |     RECLAMA con un UPDATE condicional (whereNull('reminded_at')) ANTES de
 |     enviar; si afecta 0 filas, otro proceso ya la cogió. Si el envío falla
 |     se suelta (reminded_at = null) para reintentar en la siguiente vuelta.
-|     Las citas sin correo (alta manual por teléfono) se saltan.
+|     Se envía directamente (sendNow, sin cola): así el correo sale con el
+|     estado que se acaba de comprobar, no con el que tenga la cita cuando
+|     pase el worker. Las citas sin correo (alta manual por teléfono) se saltan.
 | EN: Emails the client the day before their CONFIRMED booking (in their
 |     language, with the signed manage and .ics links). "Tomorrow" is
 |     computed in the business zone (appointments.timezone), not the
@@ -35,6 +37,8 @@ use Illuminate\Support\Facades\Mail;
 |     CLAIMED with a conditional UPDATE (whereNull('reminded_at')) BEFORE
 |     sending; if it affects 0 rows, another process took it. If sending
 |     fails it is released (reminded_at = null) to retry on the next run.
+|     Sent directly (sendNow, no queue): the email goes out with the state
+|     just checked, not whatever the booking has when the worker runs.
 |     Bookings without an email (manual phone entry) are skipped.
 |
 | Uso / Usage:  php artisan citas:recordar
@@ -119,7 +123,7 @@ class SendReminders extends Command
                 Mail::to($cita->email)
                     ->cc($cita->emailsAsistentesExtra())
                     ->locale($cita->idiomaCita())
-                    ->send(new AppointmentReminder($cita));
+                    ->sendNow(new AppointmentReminder($cita));
                 $enviados++;
             } catch (\Throwable $e) {
                 // ES: Se suelta para reintentar en la siguiente vuelta. Solo la clase en el log.

@@ -98,9 +98,24 @@ class PanelCitas extends Component
      *     a cancelled one could clash with the unique index if someone else had
      *     taken that slot (500).
      */
-    public function confirmar(int $id): void
+    public function confirmar(int $id, ?string $version = null): void
     {
         $this->resetErrorBag();
+
+        // ES: $version = updated_at (segundos) de la fila que ve el dueño. Si el
+        //     cliente cambió la cita después de cargar la tabla, no se confirma
+        //     la hora nueva sin verla.
+        // EN: $version = updated_at (seconds) of the row the owner sees. If the
+        //     client changed the booking after the table loaded, the new time
+        //     isn't confirmed unseen.
+        if ($version !== null) {
+            $actual = Appointment::find($id);
+            if ($actual && $actual->updated_at && (string) $actual->updated_at->timestamp !== $version) {
+                $this->addError('accion', __('citas.panel_err_changed'));
+
+                return;
+            }
+        }
 
         // ES: Transición ATÓMICA pendiente -> confirmada con UPDATE condicional
         //     (igual que en Telegram). 0 filas = no existía o no estaba pendiente.
@@ -108,6 +123,7 @@ class PanelCitas extends Component
         //     (same as Telegram). 0 rows = missing or not pending.
         $filas = Appointment::whereKey($id)
             ->where('status', 'pendiente')
+            ->when(isset($actual) && $actual, fn ($q) => $q->where('updated_at', $actual->updated_at))
             ->update(['status' => 'confirmada']);
 
         if ($filas === 0) {

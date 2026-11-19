@@ -101,4 +101,13 @@ class EmailsTest extends TestCase
         $this->assertStringContainsString(__('emails.client_rescheduled_heading', [], 'en'), $html);
         $this->assertStringContainsString('/gestionar?signature=', $html);
     }
+
+    public function test_un_correo_en_cola_de_antes_de_actualizar_no_falla_sin_reprogramada(): void
+    {
+        // ES: Al deserializar un trabajo viejo no se llama al constructor.
+        // EN: Unserializing an old job doesn't call the constructor.
+        $mail = (new \ReflectionClass(AppointmentConfirmationToClient::class))->newInstanceWithoutConstructor();
+
+        $this->assertFalse($mail->reprogramada);
+    }
 }

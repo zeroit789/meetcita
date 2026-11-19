@@ -45,9 +45,15 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
     //    día u hora (mismo correo, otro asunto y otro título).
     //    EN: $reprogramada = true when the client has just moved their booking
     //    to another day or time (same email, another subject and heading).
-    public function __construct(public Appointment $appointment, public bool $reprogramada = false)
+    //    ES: Propiedad normal con valor por defecto (no promovida): un correo
+    //    que ya estaba en cola antes de actualizar se deserializa sin ella.
+    //    EN: Plain property with a default (not promoted): an email queued
+    //    before upgrading is unserialized without it.
+    public bool $reprogramada = false;
+
+    public function __construct(public Appointment $appointment, bool $reprogramada = false)
     {
-        //
+        $this->reprogramada = $reprogramada;
     }
 
     // 2. ES: Asunto para el cliente. Traducido según el locale activo (fijado con

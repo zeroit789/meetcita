@@ -272,6 +272,7 @@ return [
     'manage_duration_unavailable' => 'Esta cita tiene una duración que ya no se ofrece en línea; para cambiarla, ponte en contacto con nosotros.',
 
     // ── 10. PANEL: VISTAS, ALTA MANUAL Y WHATSAPP ─────────────────────────
+    'panel_err_changed' => 'El cliente ha cambiado esta cita hace un momento. Revisa el día y la hora nuevos y confirma otra vez.',
     'panel_view_aria' => 'Qué citas ver',
     'panel_view_today' => 'Hoy',
     'panel_view_upcoming' => 'Próximas',

@@ -175,4 +175,16 @@ class TelegramWebhookTest extends TestCase
         Http::assertSent(fn ($r) => str_contains($r->url(), 'editMessageText'));
         Mail::assertQueued(AppointmentConfirmed::class, 1);
     }
+
+    public function test_un_boton_sin_version_no_confirma_una_cita_que_ya_se_cambio(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
+        $this->travel(5)->seconds();
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+
+        // ES: Botón de un aviso anterior a la 1.0.0 (sin versión). EN: Button from a pre-1.0.0 notice (no version).
+        $this->webhook($this->boton("ac:{$cita->id}"))->assertOk();
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
+    }
 }

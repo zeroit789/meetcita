@@ -270,6 +270,7 @@ return [
     'manage_duration_unavailable' => 'This booking has a duration that is no longer offered online; to change it, please get in touch with us.',
 
     // ── 10. PANEL: VIEWS, MANUAL ENTRY AND WHATSAPP ───────────────────────
+    'panel_err_changed' => 'The client has just changed this booking. Check the new day and time and confirm again.',
     'panel_view_aria' => 'Which bookings to show',
     'panel_view_today' => 'Today',
     'panel_view_upcoming' => 'Upcoming',

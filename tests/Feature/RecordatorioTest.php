@@ -47,8 +47,8 @@ class RecordatorioTest extends TestCase
 
         $this->artisan('citas:recordar')->assertSuccessful();
 
-        Mail::assertQueuedCount(1);
-        Mail::assertQueued(AppointmentReminder::class, fn ($m) => $m->hasTo('si@example.com'));
+        Mail::assertSentCount(1);
+        Mail::assertSent(AppointmentReminder::class, fn ($m) => $m->hasTo('si@example.com'));
         $this->assertNotNull($manana->fresh()->reminded_at);
     }
 
@@ -62,7 +62,7 @@ class RecordatorioTest extends TestCase
         $this->artisan('citas:recordar');
         $this->artisan('citas:recordar');
 
-        Mail::assertQueuedCount(1);
+        Mail::assertSentCount(1);
     }
 
     public function test_va_en_el_idioma_de_la_cita_con_los_enlaces_firmados(): void
@@ -71,7 +71,7 @@ class RecordatorioTest extends TestCase
 
         $this->artisan('citas:recordar');
 
-        Mail::assertQueued(AppointmentReminder::class, function (AppointmentReminder $m) {
+        Mail::assertSent(AppointmentReminder::class, function (AppointmentReminder $m) {
             return $m->locale === 'en';
         });
 
@@ -98,8 +98,8 @@ class RecordatorioTest extends TestCase
 
         $this->artisan('citas:recordar');
 
-        Mail::assertQueuedCount(1);
-        Mail::assertQueued(AppointmentReminder::class, fn ($m) => $m->hasTo('manana@example.com'));
+        Mail::assertSentCount(1);
+        Mail::assertSent(AppointmentReminder::class, fn ($m) => $m->hasTo('manana@example.com'));
     }
 
     public function test_no_envia_antes_de_la_hora_minima_ni_desactivado(): void
@@ -108,12 +108,12 @@ class RecordatorioTest extends TestCase
 
         Carbon::setTestNow(Carbon::parse('2026-09-21 08:45', 'Europe/Madrid'));
         $this->artisan('citas:recordar')->assertSuccessful();
-        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
 
         Carbon::setTestNow(Carbon::parse('2026-09-21 10:00', 'Europe/Madrid'));
         config(['appointments.reminders.enabled' => false]);
         $this->artisan('citas:recordar')->assertSuccessful();
-        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
     }
 
     public function test_sin_email_no_se_envia_nada(): void
@@ -122,7 +122,7 @@ class RecordatorioTest extends TestCase
 
         $this->artisan('citas:recordar')->assertSuccessful();
 
-        Mail::assertNothingQueued();
+        Mail::assertNothingSent();
     }
 
     public function test_esta_programada_cada_quince_minutos_sin_solaparse(): void

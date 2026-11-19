@@ -126,7 +126,14 @@ class TelegramWebhookController extends Controller
                 // EN: Pending, but the client changed it after this notice: its buttons no
                 //     longer work. Goes AFTER the state: confirming or cancelling also
                 //     changes updated_at and there it must say "already confirmed".
-                if ($version !== null && $version !== TelegramNotifier::version($cita)) {
+                //     Sin versión (aviso anterior a la 1.0.0): solo si la cita no se
+                //     ha tocado desde que se creó.
+                //     Without a version (pre-1.0.0 notice): only if the booking was
+                //     never touched since it was created.
+                $cambiada = $version !== null
+                    ? $version !== TelegramNotifier::version($cita)
+                    : $cita->updated_at?->ne($cita->created_at);
+                if ($cambiada) {
                     $tg->responderCallback($cb['id'], 'Esa cita ha cambiado: usa el aviso más reciente.');
 
                     return response('ok');
