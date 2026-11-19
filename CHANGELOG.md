@@ -34,6 +34,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** A pending booking's `.ics` is `TENTATIVE`. Calendar texts use the booking's language.
 - **ES:** El aviso de Telegram solo lleva referencia, nombre, día y hora.
   **EN:** The Telegram notice only carries reference, name, day and time.
+- **ES:** ⚠️ Tema nuevo, claro y neutro, pensado para negocios, y **claro por defecto** (`APPOINTMENTS_THEME=light`; antes era oscuro). Si quieres seguir con el oscuro, pon `APPOINTMENTS_THEME=dark`.
+  **EN:** ⚠️ New neutral light theme designed for businesses, and **light by default** (`APPOINTMENTS_THEME=light`; it used to be dark). To keep the dark one, set `APPOINTMENTS_THEME=dark`.
+- **ES:** El código de cita es más fácil de leer y dictar: `APT-K7P-3QX` (dos grupos de tres, sin caracteres que se confunden como 0/O o 1/I). Los códigos antiguos siguen valiendo.
+  **EN:** The booking code is easier to read and dictate: `APT-K7P-3QX` (two groups of three, without look-alike characters such as 0/O or 1/I). Old codes keep working.
 
 ### Añadido · Added
 
@@ -43,3 +47,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** First-layer data-protection notice next to the booking button and a note in the emails (`APPOINTMENTS_PRIVACY_*`).
 - **ES:** Tope de citas activas por correo (`APPOINTMENTS_MAX_ACTIVE_PER_EMAIL`, 2 por defecto).
   **EN:** Cap of active bookings per email (`APPOINTMENTS_MAX_ACTIVE_PER_EMAIL`, 2 by default).
+- **ES:** Color de acento configurable con `APPOINTMENTS_ACCENT` (entre comillas: `"#1d4ed8"`) y `APPOINTMENTS_ACCENT_GLOW`, sin recompilar. Si el color no da un contraste de 4,5:1 con texto blanco, se usa el de por defecto.
+  **EN:** Configurable accent colour with `APPOINTMENTS_ACCENT` (quoted: `"#1d4ed8"`) and `APPOINTMENTS_ACCENT_GLOW`, no rebuild needed. If the colour doesn't give a 4.5:1 contrast with white text, the default is used.
+- **ES:** Accesibilidad WCAG 2.1 AA en la reserva y el panel: contraste, foco visible, etiquetas y errores anunciados. Revisado con axe en los dos temas: sin violaciones serias.
+  **EN:** WCAG 2.1 AA accessibility on the booking page and the panel: contrast, visible focus, labels and announced errors. Checked with axe in both themes: no serious violations.
+- **ES:** `Dockerfile` (FrankenPHP, sin root, puerto 8080, SQLite en el volumen `/data`) y `compose.yaml` con la web y el scheduler. ⚠️ Aún sin construir ni probar en CI.
+  **EN:** `Dockerfile` (FrankenPHP, no root, port 8080, SQLite on the `/data` volume) and `compose.yaml` with the web and the scheduler. ⚠️ Not yet built or tested in CI.
+- **ES:** Modo demo pública con `MEETCITA_DEMO=true`: correo al log, sin Telegram ni Google, aviso en las páginas, contraseña de panel conocida (`MEETCITA_DEMO_PANEL_PASSWORD`) y reinicio con datos de ejemplo cada hora (`citas:demo`). Nunca en una instalación real.
+  **EN:** Public demo mode with `MEETCITA_DEMO=true`: mail to the log, no Telegram or Google, a notice on the pages, a known panel password (`MEETCITA_DEMO_PANEL_PASSWORD`) and an hourly reset with sample data (`citas:demo`). Never on a real installation.
+- **ES:** README reescrito en español e inglés, con una parte para el negocio y otra para el desarrollador, y capturas nuevas.
+  **EN:** README rewritten in Spanish and English, with one part for the business and one for the developer, and new screenshots.
