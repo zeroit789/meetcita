@@ -25,11 +25,11 @@ services:
     env_file: .env
     environment:
       DB_CONNECTION: sqlite
-      DB_DATABASE: /app/database/database.sqlite
+      DB_DATABASE: /data/database.sqlite
     ports:
-      - "8080:80"
+      - "8080:8080"
     volumes:
-      - datos:/app/database
+      - datos:/data
       - almacen:/app/storage
     restart: unless-stopped
 
@@ -37,16 +37,18 @@ services:
   # EN: Scheduler: runs the scheduled tasks every minute (email queue, purge…).
   scheduler:
     image: meetcita:latest
+    # ES: Espera a que la web haya migrado y responda. EN: Waits until the web has migrated and answers.
     depends_on:
-      - web
+      web:
+        condition: service_healthy
     env_file: .env
     environment:
       DB_CONNECTION: sqlite
-      DB_DATABASE: /app/database/database.sqlite
+      DB_DATABASE: /data/database.sqlite
       MEETCITA_MIGRATE: "false"
     command: ["php", "artisan", "schedule:work"]
     volumes:
-      - datos:/app/database
+      - datos:/data
       - almacen:/app/storage
     restart: unless-stopped
 

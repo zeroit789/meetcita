@@ -8,21 +8,22 @@
 set -e
 cd /app
 
-# ES: Con SQLite, el fichero vive en el volumen montado en /app/database.
-# EN: With SQLite, the file lives on the volume mounted at /app/database.
+# ES: Con SQLite, el fichero vive en el volumen montado en /data.
+# EN: With SQLite, the file lives on the volume mounted at /data.
 if [ "${DB_CONNECTION:-sqlite}" = "sqlite" ]; then
-  DB_FILE="${DB_DATABASE:-/app/database/database.sqlite}"
+  DB_FILE="${DB_DATABASE:-/data/database.sqlite}"
   [ -f "$DB_FILE" ] || touch "$DB_FILE"
-  chown www-data:www-data "$DB_FILE" 2>/dev/null || true
 fi
 
 # ES: Solo el servicio web migra (MEETCITA_MIGRATE=false en el scheduler).
 # EN: Only the web service migrates (MEETCITA_MIGRATE=false on the scheduler).
 if [ "${MEETCITA_MIGRATE:-true}" = "true" ]; then
   php artisan migrate --force
+  # ES: Las vistas compiladas (volumen compartido) las prepara solo la web.
+  # EN: Compiled views (shared volume) are prepared by the web only.
+  php artisan view:cache
 fi
 php artisan config:cache
 php artisan route:cache
-php artisan view:cache
 
 exec "$@"

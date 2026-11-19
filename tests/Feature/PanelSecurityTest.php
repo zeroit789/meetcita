@@ -106,7 +106,9 @@ class PanelSecurityTest extends TestCase
 
         // ES: 1) Con sesión, la instantánea funciona (la prueba es válida).
         // EN: 1) With a session, the snapshot works (the test is valid).
-        $this->accion($snapshot, 'confirmar', [$citaA->id])->assertOk();
+        $conSesion = $this->accion($snapshot, 'confirmar', [$citaA->id])->assertOk();
+        // ES: Ni la respuesta de la acción se guarda en caché. EN: Not even the action response gets cached.
+        $this->assertStringContainsString('no-store', (string) $conSesion->headers->get('Cache-Control'));
         $this->assertSame('confirmada', $citaA->fresh()->status);
 
         // ES: 2) Tras cerrar sesión, la misma instantánea no confirma nada ni

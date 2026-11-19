@@ -41,10 +41,17 @@ COPY docker/entrypoint.sh /usr/local/bin/meetcita-entrypoint
 # ES: Carpetas escribibles por el usuario del servidor web.
 # EN: Folders writable by the web server user.
 RUN chmod +x /usr/local/bin/meetcita-entrypoint \
- && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs database \
- && chown -R www-data:www-data storage bootstrap/cache database
-ENV SERVER_NAME=":80" APP_ENV=production APP_DEBUG=false LOG_CHANNEL=stderr
-EXPOSE 80
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD curl -fsS http://localhost/up || exit 1
+ && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs /data \
+ && chown -R www-data:www-data storage bootstrap/cache /data /config/caddy /data/caddy
+# ES: Sin root: el servidor y el scheduler corren como www-data y escuchan en
+#     el 8080 (un puerto alto no necesita privilegios). La BD SQLite va en
+#     /data (volumen), fuera del código, para no tapar las migraciones nuevas.
+# EN: No root: the server and the scheduler run as www-data and listen on
+#     8080 (a high port needs no privileges). The SQLite DB lives in /data
+#     (volume), outside the code, so new migrations are not hidden.
+USER www-data
+ENV SERVER_NAME=":8080" APP_ENV=production APP_DEBUG=false LOG_CHANNEL=stderr DB_DATABASE=/data/database.sqlite
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s CMD curl -fsS http://localhost:8080/up || exit 1
 ENTRYPOINT ["meetcita-entrypoint"]
-CMD ["frankenphp", "php-server", "--root", "public/", "--listen", ":80"]
+CMD ["frankenphp", "php-server", "--root", "public/", "--listen", ":8080"]

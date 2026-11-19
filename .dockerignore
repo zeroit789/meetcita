@@ -1,8 +1,11 @@
 # ES: Fuera de la imagen: secretos, dependencias locales y datos de prueba.
 # EN: Kept out of the image: secrets, local dependencies and test data.
 .env
-.env.backup
-.env.production
+.env.*
+!.env.example
+*.key
+*.pem
+auth.json
 .git
 .local
 .codegraph

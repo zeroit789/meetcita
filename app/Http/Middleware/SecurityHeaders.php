@@ -56,6 +56,16 @@ class SecurityHeaders
         $respuesta->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $respuesta->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()');
 
+        // ES: Las respuestas de Livewire (/livewire/update) pueden llevar datos de
+        //     clientes del panel: que el navegador no las guarde. El middleware
+        //     del panel no llega a esta respuesta (Livewire la descarta).
+        // EN: Livewire responses (/livewire/update) may carry panel client
+        //     data: the browser must not store them. The panel middleware
+        //     doesn't reach this response (Livewire discards it).
+        if ($request->hasHeader('X-Livewire')) {
+            $respuesta->headers->set('Cache-Control', 'no-store, private');
+        }
+
         // ES: HSTS solo por HTTPS (por HTTP el navegador la ignora y en local molestaría).
         // EN: HSTS only over HTTPS (browsers ignore it over HTTP and it would get in the way locally).
         if ($request->isSecure()) {
