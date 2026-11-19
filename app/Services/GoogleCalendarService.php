@@ -324,12 +324,15 @@ class GoogleCalendarService
      */
     protected function construirInvitados(Appointment $cita): array
     {
-        // ES: El cliente siempre va el primero. EN: The client always goes first.
-        $invitados = [$cita->email];
+        // ES: El cliente va el primero, si tiene correo (un alta manual por
+        //     teléfono puede no tenerlo).
+        // EN: The client goes first, if they have an email (a manual phone
+        //     entry may have none).
+        $invitados = $cita->tieneEmail() ? [$cita->email] : [];
 
         // ES: Set de control en minúsculas para no duplicar (incluido el del cliente).
         // EN: Lowercase control set to avoid dups (including the client's).
-        $vistos = [strtolower(trim($cita->email))];
+        $vistos = [strtolower(trim((string) $cita->email))];
 
         // ES: Sin correos extra → solo el cliente. EN: No extra emails → just the client.
         if (empty($cita->attendee_emails)) {

@@ -299,6 +299,19 @@ class Appointment extends Model
         return 'https://calendar.google.com/calendar/render?'.$params;
     }
 
+    /**
+     * ES: ¿Tiene la cita un correo al que escribir? Las citas dadas de alta a
+     *     mano en el panel (cliente que llama por teléfono) pueden no tenerlo:
+     *     entonces se guarda vacío y NO se envía ningún correo.
+     * EN: Does the booking have an email to write to? Bookings added by hand
+     *     in the panel (a client who phones) may have none: it is stored empty
+     *     and NO email is sent.
+     */
+    public function tieneEmail(): bool
+    {
+        return filter_var(trim((string) $this->email), FILTER_VALIDATE_EMAIL) !== false;
+    }
+
     // ── 5. Attendees — emails de los asistentes extra ───────────────────────
 
     /**

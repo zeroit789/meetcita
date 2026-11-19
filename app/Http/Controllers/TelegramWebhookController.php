@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\AppointmentCancelled;
+use App\Events\AppointmentConfirmed as CitaConfirmada;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Services\GoogleCalendarService;
 use App\Services\TelegramNotifier;
+use App\Support\Eventos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -150,6 +153,9 @@ class TelegramWebhookController extends Controller
 
                     $this->enviarMail($cita->email, new AppointmentConfirmed($cita), $cita->emailsAsistentesExtra(), $cita->locale ?? config('appointments.default_locale'));
 
+                    // ES: Evento para el CRM. EN: Event for the CRM.
+                    Eventos::disparar(new CitaConfirmada($cita, CitaConfirmada::SOURCE_TELEGRAM));
+
                     $tg->responderCallback($cb['id'], '✅ Cita confirmada');
                     if ($messageId) {
                         $tg->editarMensaje((int) $messageId, $this->resumen($cita, '✅ <b>CONFIRMADA</b> · email enviado al cliente'));
@@ -223,6 +229,9 @@ class TelegramWebhookController extends Controller
 
                             $this->enviarMail($cita->email, new AppointmentRejected($cita, $motivo), $cita->emailsAsistentesExtra(), $cita->locale ?? config('appointments.default_locale'));
 
+                            // ES: Evento para el CRM. EN: Event for the CRM.
+                            Eventos::disparar(new AppointmentCancelled($cita, AppointmentCancelled::BY_TELEGRAM, $motivo));
+
                             $tg->enviar(
                                 "❌ Cita <code>{$cita->reference}</code> de ".e($cita->name)
                                 .' cancelada. Le he enviado tu motivo por email.'
@@ -256,8 +265,14 @@ class TelegramWebhookController extends Controller
      *     $cc: extra attendee emails to put in copy (empty array = no Cc), so the
      *     invitees also receive the confirmation/rejection of the booking.
      */
-    protected function enviarMail(string $to, $mailable, array $cc = [], ?string $locale = null): void
+    protected function enviarMail(?string $to, $mailable, array $cc = [], ?string $locale = null): void
     {
+        // ES: Cita sin correo (alta manual por teléfono): no hay a quién escribir.
+        // EN: Booking without an email (manual phone entry): nobody to write to.
+        if (filter_var(trim((string) $to), FILTER_VALIDATE_EMAIL) === false) {
+            return;
+        }
+
         try {
             $mail = Mail::to($to)->cc($cc);
             // ES: Si la cita guardó el idioma del cliente, enviamos el correo en ese idioma.
@@ -267,7 +282,7 @@ class TelegramWebhookController extends Controller
             }
             $mail->send($mailable);
         } catch (\Throwable $e) {
-            Log::error('Telegram webhook: fallo al enviar email: '.$e->getMessage());
+            Log::error('Telegram webhook: email failed ('.$e::class.').');
         }
     }
 

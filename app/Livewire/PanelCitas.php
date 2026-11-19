@@ -2,11 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Events\AppointmentCancelled;
+use App\Events\AppointmentConfirmed as CitaConfirmada;
 use App\Http\Middleware\AdminPanelPassword;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Services\GoogleCalendarService;
+use App\Support\Eventos;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
@@ -111,21 +114,29 @@ class PanelCitas extends Component
         try {
             app(GoogleCalendarService::class)->crearEvento($cita);
         } catch (\Throwable $e) {
-            Log::error('Could not create the Google Calendar event on confirm: '.$e->getMessage());
+            Log::error('Could not create the Google Calendar event on confirm ('.$e::class.').');
         }
 
         // ES: Avisamos al cliente de que su cita queda confirmada (cliente en To
-        //     + asistentes extra en Cc), en el idioma del cliente.
+        //     + asistentes extra en Cc), en el idioma del cliente. Sin correo
+        //     (alta manual por teléfono) no se envía nada.
         // EN: Tell the client their appointment is confirmed (client in To +
-        //     extra attendees in Cc), in the client's language.
-        try {
-            Mail::to($cita->email)
-                ->cc($cita->emailsAsistentesExtra())
-                ->locale($cita->locale ?? config('appointments.default_locale', 'es'))
-                ->send(new AppointmentConfirmed($cita));
-        } catch (\Throwable $e) {
-            Log::error('Could not send the confirmed-appointment email: '.$e->getMessage());
+        //     extra attendees in Cc), in the client's language. Without an
+        //     email (manual phone entry) nothing is sent.
+        if ($cita->tieneEmail()) {
+            try {
+                Mail::to($cita->email)
+                    ->cc($cita->emailsAsistentesExtra())
+                    ->locale($cita->locale ?? config('appointments.default_locale', 'es'))
+                    ->send(new AppointmentConfirmed($cita));
+            } catch (\Throwable $e) {
+                Log::error('Could not send the confirmed-appointment email ('.$e::class.').');
+            }
         }
+
+        // ES: Evento para el CRM (solo si la confirmamos nosotros).
+        // EN: Event for the CRM (only if we confirmed it).
+        Eventos::disparar(new CitaConfirmada($cita, CitaConfirmada::SOURCE_PANEL));
     }
 
     // ── 2. pedirCancelacion() ────────────────────────────────────────────
@@ -192,19 +203,27 @@ class PanelCitas extends Component
         try {
             app(GoogleCalendarService::class)->borrarEvento($cita);
         } catch (\Throwable $e) {
-            Log::error('Could not delete the Google Calendar event on cancel: '.$e->getMessage());
+            Log::error('Could not delete the Google Calendar event on cancel ('.$e::class.').');
         }
 
-        // ES: Email de cancelación al cliente (+ asistentes extra en Cc), en su idioma.
-        // EN: Cancellation email to the client (+ extra attendees in Cc), in their language.
-        try {
-            Mail::to($cita->email)
-                ->cc($cita->emailsAsistentesExtra())
-                ->locale($cita->locale ?? config('appointments.default_locale', 'es'))
-                ->send(new AppointmentRejected($cita, $motivo));
-        } catch (\Throwable $e) {
-            Log::error('Could not send the cancellation email: '.$e->getMessage());
+        // ES: Email de cancelación al cliente (+ asistentes extra en Cc), en su
+        //     idioma. Sin correo no se envía nada.
+        // EN: Cancellation email to the client (+ extra attendees in Cc), in
+        //     their language. Without an email nothing is sent.
+        if ($cita->tieneEmail()) {
+            try {
+                Mail::to($cita->email)
+                    ->cc($cita->emailsAsistentesExtra())
+                    ->locale($cita->locale ?? config('appointments.default_locale', 'es'))
+                    ->send(new AppointmentRejected($cita, $motivo));
+            } catch (\Throwable $e) {
+                Log::error('Could not send the cancellation email ('.$e::class.').');
+            }
         }
+
+        // ES: Evento para el CRM: la canceló el dueño, con su motivo.
+        // EN: Event for the CRM: the owner cancelled it, with their reason.
+        Eventos::disparar(new AppointmentCancelled($cita, AppointmentCancelled::BY_OWNER, $motivo !== '' ? $motivo : null));
     }
 
     // ── 4. render() ──────────────────────────────────────────────────────

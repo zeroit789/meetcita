@@ -2,13 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Events\AppointmentRequested;
 use App\Mail\AppointmentConfirmationToClient;
 use App\Mail\AppointmentRequestedToOwner;
 use App\Models\Appointment;
 use App\Services\AvailabilityService;
 use App\Services\CaptchaService;
 use App\Services\TelegramNotifier;
-use App\Support\Duracion;
+use App\Support\Eventos;
 use Carbon\Carbon;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\QueryException;
@@ -629,10 +630,14 @@ class BookAppointment extends Component
         // EN: 4b) Optional Telegram heads-up with confirm/reject buttons.
         //     Degrades gracefully if Telegram isn't configured.
         try {
-            $this->notifyTelegram($appointment);
+            app(TelegramNotifier::class)->avisarCitaPendiente($appointment);
         } catch (\Throwable $e) {
             Log::error('Appointment '.$appointment->reference.' created, but Telegram failed ('.$e::class.').');
         }
+
+        // ES: 4c) Evento para enganchar un CRM (ver README, «Eventos»).
+        // EN: 4c) Event to hook a CRM (see README, "Events").
+        Eventos::disparar(new AppointmentRequested($appointment, AppointmentRequested::SOURCE_WEB));
 
         // ES: 5) Guardamos datos para la pantalla de confirmación y avanzamos.
         //     La fecha se formatea en el idioma activo (patrón natural por idioma).
@@ -665,41 +670,6 @@ class BookAppointment extends Component
             ->where('status', '!=', 'cancelada')
             ->whereDate('date', '>=', Carbon::today($this->tz())->toDateString())
             ->count() >= $tope;
-    }
-
-    /**
-     * ES: Avisa al dueño por Telegram de una nueva cita, con botones para
-     *     confirmarla o rechazarla desde el móvil. El texto es neutro (sin
-     *     nombres personales): usa los datos del cliente y la marca de config.
-     * EN: Heads-up the owner via Telegram about a new appointment, with buttons
-     *     to confirm or reject it from the phone. Text is neutral (no personal
-     *     names): it uses the data the client typed plus the config brand.
-     */
-    protected function notifyTelegram(Appointment $cita): void
-    {
-        $date = $cita->date->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM');
-        $dur = Duracion::etiqueta((int) $cita->duration);
-
-        // ES: Texto del aviso (HTML). e() escapa lo que escribe el cliente.
-        // EN: Notice text (HTML). e() escapes whatever the client typed.
-        $text = "🗓 <b>New appointment</b> · <code>{$cita->reference}</code>\n\n"
-            .'👤 <b>'.e($cita->name)."</b>\n"
-            ."📅 {$date} · <b>{$cita->time}</b> ({$dur})";
-        // ES: Lo mínimo: referencia, nombre, día y hora. Telegram es otro
-        //     destinatario (y fuera de la UE): email, asistentes y mensaje se
-        //     ven en el panel o en el correo, no aquí.
-        // EN: The bare minimum: reference, name, day and time. Telegram is
-        //     another recipient (and outside the EU): email, attendees and
-        //     message are seen in the panel or the email, not here.
-
-        // ES: Botones: confirmar (ac:ID) / rechazar (ar:ID).
-        // EN: Buttons: confirm (ac:ID) / reject (ar:ID).
-        $buttons = [[
-            ['text' => '✅ Confirm', 'callback_data' => "ac:{$cita->id}"],
-            ['text' => '❌ Reject',  'callback_data' => "ar:{$cita->id}"],
-        ]];
-
-        app(TelegramNotifier::class)->enviar($text, $buttons);
     }
 
     // ── 6. RESET / RENDER EN / ES ────────────────────────────────────────

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Appointment;
+use App\Support\Duracion;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -168,5 +170,52 @@ class TelegramNotifier
         } catch (\Throwable $e) {
             Log::error('Telegram editarMensaje() falló: '.$e->getMessage());
         }
+    }
+
+    // ── 5. Avisos de citas (texto mínimo) / Booking notices (minimal text) ──
+
+    /**
+     * ES: Avisa al dueño de una cita pendiente (nueva o reprogramada), con los
+     *     botones confirmar (ac:ID) / rechazar (ar:ID). Lo mínimo: referencia,
+     *     nombre, día y hora. Telegram es otro destinatario (y fuera de la UE):
+     *     email, asistentes y mensaje se ven en el panel o en el correo.
+     *     $antes = "fecha · hora" anteriores si se reprogramó (null si es nueva).
+     * EN: Tells the owner about a pending booking (new or rescheduled), with
+     *     the confirm (ac:ID) / reject (ar:ID) buttons. The bare minimum:
+     *     reference, name, day and time. Telegram is another recipient (and
+     *     outside the EU): email, attendees and message are seen in the panel
+     *     or the email. $antes = previous "date · time" if rescheduled (null if new).
+     */
+    public function avisarCitaPendiente(Appointment $cita, ?string $antes = null): void
+    {
+        $fecha = $cita->date->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM');
+        $dur = Duracion::etiqueta((int) $cita->duration);
+
+        // ES: e() escapa lo que escribe el cliente. EN: e() escapes what the client typed.
+        $titulo = $antes === null ? '🗓 <b>New appointment</b>' : '🔁 <b>Rescheduled</b>';
+        $texto = "{$titulo} · <code>{$cita->reference}</code>\n\n"
+            .'👤 <b>'.e($cita->name)."</b>\n"
+            ."📅 {$fecha} · <b>{$cita->time}</b> ({$dur})";
+        if ($antes !== null) {
+            $texto .= "\n↩️ <s>".e($antes).'</s>';
+        }
+
+        $this->enviar($texto, [[
+            ['text' => '✅ Confirm', 'callback_data' => "ac:{$cita->id}"],
+            ['text' => '❌ Reject',  'callback_data' => "ar:{$cita->id}"],
+        ]]);
+    }
+
+    /**
+     * ES: Avisa al dueño de que el CLIENTE ha cancelado su cita (sin botones).
+     * EN: Tells the owner that the CLIENT cancelled their booking (no buttons).
+     */
+    public function avisarCancelacionCliente(Appointment $cita): void
+    {
+        $fecha = $cita->date->locale(app()->getLocale())->isoFormat('dddd D [de] MMMM');
+
+        $this->enviar("❌ <b>Cancelled by the client</b> · <code>{$cita->reference}</code>\n\n"
+            .'👤 <b>'.e($cita->name)."</b>\n"
+            ."📅 {$fecha} · <b>{$cita->time}</b>");
     }
 }
