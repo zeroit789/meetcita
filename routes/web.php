@@ -24,6 +24,15 @@ use Illuminate\Support\Facades\Route;
 |  TELEGRAM   POST /telegram/webhook               -> TelegramWebhookController@handle [telegram.webhook]
 |  PANEL      GET/POST /panel/*                     -> PanelController (login/index/logout) [panel.*]
 |
+| ES: Cada throttle lleva un prefijo propio (3.er parámetro: ics, gestionar,
+|     altcha, panel-login). Sin él, Laravel usa UN contador por IP para todas
+|     las rutas limitadas: abrir varias veces la página de gestionar o pedir
+|     retos del captcha agotaba los 5 intentos del login del panel.
+| EN: Each throttle has its own prefix (3rd parameter: ics, gestionar,
+|     altcha, panel-login). Without it, Laravel uses ONE counter per IP for
+|     every throttled route: opening the manage page a few times or fetching
+|     captcha challenges used up the panel login's 5 attempts.
+|
 | ES: La página de reserva (/citas) y el panel son herramientas, no contenido.
 | EN: The booking page (/citas) and the panel are tools, not indexable content.
 |==============================================================================
@@ -70,7 +79,7 @@ Route::get('/lang/{locale}', function (string $locale) {
 //     event for Outlook / Apple Calendar (linked from the confirmation email).
 //     throttle:20,1 -> max 20 downloads/min per IP (anti-abuse).
 Route::get('/cita/{reference}/calendario.ics', [AppointmentIcsController::class, 'show'])
-    ->middleware('throttle:20,1')
+    ->middleware('throttle:20,1,ics')
     ->name('cita.ics');
 
 // ─── CITAS · GESTIONAR (manage my booking) / gestionar mi cita ────────────────
@@ -85,7 +94,7 @@ Route::get('/cita/{reference}/calendario.ics', [AppointmentIcsController::class,
 //     tampered signature = 403. The GET only shows; actions are POST (Livewire).
 //     throttle:30,1 -> max 30 loads/min per IP.
 Route::get('/cita/{reference}/gestionar', [GestionarCitaController::class, 'show'])
-    ->middleware(['throttle:30,1', 'signed:relative'])
+    ->middleware(['throttle:30,1,gestionar', 'signed:relative'])
     ->name('cita.gestionar');
 
 // ─── CAPTCHA (ALTCHA) ─────────────────────────────────────────────────────────
@@ -94,7 +103,7 @@ Route::get('/cita/{reference}/gestionar', [GestionarCitaController::class, 'show
 Route::get('/altcha/challenge', fn (CaptchaService $captcha) => response()
     ->json($captcha->crearReto())
     ->header('Cache-Control', 'no-store, private'))
-    ->middleware('throttle:30,1')
+    ->middleware('throttle:30,1,altcha')
     ->name('altcha.challenge');
 
 // ─── TELEGRAM (booking bot webhook) / webhook bot citas ───────────────────────
@@ -123,7 +132,7 @@ Route::prefix('panel')->group(function () {
     // ES: throttle:5,1 -> máximo 5 intentos de login/min por IP (anti fuerza bruta).
     // EN: throttle:5,1 -> max 5 login attempts/min per IP (anti brute force).
     Route::post('/login', [PanelController::class, 'login'])
-        ->middleware('throttle:5,1')
+        ->middleware('throttle:5,1,panel-login')
         ->name('panel.login.attempt');
 
     // ES: Cerrar sesión. EN: Log out.

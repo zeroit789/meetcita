@@ -297,4 +297,19 @@ class AutogestionTest extends TestCase
 
         $this->assertSame('2026-09-23', $cita->fresh()->date->toDateString());
     }
+
+    public function test_cada_ruta_limitada_tiene_su_propio_contador_por_ip(): void
+    {
+        $cita = $this->cita();
+
+        // ES: Antes todas las rutas con throttle compartían un contador por IP:
+        //     abrir 6 veces la página de gestionar bloqueaba el login del panel.
+        // EN: All throttled routes used to share one counter per IP: opening
+        //     the manage page 6 times blocked the panel login.
+        for ($i = 0; $i < 6; $i++) {
+            $this->get($this->enlace($cita))->assertOk();
+        }
+
+        $this->post('/panel/login', ['password' => 'mala'])->assertStatus(302);
+    }
 }
