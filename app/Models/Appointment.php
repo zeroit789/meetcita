@@ -486,7 +486,8 @@ class Appointment extends Model
      *     Del número nacional se quita como mucho UN 0 (el prefijo nacional de
      *     Reino Unido, Alemania, Francia...), salvo en Italia, San Marino y el
      *     Vaticano, donde el 0 forma parte del número. "(0)" en un número
-     *     internacional ("+44 (0)20...") también se quita. Si el resultado no
+     *     internacional ("+44 (0)20...") también se quita, salvo en esos
+     *     mismos países ("+39 (0)6..." conserva el 0). Si el resultado no
      *     parece un E.164 válido, no hay botón: mejor eso que escribir a otro.
      * EN: wa.me link to message the client on WhatsApp with the booking
      *     code, or null if the button is off (whatsapp.link) or the phone is
@@ -495,7 +496,8 @@ class Appointment extends Model
      *     added. At most ONE 0 is dropped from the national number (the trunk
      *     prefix of the UK, Germany, France...), except in Italy, San Marino
      *     and the Vatican, where the 0 is part of the number. "(0)" in an
-     *     international number ("+44 (0)20...") is dropped too. If the result
+     *     international number ("+44 (0)20...") is dropped too, except in
+     *     those same countries ("+39 (0)6..." keeps the 0). If the result
      *     doesn't look like a valid E.164, there is no button: better than
      *     writing to someone else.
      */
@@ -509,20 +511,28 @@ class Appointment extends Model
         // ES: Lo que va tras una letra, "#", ";" o "," es una extensión: fuera.
         // EN: Whatever follows a letter, "#", ";" or "," is an extension: dropped.
         $telefono = trim(preg_split('/[A-Za-z#;,]/', $telefono)[0]);
-        // ES: "(0)" es el prefijo nacional escrito dentro de un número internacional.
-        // EN: "(0)" is the trunk prefix written inside an international number.
-        $telefono = preg_replace('/\(\s*0\s*\)/', '', $telefono);
+        // ES: Prefijos de país donde el 0 inicial es parte del número (Italia,
+        //     San Marino y el Vaticano): ahí nunca se quita.
+        // EN: Country prefixes where the leading 0 is part of the number
+        //     (Italy, San Marino and the Vatican): never dropped there.
+        $ceroSignificativo = fn (string $numero) => (bool) preg_match('/^(39|378|379)/', $numero);
         $digitos = preg_replace('/\D+/', '', $telefono);
-        if (str_starts_with($telefono, '+')) {
-            $numero = $digitos;
-        } elseif (str_starts_with($digitos, '00')) {
-            $numero = substr($digitos, 2);
+
+        if (str_starts_with($telefono, '+') || str_starts_with($digitos, '00')) {
+            // ES: Internacional. "(0)" es el prefijo nacional escrito dentro del
+            //     número ("+44 (0)20..."): se quita salvo donde el 0 cuenta.
+            // EN: International. "(0)" is the trunk prefix written inside the
+            //     number ("+44 (0)20..."): dropped except where the 0 counts.
+            $numero = str_starts_with($telefono, '+') ? $digitos : substr($digitos, 2);
+            if (! $ceroSignificativo($numero)) {
+                $sinCero = preg_replace('/\D+/', '', preg_replace('/\(\s*0\s*\)/', '', $telefono));
+                $numero = str_starts_with($telefono, '+') ? $sinCero : substr($sinCero, 2);
+            }
         } else {
+            // ES: Nacional: se le pone el prefijo del país y se quita como mucho un 0.
+            // EN: National: the country prefix is added and at most one 0 dropped.
             $pais = preg_replace('/\D+/', '', (string) config('appointments.whatsapp.country_code', '34'));
-            // ES: Países donde el 0 inicial es parte del número (no se quita).
-            // EN: Countries where the leading 0 is part of the number (kept).
-            $ceroSignificativo = in_array($pais, ['39', '378', '379'], true);
-            $nacional = (! $ceroSignificativo && str_starts_with($digitos, '0')) ? substr($digitos, 1) : $digitos;
+            $nacional = (! $ceroSignificativo($pais) && str_starts_with($digitos, '0')) ? substr($digitos, 1) : $digitos;
             $numero = $pais.$nacional;
         }
 

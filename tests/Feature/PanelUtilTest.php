@@ -196,6 +196,10 @@ class PanelUtilTest extends TestCase
         // EN: Doubtful: the button is hidden instead of guessing.
         config(['appointments.whatsapp.country_code' => '34']);
         $this->assertNull($cita('+0612345678')->urlWhatsapp());
+
+        // ES: En Italia el 0 cuenta aunque vaya entre paréntesis.
+        // EN: In Italy the 0 counts even in brackets.
+        $this->assertStringStartsWith('https://wa.me/390612345678?text=', $cita('+39 (0)6 1234 5678')->urlWhatsapp());
     }
 
     public function test_el_boton_de_whatsapp_sale_solo_si_esta_activado(): void
