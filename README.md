@@ -223,7 +223,7 @@ Sin `pnpm run build` las páginas dan error 500, porque falta el manifiesto de V
 | `APPOINTMENTS_REMINDERS` | Correo de recordatorio la víspera de cada cita confirmada. Necesita el scheduler. | `true` |
 | `APPOINTMENTS_REMINDERS_FROM` | Hora local a partir de la que sale el recordatorio (para no escribir de madrugada). | `09:00` |
 | `APPOINTMENTS_WHATSAPP_LINK` | Botón de WhatsApp en el panel para las citas con teléfono. | `false` |
-| `APPOINTMENTS_WHATSAPP_COUNTRY_CODE` | Prefijo de país que se añade a los teléfonos escritos sin `+` ni `00`. | `34` |
+| `APPOINTMENTS_WHATSAPP_COUNTRY_CODE` | Prefijo de país que se añade a los teléfonos escritos sin `+` ni `00` (se quita un 0 inicial, salvo en Italia). Si el número no es válido, no sale el botón. | `34` |
 
 **Privacidad (RGPD)**
 
@@ -754,7 +754,7 @@ Without `pnpm run build`, pages return a 500 error because the Vite manifest is 
 | `APPOINTMENTS_REMINDERS` | Reminder email the day before each confirmed booking. Needs the scheduler. | `true` |
 | `APPOINTMENTS_REMINDERS_FROM` | Local time from which the reminder goes out (so as not to write at night). | `09:00` |
 | `APPOINTMENTS_WHATSAPP_LINK` | WhatsApp button in the panel for bookings with a phone. | `false` |
-| `APPOINTMENTS_WHATSAPP_COUNTRY_CODE` | Country prefix added to phones written without `+` or `00`. | `34` |
+| `APPOINTMENTS_WHATSAPP_COUNTRY_CODE` | Country prefix added to phones written without `+` or `00` (one leading 0 is dropped, except in Italy). If the number isn't valid, the button isn't shown. | `34` |
 
 **Privacy (GDPR)**
 

@@ -259,11 +259,15 @@ return [
     // ES: Botón opcional en el panel para escribir al cliente por WhatsApp
     //     (enlace wa.me con el código de la cita). Solo si la cita tiene
     //     teléfono. Los números sin prefijo internacional (+ o 00) llevan
-    //     delante country_code (34 = España).
+    //     delante country_code (34 = España) y pierden un 0 de prefijo
+    //     nacional (salvo Italia, donde el 0 es parte del número). Si el
+    //     resultado no es un número válido, no sale el botón.
     // EN: Optional panel button to message the client on WhatsApp (wa.me
     //     link with the booking code). Only if the booking has a phone.
     //     Numbers without an international prefix (+ or 00) get country_code
-    //     in front (34 = Spain).
+    //     in front (34 = Spain) and lose one national trunk 0 (except
+    //     Italy, where the 0 is part of the number). If the result isn't a
+    //     valid number, the button isn't shown.
     // ──────────────────────────────────────────────────────────────────────
     'whatsapp' => [
         'link' => (bool) env('APPOINTMENTS_WHATSAPP_LINK', false),

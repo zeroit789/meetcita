@@ -176,6 +176,28 @@ class PanelUtilTest extends TestCase
         $this->assertNull($cita('612 345 678')->urlWhatsapp());
     }
 
+    public function test_whatsapp_respeta_el_cero_de_cada_pais_y_oculta_los_numeros_dudosos(): void
+    {
+        config(['appointments.whatsapp.link' => true]);
+        $cita = fn (string $tel) => Appointment::factory()->make(['phone' => $tel]);
+
+        // ES: Italia: el 0 del fijo forma parte del número (+39 06…).
+        // EN: Italy: the landline's 0 is part of the number (+39 06…).
+        config(['appointments.whatsapp.country_code' => '39']);
+        $this->assertStringStartsWith('https://wa.me/390612345678?text=', $cita('06 1234 5678')->urlWhatsapp());
+
+        // ES: Reino Unido: un solo 0 de prefijo nacional, que se quita.
+        // EN: United Kingdom: a single national trunk 0, which is dropped.
+        config(['appointments.whatsapp.country_code' => '44']);
+        $this->assertStringStartsWith('https://wa.me/447700900123?text=', $cita('07700 900123')->urlWhatsapp());
+        $this->assertStringStartsWith('https://wa.me/442079460958?text=', $cita('+44 (0)20 7946 0958')->urlWhatsapp());
+
+        // ES: Dudosos: se oculta el botón en vez de adivinar.
+        // EN: Doubtful: the button is hidden instead of guessing.
+        config(['appointments.whatsapp.country_code' => '34']);
+        $this->assertNull($cita('+0612345678')->urlWhatsapp());
+    }
+
     public function test_el_boton_de_whatsapp_sale_solo_si_esta_activado(): void
     {
         Appointment::factory()->create(['phone' => '612 345 678']);
