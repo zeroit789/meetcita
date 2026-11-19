@@ -146,6 +146,7 @@ return [
     'err_email_invalid' => 'El correo ":email" no es válido. Revisa la lista (sepáralos por comas).',
     'err_max_attendees' => 'Máximo :max asistentes.',
     'err_email_limit' => 'Este correo ya tiene :max citas pendientes. Cuando pasen o se cancelen podrás pedir otra.',
+    'err_captcha' => 'Comprueba que no eres un robot (marca la casilla) y vuelve a enviar.',
     'err_retry_soon' => 'Inténtalo de nuevo en un momento.',
     'err_slot_taken' => 'Ese hueco acaba de ocuparse, elige otro.',
     'err_slot_taken_step2' => 'Ese hueco se acaba de ocupar. Elige otra hora, por favor.',

@@ -144,6 +144,7 @@ return [
     'err_email_invalid' => 'The email ":email" is not valid. Check the list (separate them with commas).',
     'err_max_attendees' => 'Maximum :max attendees.',
     'err_email_limit' => 'This email already has :max upcoming bookings. You can book again once they are over or cancelled.',
+    'err_captcha' => 'Please confirm you\'re not a robot (tick the box) and send again.',
     'err_retry_soon' => 'Please try again in a moment.',
     'err_slot_taken' => 'That slot has just been taken, please pick another.',
     'err_slot_taken_step2' => 'That slot has just been taken. Please pick another time.',

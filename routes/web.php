@@ -4,6 +4,7 @@ use App\Http\Controllers\AppointmentIcsController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\TelegramWebhookController;
 use App\Http\Middleware\SetLocale;
+use App\Services\CaptchaService;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,6 +18,7 @@ use Illuminate\Support\Facades\Route;
 |  CITAS      GET  /citas                          -> view('citas') (Livewire)        [citas]
 |  IDIOMA     GET  /lang/{locale}                  -> closure (locale cookie)         [lang.switch]
 |  CITAS ICS  GET  /cita/{reference}/calendario.ics -> AppointmentIcsController@show  [cita.ics]
+|  CAPTCHA    GET  /altcha/challenge               -> closure (ALTCHA challenge JSON) [altcha.challenge]
 |  TELEGRAM   POST /telegram/webhook               -> TelegramWebhookController@handle [telegram.webhook]
 |  PANEL      GET/POST /panel/*                     -> PanelController (login/index/logout) [panel.*]
 |
@@ -68,6 +70,15 @@ Route::get('/lang/{locale}', function (string $locale) {
 Route::get('/cita/{reference}/calendario.ics', [AppointmentIcsController::class, 'show'])
     ->middleware('throttle:20,1')
     ->name('cita.ics');
+
+// ─── CAPTCHA (ALTCHA) ─────────────────────────────────────────────────────────
+// ES: Reto del captcha propio (JSON). Sin caché y limitado a 30/min por IP.
+// EN: Own captcha challenge (JSON). Not cached and limited to 30/min per IP.
+Route::get('/altcha/challenge', fn (CaptchaService $captcha) => response()
+    ->json($captcha->crearReto())
+    ->header('Cache-Control', 'no-store, private'))
+    ->middleware('throttle:30,1')
+    ->name('altcha.challenge');
 
 // ─── TELEGRAM (booking bot webhook) / webhook bot citas ───────────────────────
 // ES: Webhook del bot de Telegram (gestión de citas). POST sin CSRF (ver bootstrap/app.php).

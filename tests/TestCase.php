@@ -57,6 +57,7 @@ abstract class TestCase extends BaseTestCase
             'services.telegram.token' => null,
             'services.telegram.chat_id' => null,
             'services.telegram.webhook_secret' => null,
+            'services.altcha.enabled' => false,
         ]);
 
         // ES: Reloj congelado en la zona del negocio.

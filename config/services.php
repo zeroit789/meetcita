@@ -71,4 +71,17 @@ return [
         'redirect_uri' => env('GOOGLE_REDIRECT_URI', 'http://localhost'),
     ],
 
+    // ES: Captcha propio ALTCHA (App\Services\CaptchaService). Sin terceros.
+    //     cost/counter fijan el trabajo del navegador; expires, la vida del reto (s).
+    // EN: Own ALTCHA captcha (App\Services\CaptchaService). No third parties.
+    //     cost/counter set the browser's work; expires, the challenge lifetime (s).
+    'altcha' => [
+        'enabled' => (bool) env('ALTCHA_ENABLED', true),
+        'hmac_key' => env('ALTCHA_HMAC_KEY'),
+        'cost' => (int) env('ALTCHA_COST', 5000),
+        'counter_min' => (int) env('ALTCHA_COUNTER_MIN', 2000),
+        'counter_max' => (int) env('ALTCHA_COUNTER_MAX', 5000),
+        'expires' => (int) env('ALTCHA_EXPIRES', 1200),
+    ],
+
 ];

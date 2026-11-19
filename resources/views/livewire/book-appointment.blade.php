@@ -370,6 +370,12 @@
              Primera capa de protección de datos (RGPD art. 13 / LOPDGDD art. 11), justo antes de reservar. --}}
         @include('partials.privacy-basic')
 
+        {{-- Own ALTCHA captcha (no third parties) / Captcha propio ALTCHA (sin terceros) --}}
+        @if(config('services.altcha.enabled', true))
+          @include('partials.captcha')
+          @error('altcha') <p class="text-xs text-red-500" role="alert">{{ $message }}</p> @enderror
+        @endif
+
         {{-- Booking-level notice (e.g. "try again in a moment") right above the button.
              Aviso de la reserva (p. ej. «inténtalo en un momento») justo encima del botón. --}}
         @error('selectedTime')

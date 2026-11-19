@@ -37,6 +37,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ### Añadido · Added
 
+- **ES:** Captcha propio ALTCHA en la reserva (sin cookies ni terceros; `ALTCHA_ENABLED`) y cabeceras de seguridad con CSP por nonce. Las fuentes ya no se cargan de Bunny Fonts.
+  **EN:** Own ALTCHA captcha on booking (no cookies or third parties; `ALTCHA_ENABLED`) and security headers with a nonce-based CSP. Fonts are no longer loaded from Bunny Fonts.
 - **ES:** Primera capa de protección de datos junto al botón de reservar y nota en los correos (`APPOINTMENTS_PRIVACY_*`).
   **EN:** First-layer data-protection notice next to the booking button and a note in the emails (`APPOINTMENTS_PRIVACY_*`).
 - **ES:** Tope de citas activas por correo (`APPOINTMENTS_MAX_ACTIVE_PER_EMAIL`, 2 por defecto).

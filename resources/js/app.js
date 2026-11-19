@@ -22,6 +22,18 @@
 
 // ES: Clave de localStorage compartida con el script anti-parpadeo de los layouts.
 // EN: localStorage key shared with the anti-FOUC script in the layouts.
+// ES: El captcha solo se descarga en las páginas que lo usan (paso 3 de la reserva).
+// EN: The captcha is only downloaded on pages that use it (booking step 3).
+function cargarCaptchaSiHaceFalta() {
+    if (document.querySelector('altcha-widget')) {
+        import('./altcha.js');
+    }
+}
+document.addEventListener('livewire:init', () => {
+    window.Livewire.hook('morphed', cargarCaptchaSiHaceFalta);
+});
+document.addEventListener('DOMContentLoaded', cargarCaptchaSiHaceFalta);
+
 const THEME_KEY = 'appointments-theme';
 
 /**

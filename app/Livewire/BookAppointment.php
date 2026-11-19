@@ -6,6 +6,7 @@ use App\Mail\AppointmentConfirmationToClient;
 use App\Mail\AppointmentRequestedToOwner;
 use App\Models\Appointment;
 use App\Services\AvailabilityService;
+use App\Services\CaptchaService;
 use App\Services\TelegramNotifier;
 use App\Support\Duracion;
 use Carbon\Carbon;
@@ -117,6 +118,12 @@ class BookAppointment extends Component
     //     with content, max:0 fails -> treated as a bot.
     #[Validate('max:0')]
     public string $website = '';
+
+    // ES: Solución del captcha ALTCHA (la copia aquí resources/js/altcha.js
+    //     cuando el widget termina). Se comprueba en reserve().
+    // EN: ALTCHA captcha solution (resources/js/altcha.js copies it here when
+    //     the widget finishes). Checked in reserve().
+    public string $altcha = '';
 
     // ── Confirmed-appointment data (for the final screen) / Datos confirmados ──
     public ?string $confirmedDate = null;
@@ -457,6 +464,20 @@ class BookAppointment extends Component
         //     validations and before touching the DB.
         RateLimiter::hit($rlKey, 3600);
 
+        // ES: 1e) Captcha propio (si está activado). Cada solución vale una vez.
+        // EN: 1e) Own captcha (if enabled). Each solution works once.
+        $captcha = app(CaptchaService::class);
+        if ($captcha->activado()) {
+            $valido = $captcha->verificar($this->altcha);
+            $this->altcha = '';
+            $this->dispatch('altcha-reset');
+            if (! $valido) {
+                $this->addError('altcha', __('citas.err_captcha'));
+
+                return;
+            }
+        }
+
         // ES: 1d) Tope de citas activas por correo (de hoy en adelante, sin
         //     cancelar). Va DESPUÉS de gastar el intento del límite por IP: así
         //     nadie puede preguntar sin freno si un correo ya tiene citas. Evita
@@ -691,7 +712,7 @@ class BookAppointment extends Component
     {
         $this->reset([
             'step', 'selectedDate', 'selectedTime', 'duration', 'modality',
-            'name', 'email', 'phone', 'attendees', 'attendeeEmails', 'message', 'website',
+            'name', 'email', 'phone', 'attendees', 'attendeeEmails', 'message', 'website', 'altcha',
             'confirmedDate', 'confirmedTime', 'confirmedDuration', 'confirmedRef',
         ]);
         $this->step = 1;
