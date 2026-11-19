@@ -269,6 +269,9 @@ return [
     'manage_err_invalid' => 'The change could not be made. Please reload the page and try again.',
     'manage_err_too_many' => 'You have made too many changes in a row. Please try again later.',
     'manage_duration_unavailable' => 'This booking has a duration that is no longer offered online; to change it, please get in touch with us.',
+    'manage_invalid_title' => 'This link is no longer valid',
+    'manage_invalid_text' => 'The booking may have been changed or cancelled, or it has already taken place. For security, each link stops working as soon as the booking changes.',
+    'manage_invalid_hint' => 'Look for the latest email we sent you about your booking: it has the link that works now. If you cannot find it, get in touch with us:',
 
     // ── 10. PANEL: VIEWS, MANUAL ENTRY AND WHATSAPP ───────────────────────
     'panel_err_changed' => 'The client has just changed this booking. Check the new day and time and confirm again.',

@@ -84,17 +84,21 @@ Route::get('/cita/{reference}/calendario.ics', [AppointmentIcsController::class,
 
 // ─── CITAS · GESTIONAR (manage my booking) / gestionar mi cita ────────────────
 // ES: Página del enlace FIRMADO de los correos al cliente para cancelar o
-//     cambiar su cita sin cuenta. 'signed:relative' valida la firma (sobre la
-//     ruta relativa, como el .ics) ANTES de mirar la base de datos: firma
-//     manipulada = 403. El GET solo muestra; las acciones son POST (Livewire).
+//     cambiar su cita sin cuenta. La firma (sobre la ruta relativa, como el
+//     .ics), la caducidad y el token los valida el controlador ANTES de
+//     enseñar nada; si el enlace no vale responde 403 con una página propia
+//     y amable (en vez del middleware 'signed', que daba un 403 pelado). El
+//     GET solo muestra; las acciones son POST (Livewire).
 //     throttle:30,1 -> máximo 30 cargas/min por IP.
 // EN: Page of the SIGNED link in the client emails to cancel or change the
-//     booking without an account. 'signed:relative' validates the signature
-//     (over the relative path, like the .ics) BEFORE looking at the database:
-//     tampered signature = 403. The GET only shows; actions are POST (Livewire).
+//     booking without an account. The signature (over the relative path,
+//     like the .ics), the expiry and the token are validated by the
+//     controller BEFORE showing anything; if the link isn't valid it answers
+//     403 with its own friendly page (instead of the 'signed' middleware,
+//     which gave a bare 403). The GET only shows; actions are POST (Livewire).
 //     throttle:30,1 -> max 30 loads/min per IP.
 Route::get('/cita/{reference}/gestionar', [GestionarCitaController::class, 'show'])
-    ->middleware(['throttle:30,1,gestionar', 'signed:relative'])
+    ->middleware('throttle:30,1,gestionar')
     ->name('cita.gestionar');
 
 // ─── CAPTCHA (ALTCHA) ─────────────────────────────────────────────────────────

@@ -271,6 +271,9 @@ return [
     'manage_err_invalid' => 'No se ha podido hacer el cambio. Recarga la página e inténtalo de nuevo.',
     'manage_err_too_many' => 'Has hecho demasiados cambios seguidos. Inténtalo más tarde.',
     'manage_duration_unavailable' => 'Esta cita tiene una duración que ya no se ofrece en línea; para cambiarla, ponte en contacto con nosotros.',
+    'manage_invalid_title' => 'Este enlace ya no es válido',
+    'manage_invalid_text' => 'Puede que la cita se haya cambiado o cancelado, o que ya haya pasado. Por seguridad, cada enlace deja de valer en cuanto la cita cambia.',
+    'manage_invalid_hint' => 'Busca el correo más reciente que te hayamos enviado sobre tu cita: ahí está el enlace que vale ahora. Si no lo encuentras, ponte en contacto con nosotros:',
 
     // ── 10. PANEL: VISTAS, ALTA MANUAL Y WHATSAPP ─────────────────────────
     'panel_err_changed' => 'El cliente ha cambiado esta cita hace un momento. Revisa el día y la hora nuevos y confirma otra vez.',

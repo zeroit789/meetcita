@@ -419,4 +419,46 @@ class AutogestionTest extends TestCase
         ], absolute: false);
         $this->get($enlace)->assertForbidden();
     }
+
+    // ── Página amable de enlace no válido ────────────────────────────────
+
+    public function test_un_enlace_caducado_muestra_una_pagina_amable_en_el_idioma_de_la_cita(): void
+    {
+        $cita = $this->cita(['locale' => 'en']);
+        $url = $cita->urlGestionar();
+        $this->travelTo(Carbon::parse('2026-09-23 10:01', 'Europe/Madrid'));
+
+        $respuesta = $this->get($url)->assertForbidden()
+            ->assertSee('lang="en"', false)
+            ->assertSee(__('citas.manage_invalid_title', [], 'en'))
+            ->assertSee(__('citas.manage_invalid_text', [], 'en'))
+            ->assertSee('owner@example.com')
+            ->assertHeader('X-Robots-Tag', 'noindex, nofollow');
+        $this->assertStringContainsString('no-store', (string) $respuesta->headers->get('Cache-Control'));
+    }
+
+    public function test_un_enlace_revocado_muestra_la_pagina_amable_sin_datos_de_la_cita(): void
+    {
+        $cita = $this->cita(['name' => 'Rosa Ejemplo']);
+        $url = $cita->urlGestionar();
+        app(GestionCitas::class)->cancelarPorCliente($cita);
+
+        $this->get($url)->assertForbidden()
+            ->assertSee('lang="es"', false)
+            ->assertSee(__('citas.manage_invalid_title', [], 'es'))
+            ->assertSee(__('citas.manage_invalid_hint', [], 'es'))
+            ->assertDontSee('Rosa Ejemplo')
+            ->assertDontSee($cita->reference);
+    }
+
+    public function test_un_enlace_manipulado_tambien_muestra_la_pagina_amable(): void
+    {
+        $cita = $this->cita();
+
+        // ES: Firma no auténtica: no se mira la cita, así que sale en el idioma de la visita.
+        // EN: Non-authentic signature: the booking isn't looked up, so it uses the visitor's language.
+        $respuesta = $this->get($this->enlace($cita).'x')->assertForbidden();
+        $respuesta->assertSee(__('citas.manage_invalid_title', [], app()->getLocale()))
+            ->assertDontSee($cita->reference);
+    }
 }
