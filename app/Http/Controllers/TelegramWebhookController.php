@@ -169,6 +169,9 @@ class TelegramWebhookController extends Controller
                     //     nuevo y disparamos evento de calendario + email.
                     // EN: $n === 1: we confirmed it. Reload with the new status and
                     //     fire the calendar event + email.
+                    //     La foto del evento sale de la escritura, no de la relectura.
+                    //     The event snapshot comes from the write, not the re-read.
+                    $foto = $cita->conCambios(['status' => 'confirmada', 'revision' => $cita->revision + 1]);
                     $cita = Appointment::find($cita->id);
 
                     // ES: Crear el evento en Google Calendar (+ Meet si es online).
@@ -188,7 +191,7 @@ class TelegramWebhookController extends Controller
                     }
 
                     // ES: Evento para el CRM. EN: Event for the CRM.
-                    Eventos::disparar(new CitaConfirmada($cita, CitaConfirmada::SOURCE_TELEGRAM));
+                    Eventos::disparar(new CitaConfirmada($foto, CitaConfirmada::SOURCE_TELEGRAM));
 
                     $tg->responderCallback($cb['id'], '✅ Cita confirmada');
                     if ($messageId) {
@@ -266,6 +269,9 @@ class TelegramWebhookController extends Controller
                         if ($n === 1) {
                             // ES: La cancelamos nosotros. Recargamos con el estado nuevo.
                             // EN: We cancelled it. Reload with the new status.
+                            //     La foto del evento sale de la escritura, no de la relectura.
+                            //     The event snapshot comes from the write, not the re-read.
+                            $foto = $cita->conCambios(['status' => 'cancelada', 'revision' => $cita->revision + 1]);
                             $cita = Appointment::find($cita->id);
 
                             // ES: Borrar el evento de Google Calendar (libera el hueco
@@ -277,7 +283,7 @@ class TelegramWebhookController extends Controller
                             $this->enviarMail($cita->email, new AppointmentRejected($cita, $motivo), $cita->emailsAsistentesExtra(), $cita->locale ?? config('appointments.default_locale'));
 
                             // ES: Evento para el CRM. EN: Event for the CRM.
-                            Eventos::disparar(new AppointmentCancelled($cita, AppointmentCancelled::BY_TELEGRAM, $motivo));
+                            Eventos::disparar(new AppointmentCancelled($foto, AppointmentCancelled::BY_TELEGRAM, $motivo));
 
                             $tg->enviar(
                                 "❌ Cita <code>{$cita->reference}</code> de ".e($cita->name)

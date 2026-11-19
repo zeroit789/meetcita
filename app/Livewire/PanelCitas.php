@@ -139,6 +139,9 @@ class PanelCitas extends Component
             return;
         }
 
+        // ES: Foto para el evento con el estado exacto que dejó esta escritura.
+        // EN: Event snapshot with the exact state this write left.
+        $foto = $actual->conCambios(['status' => 'confirmada', 'revision' => $revision + 1]);
         $cita = Appointment::find($id);
 
         // ES: Crea el evento de Google Calendar (+ Meet si es online). Degrada
@@ -171,7 +174,7 @@ class PanelCitas extends Component
 
         // ES: Evento para el CRM (solo si la confirmamos nosotros).
         // EN: Event for the CRM (only if we confirmed it).
-        Eventos::disparar(new CitaConfirmada($cita, CitaConfirmada::SOURCE_PANEL));
+        Eventos::disparar(new CitaConfirmada($foto, CitaConfirmada::SOURCE_PANEL));
     }
 
     // ── 2. pedirCancelacion() ────────────────────────────────────────────

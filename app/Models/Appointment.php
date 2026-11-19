@@ -193,6 +193,25 @@ class Appointment extends Model
             && hash_equals((string) $this->manage_token, (string) $token);
     }
 
+    /**
+     * ES: Copia en memoria de la cita con $cambios aplicados. Sirve para la
+     *     foto de los eventos: tras un UPDATE condicional que exigía esta
+     *     revisión, el estado de la fila es EXACTAMENTE esta cita más los
+     *     cambios, sin volver a leerla (una relectura podría ver ya un cambio
+     *     posterior de otra petición).
+     * EN: In-memory copy of the booking with $cambios applied. Used for the
+     *     events' snapshot: after a conditional UPDATE that required this
+     *     revision, the row's state is EXACTLY this booking plus the changes,
+     *     without reading it again (a re-read could already see a later
+     *     change from another request).
+     *
+     * @param  array<string, mixed>  $cambios
+     */
+    public function conCambios(array $cambios): self
+    {
+        return (clone $this)->forceFill($cambios);
+    }
+
     // ── 2. Reference — código público único de la cita ──────────────────────
 
     /**

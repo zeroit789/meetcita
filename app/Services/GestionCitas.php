@@ -135,6 +135,9 @@ class GestionCitas
             return self::NO_VALIDO;
         }
         $this->tokenNuevo = $nuevoToken;
+        // ES: Foto para el evento con el estado exacto que dejó esta escritura.
+        // EN: Event snapshot with the exact state this write left.
+        $foto = $actual->conCambios(['status' => 'cancelada', 'revision' => $actual->revision + 1, 'manage_token' => $nuevoToken]);
 
         $cita->refresh();
 
@@ -151,7 +154,7 @@ class GestionCitas
             Log::error('Client cancellation of '.$cita->reference.': Telegram failed ('.$e::class.').');
         }
 
-        Eventos::disparar(new AppointmentCancelled($cita, AppointmentCancelled::BY_CLIENT));
+        Eventos::disparar(new AppointmentCancelled($foto, AppointmentCancelled::BY_CLIENT));
 
         return self::OK;
     }
@@ -197,14 +200,17 @@ class GestionCitas
         // EN: Google event id of the old time: captured INSIDE the transaction
         //     (if the panel confirms right after and creates another, it isn't touched).
         $eventoViejo = null;
+        // ES: Copia de la cita tal y como quedó guardada (para la foto del evento).
+        // EN: Copy of the booking exactly as saved (for the event snapshot).
+        $guardada = null;
 
         // ES: Token nuevo del enlace (se guarda en la misma escritura).
         // EN: New link token (stored in the same write).
         $nuevoToken = Appointment::nuevoTokenGestion();
 
-        $resultado = $this->conBloqueosDeDias($dias, function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, $token, $nuevoToken, &$eventoViejo) {
+        $resultado = $this->conBloqueosDeDias($dias, function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, $token, $nuevoToken, &$eventoViejo, &$guardada) {
             try {
-                return DB::transaction(function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, $token, $nuevoToken, &$eventoViejo) {
+                return DB::transaction(function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, $token, $nuevoToken, &$eventoViejo, &$guardada) {
                     // ES: Relectura con la cita bloqueada: si cambió o se canceló
                     //     mientras esperábamos, no seguimos.
                     // EN: Re-read with the booking locked: if it changed or was
@@ -262,6 +268,7 @@ class GestionCitas
                     $actual->google_event_id = null;
                     $actual->google_meet_url = null;
                     $actual->save();
+                    $guardada = clone $actual;
 
                     return self::OK;
                 });
@@ -318,7 +325,7 @@ class GestionCitas
             }
         }
 
-        Eventos::disparar(new AppointmentRescheduled($cita, $fechaAntes, $horaAntes));
+        Eventos::disparar(new AppointmentRescheduled($guardada, $fechaAntes, $horaAntes));
 
         return self::OK;
     }
