@@ -31,10 +31,12 @@
 - [Instalación en local](#instalación-en-local)
 - [Configuración (.env)](#configuración-env)
 - [Despliegue en producción](#despliegue-en-producción)
+- [Que los correos no acaben en spam: SPF, DKIM y DMARC](#que-los-correos-no-acaben-en-spam-spf-dkim-y-dmarc)
 - [Docker (pendiente de probar)](#docker-pendiente-de-probar)
 - [Google Calendar + Meet (opcional)](#google-calendar--meet-opcional)
 - [Bot de Telegram (opcional)](#bot-de-telegram-opcional)
 - [Personalización](#personalización)
+- [Eventos para enganchar tu CRM](#eventos-para-enganchar-tu-crm)
 - [Modo demo](#modo-demo)
 - [Comandos](#comandos)
 - [Rutas](#rutas)
@@ -58,6 +60,9 @@ Es software libre (licencia MIT). No se paga una cuota por usuario ni por cita: 
 - **No hay dos citas a la vez.** Aunque dos personas pulsen «Reservar» en el mismo segundo, solo una se queda con la hora.
 - **Confirmas o rechazas desde el panel o desde el móvil.** El panel es una página privada con contraseña. Si quieres, también te llega cada cita por Telegram con dos botones.
 - **El cliente recibe sus correos.** Uno al pedir la cita, otro cuando la confirmas (con el archivo para añadirla a su calendario) y otro si la cancelas, con el motivo si lo escribes.
+- **El cliente cambia o cancela su cita él mismo.** Los correos llevan un enlace privado a «gestionar mi cita»: sin cuenta, puede cambiar el día y la hora o cancelarla hasta 24 horas antes (lo decides tú). Si la cambia, vuelve a quedar pendiente y la confirmas de nuevo. Pasado el plazo, la página le da tu contacto.
+- **Recordatorio la víspera.** El día antes de cada cita confirmada le llega un correo con la hora, el botón para añadirla al calendario y el enlace para cambiarla o cancelarla. Menos citas olvidadas.
+- **Tu horario de verdad.** Admite horario partido y distinto según el día (por ejemplo, de lunes a jueves mañana y tarde, y el viernes solo mañana). Ninguna cita cruza el descanso.
 - **Videollamada automática (opcional).** Si conectas Google Calendar, cada cita online confirmada se crea en tu calendario con un enlace de Google Meet.
 - **En español y en inglés.** La página y los correos salen en el idioma del cliente.
 - **Con tu nombre y tu color.** El nombre del negocio, el horario, las duraciones y el color de los botones se cambian en la configuración.
@@ -80,6 +85,12 @@ Son cuatro pasos y funciona igual en el móvil:
 ### Cómo gestionas las citas
 
 En el **panel** (`/panel`) ves todas las citas con su estado: pendiente, confirmada o cancelada. Desde ahí confirmas, cancelas (con un motivo opcional que le llega al cliente) y bloqueas los días en que no trabajas.
+
+El panel abre en **Próximas** (de hoy en adelante). Con **Hoy** ves la agenda del día por horas y con **Todas**, el historial completo.
+
+Si un cliente te llama por teléfono, das de **alta la cita a mano** con el botón «Nueva cita». Basta con el nombre; el correo y el teléfono son opcionales y, si no pones correo, no se envía nada. Solo te ofrece horas libres y la cita queda confirmada al guardarla.
+
+Si activas `APPOINTMENTS_WHATSAPP_LINK`, cada cita con teléfono tiene un botón **WhatsApp** que abre la conversación con el cliente con su código de cita ya escrito.
 
 ![Panel de citas](docs/img/panel.png)
 
@@ -201,6 +212,19 @@ Sin `pnpm run build` las páginas dan error 500, porque falta el manifiesto de V
 | `APPOINTMENTS_MODALITY_ONLINE` / `APPOINTMENTS_MODALITY_IN_PERSON` | Modalidades ofrecidas (al menos una a `true`). | `true` / `true` |
 | `APPOINTMENTS_PANEL_PASSWORD` | Contraseña de `/panel`. No tiene valor por defecto. Cambiarla cierra todas las sesiones abiertas. | *(vacía: ponla tú)* |
 
+**Horario, autogestión, recordatorios y WhatsApp**
+
+| Variable | Qué hace | Por defecto |
+|---|---|---|
+| `APPOINTMENTS_HOURS` | Horario por día (opcional). Si tiene algo, manda él y `APPOINTMENTS_OPEN`/`APPOINTMENTS_CLOSE` y los días laborables se ignoran. Grupos separados por `;`: el día o rango ISO (1 = lunes … 7 = domingo) y sus tramos. Ejemplo: `"1-4 09:00-14:00 16:00-19:00; 5 09:00-14:00"` (lunes a jueves partido, viernes solo mañana). | *(vacío = apertura y cierre de lunes a viernes)* |
+| `APPOINTMENTS_SELF_SERVICE` | Enlace «gestionar mi cita» en los correos al cliente para cambiar o cancelar su cita sin cuenta. `false` quita el enlace y la página. | `true` |
+| `APPOINTMENTS_SELF_SERVICE_HOURS_BEFORE` | Horas mínimas antes de la cita para cambiarla o cancelarla en línea. `0` = hasta que empiece. | `24` |
+| `APPOINTMENTS_PHONE` | Teléfono que ve el cliente cuando ya no puede cambiar su cita en línea. | *(vacío = solo el correo)* |
+| `APPOINTMENTS_REMINDERS` | Correo de recordatorio la víspera de cada cita confirmada. Necesita el scheduler. | `true` |
+| `APPOINTMENTS_REMINDERS_FROM` | Hora local a partir de la que sale el recordatorio (para no escribir de madrugada). | `09:00` |
+| `APPOINTMENTS_WHATSAPP_LINK` | Botón de WhatsApp en el panel para las citas con teléfono. | `false` |
+| `APPOINTMENTS_WHATSAPP_COUNTRY_CODE` | Prefijo de país que se añade a los teléfonos escritos sin `+` ni `00`. | `34` |
+
 **Privacidad (RGPD)**
 
 | Variable | Qué hace | Por defecto |
@@ -239,6 +263,7 @@ Lo que no está en el `.env` se cambia en `config/appointments.php`:
 - `schedule.durations`: duraciones que puede elegir el cliente, en minutos (por defecto `[30, 60]`). Valen otras, como 90 o 120, siempre que sean múltiplos del hueco: la cita no pisa la siguiente ni pasa del cierre.
 - `schedule.slot_minutes`: tamaño del hueco (30).
 - `schedule.weekdays`: días laborables en formato ISO (1 = lunes … 7 = domingo; por defecto, de lunes a viernes).
+- `schedule.hours`: horario por día con varios tramos (lo mismo que `APPOINTMENTS_HOURS`, escrito como array): `[1 => [['09:00', '14:00'], ['16:00', '19:00']], 5 => [['09:00', '14:00']]]`. Los días que no aparecen están cerrados.
 - `locales` y `default_locale`: idiomas. El de cada visita sale de la cookie del selector, si no del navegador (`Accept-Language`) y si no de `default_locale` (`es`).
 
 ### Despliegue en producción
@@ -255,15 +280,46 @@ Lo que no está en el `.env` se cambia en `config/appointments.php`:
    `routes/console.php` programa:
    - `queue:work --stop-when-empty --max-time=55 --tries=3` cada minuto (envía los correos);
    - `citas:purgar` cada día a las 03:30 (borra los datos caducados);
+   - `citas:recordar` cada 15 minutos (recordatorio de la víspera; nunca sale dos veces);
    - `citas:demo` cada hora, **solo** con `MEETCITA_DEMO=true`.
 
    Si prefieres un worker permanente para la cola: `php artisan queue:work --tries=3`.
 5. **HTTPS.** Sirve la web solo por HTTPS. La cabecera HSTS se envía cuando la petición llega por HTTPS.
 6. **Proxy inverso.** Pon en `TRUSTED_PROXIES` la IP o el rango de tu proxy (en Coolify, `10.0.1.0/24`). Si lo dejas vacío detrás de un proxy, Laravel no verá la IP real ni el HTTPS del cliente, y el límite de reservas por IP se aplicará a la IP del proxy, común para todos.
 7. **Sesiones en el servidor.** `SESSION_DRIVER=database` (el valor de `.env.example`), `redis` o `file`. No uses `cookie`.
-8. **No cambies `APP_KEY`** una vez en marcha: firma los enlaces `.ics` de los correos, y con otra clave los enlaces ya enviados dejan de valer.
+8. **No cambies `APP_KEY`** una vez en marcha: firma los enlaces `.ics` y de «gestionar mi cita» de los correos, y con otra clave los enlaces ya enviados dejan de valer.
 9. **Borrado de datos antiguos.** Está activado por defecto (12 meses). Si actualizas una instalación y quieres conservarlo todo, pon `APPOINTMENTS_RETENTION_MONTHS=0` **antes** de que corra el scheduler. Para ver qué se borraría: `php artisan citas:purgar --simular`.
 10. **Telegram.** El webhook necesita HTTPS público. Tras el despliegue, ejecuta `php artisan telegram:set-webhook`.
+11. **Correo que llegue a la bandeja de entrada.** Configura SPF, DKIM y DMARC en tu dominio (ver la sección siguiente). Sin ellos, los recordatorios y las confirmaciones acaban a menudo en spam.
+
+### Que los correos no acaben en spam: SPF, DKIM y DMARC
+
+Los recordatorios solo sirven si llegan a la bandeja de entrada. Los grandes proveedores de correo (Gmail, Outlook, Yahoo…) desconfían de los correos de un dominio que no demuestra que los envía él, y los mandan a spam o los rechazan. Se demuestra con tres registros DNS de tu dominio:
+
+- **SPF** dice qué servidores pueden enviar correo en nombre de tu dominio. Es una lista de remitentes autorizados.
+- **DKIM** firma cada correo con una clave privada que guarda tu proveedor de correo. La clave pública va en tu DNS y el que recibe comprueba que nadie ha tocado el mensaje por el camino.
+- **DMARC** une los dos anteriores: le dice al que recibe qué hacer si un correo con tu dominio no pasa SPF ni DKIM (dejarlo pasar, mandarlo a spam o rechazarlo) y adónde enviarte informes.
+
+`MAIL_FROM_ADDRESS` tiene que ser una dirección de **tu** dominio, el mismo de estos registros. Registros de ejemplo para `example.com` (los valores reales te los da tu proveedor SMTP):
+
+```text
+; SPF: un solo registro TXT en la raíz del dominio (si ya tienes uno, añade el include, no crees otro)
+example.com.                       TXT  "v=spf1 include:_spf.proveedor-de-correo.example ~all"
+
+; DKIM: el selector ("s1") y la clave pública los genera tu proveedor
+s1._domainkey.example.com.         TXT  "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..."
+
+; DMARC: empieza en p=none (solo informes) y sube a quarantine o reject cuando todo pase
+_dmarc.example.com.                TXT  "v=DMARC1; p=none; rua=mailto:dmarc@example.com"
+```
+
+**Cómo comprobarlo:**
+
+1. Mira que los registros están publicados: `dig +short TXT example.com`, `dig +short TXT s1._domainkey.example.com` y `dig +short TXT _dmarc.example.com` (en Windows, `nslookup -type=TXT _dmarc.example.com`).
+2. Pide una cita de prueba con un correo de Gmail y abre el mensaje con «Mostrar original»: SPF, DKIM y DMARC deben decir `PASS`.
+3. En cualquier cliente, la cabecera `Authentication-Results` del correo recibido debe traer `spf=pass`, `dkim=pass` y `dmarc=pass`.
+
+Cuando lleves unas semanas con todo en `pass` en los informes de DMARC, cambia `p=none` por `p=quarantine` (y más adelante `p=reject`) para que nadie pueda enviar correos falsos con tu dominio.
 
 ### Docker (pendiente de probar)
 
@@ -312,6 +368,49 @@ Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 - **Página de inicio**: `resources/views/welcome.blade.php` es una portada de ejemplo; cámbiala por la tuya.
 - **Incrustar en tu web con un iframe**: añade tu dominio a `frame-ancestors` en `config/csp.php`.
 
+### Eventos para enganchar tu CRM
+
+Cada cambio de una cita dispara un evento de Laravel. Con un *listener* puedes llevar las citas a tu CRM, a una hoja de cálculo o a donde quieras, sin tocar el código de Meetcita. Cada evento se dispara **una sola vez por cambio real** (si la cita ya estaba en ese estado, no se repite).
+
+| Evento | Cuándo | Datos |
+|---|---|---|
+| `App\Events\AppointmentRequested` | Se crea una cita: desde la web (pendiente) o a mano en el panel. | `$appointment`, `$source` (`web` o `panel`) |
+| `App\Events\AppointmentConfirmed` | Una cita pasa a confirmada: en el panel (también en el alta manual) o con el botón de Telegram. | `$appointment`, `$source` (`panel` o `telegram`) |
+| `App\Events\AppointmentCancelled` | Una cita pasa a cancelada. | `$appointment`, `$cancelledBy` (`client`, `owner` o `telegram`), `$reason` (motivo o `null`) |
+| `App\Events\AppointmentRescheduled` | El cliente cambia el día o la hora con su enlace (la cita vuelve a pendiente). | `$appointment` (ya con la fecha nueva), `$previousDate`, `$previousTime` |
+
+Ejemplo: enviar cada cita nueva a un CRM. Crea `app/Listeners/EnviarCitaAlCrm.php`; Laravel lo registra solo porque está en `app/Listeners` y el tipo del parámetro dice qué evento escucha:
+
+```php
+<?php
+
+namespace App\Listeners;
+
+use App\Events\AppointmentRequested;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Http;
+
+// ES: En cola (ShouldQueue): la llamada al CRM no hace esperar al cliente.
+class EnviarCitaAlCrm implements ShouldQueue
+{
+    public function handle(AppointmentRequested $evento): void
+    {
+        $cita = $evento->appointment;
+
+        Http::post('https://crm.example.com/api/leads', [
+            'nombre' => $cita->name,
+            'email' => $cita->email,
+            'cita' => $cita->reference,
+            'dia' => $cita->date->toDateString(),
+            'hora' => $cita->time,
+            'origen' => $evento->source,
+        ]);
+    }
+}
+```
+
+Si un listener sin cola falla, el error se registra en el log (solo la clase de la excepción) y la cita sigue adelante: un CRM caído no rompe las reservas. Para trabajo lento o llamadas a otros servicios, usa `ShouldQueue` como en el ejemplo.
+
 ### Modo demo
 
 `MEETCITA_DEMO=true` convierte la instalación en una demo pública:
@@ -335,6 +434,7 @@ Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 | `pnpm run dev` / `pnpm run build` | Vite en desarrollo / compilación para producción. |
 | `php artisan schedule:work` | Scheduler en primer plano (cola de correos cada minuto, purga nocturna). |
 | `php artisan citas:purgar` | Borra las citas y los registros técnicos caducados. Con `--simular` solo cuenta lo que borraría. |
+| `php artisan citas:recordar` | Envía el recordatorio a las citas confirmadas de mañana que aún no lo tienen (el scheduler la lanza cada 15 minutos). |
 | `php artisan citas:demo` | Reinicia la demo con datos de ejemplo. Solo funciona con `MEETCITA_DEMO=true`. |
 | `php artisan google:auth` | Paso 1 del OAuth de Google: imprime la URL de autorización. |
 | `php artisan google:auth --code=CODIGO` | Paso 2: canjea el código e imprime el `GOOGLE_REFRESH_TOKEN`. |
@@ -351,6 +451,7 @@ Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 | GET | `/citas` | Asistente de reserva. |
 | GET | `/lang/{locale}` | Cambia el idioma (`es` / `en`). |
 | GET | `/cita/{reference}/calendario.ics` | Descarga el `.ics` de una cita. Exige el enlace firmado de los correos (máximo 20 descargas por minuto e IP). |
+| GET | `/cita/{reference}/gestionar` | «Gestionar mi cita»: ver, cambiar o cancelar. Exige el enlace firmado de los correos; la página solo muestra y las acciones van por POST (máximo 30 cargas por minuto e IP). |
 | GET | `/altcha/challenge` | Reto del captcha, en JSON (máximo 30 por minuto e IP). |
 | POST | `/telegram/webhook` | Webhook del bot (sin CSRF, protegido por secreto). |
 | GET / POST | `/panel/login` | Login del panel (máximo 5 intentos por minuto e IP). |
@@ -362,14 +463,15 @@ Guía paso a paso: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 
 ```text
 app/
-├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:demo
-├── Http/Controllers/    PanelController, AppointmentIcsController, TelegramWebhookController
+├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:recordar, citas:demo
+├── Events/              AppointmentRequested, AppointmentConfirmed, AppointmentCancelled, AppointmentRescheduled
+├── Http/Controllers/    PanelController, AppointmentIcsController, GestionarCitaController, TelegramWebhookController
 ├── Http/Middleware/     AdminPanelPassword (panel), SecurityHeaders (CSP y cabeceras), SetLocale (idioma)
-├── Livewire/            BookAppointment (asistente), PanelCitas, PanelBlockedDays
-├── Mail/                los 4 correos de la cita (en cola)
+├── Livewire/            BookAppointment (asistente), GestionarCita (gestionar mi cita), PanelCitas, PanelNuevaCita, PanelBlockedDays
+├── Mail/                los correos de la cita, el recordatorio y los avisos al dueño (en cola)
 ├── Models/              Appointment, BlockedDay, User (del esqueleto, sin uso)
-├── Services/            AvailabilityService, CaptchaService, GoogleCalendarService, TelegramNotifier
-└── Support/             Duracion (texto de una duración), ModoDemo
+├── Services/            AvailabilityService, GestionCitas (cancelar, reprogramar, alta manual), CaptchaService, GoogleCalendarService, TelegramNotifier
+└── Support/             Duracion, Eventos (disparo seguro), Horario (horario por día), ModoDemo
 bootstrap/app.php        middleware, proxies de confianza, CSRF del webhook
 config/appointments.php  configuración del sistema de citas
 config/csp.php           directivas de la Content Security Policy
@@ -383,7 +485,7 @@ resources/css/app.css    Tailwind 4 y paletas de los temas
 resources/js/            botón de tema y captcha
 resources/views/         layouts, asistente, panel, partials y plantillas de correo
 routes/web.php           rutas web
-routes/console.php       tareas programadas (cola, purga, demo)
+routes/console.php       tareas programadas (cola, recordatorios, purga, demo)
 tests/                   tests unitarios y de funcionalidad
 Dockerfile, compose.yaml imagen de producción y ejemplo con Docker Compose
 .github/workflows/ci.yml integración continua (GitHub Actions)
@@ -420,6 +522,9 @@ Buenas prácticas al instalar: las de [SECURITY.md](SECURITY.md#buenas-práctica
 
 - **MySQL/MariaDB**: no admiten índices parciales, así que ahí no hay índice único en base de datos. La doble reserva la evitan solo el bloqueo y la transacción de la aplicación.
 - Los mensajes del bot de Telegram están en español y sus botones en inglés. El error de contraseña del login del panel sale siempre en español.
+- El enlace de «gestionar mi cita» no caduca (la referencia no cambia al reprogramar). Cualquiera que lo tenga, también los asistentes que van en copia, puede cambiar o cancelar la cita dentro del plazo. Si eso no encaja con tu negocio, pon `APPOINTMENTS_SELF_SERVICE=false`.
+- Al reprogramar, el cliente solo puede elegir los días que ofrece la reserva pública y mantiene la duración de su cita; si esa duración ya no está en la config, la página le pide que te contacte. El alta manual del panel también ofrece solo esos días.
+- Si tienes Google Calendar, al reprogramar se borra el evento viejo (Google avisa a los invitados de la cancelación) y se crea uno nuevo cuando vuelves a confirmar.
 - El uso único de cada solución del captcha depende de la caché compartida: con varios servidores, usa una caché común (`database`, que es la de por defecto, o `redis`).
 - Docker: ver el aviso de [Docker (pendiente de probar)](#docker-pendiente-de-probar).
 
@@ -447,10 +552,12 @@ Buenas prácticas al instalar: las de [SECURITY.md](SECURITY.md#buenas-práctica
 - [Local installation](#local-installation)
 - [Configuration (.env)](#configuration-env)
 - [Production deployment](#production-deployment)
+- [Keeping emails out of spam: SPF, DKIM and DMARC](#keeping-emails-out-of-spam-spf-dkim-and-dmarc)
 - [Docker (not yet tested)](#docker-not-yet-tested)
 - [Google Calendar + Meet (optional)](#google-calendar--meet-optional)
 - [Telegram bot (optional)](#telegram-bot-optional)
 - [Customization](#customization)
+- [Events to hook your CRM](#events-to-hook-your-crm)
 - [Demo mode](#demo-mode)
 - [Commands](#commands)
 - [Routes](#routes)
@@ -474,6 +581,9 @@ It is free software (MIT licence). There is no fee per user or per booking: it r
 - **No two bookings at once.** Even if two people press "Book" in the same second, only one of them gets the time.
 - **You confirm or reject from the panel or from your phone.** The panel is a private, password-protected page. If you want, every booking also reaches you on Telegram with two buttons.
 - **The client gets their emails.** One when they book, another when you confirm (with a file to add it to their calendar) and another if you cancel, with the reason if you write one.
+- **Clients change or cancel their own booking.** The emails carry a private "manage my booking" link: without an account, they can move it to another day and time or cancel it up to 24 hours before (you choose). If they change it, it goes back to pending and you confirm it again. After the deadline, the page shows your contact details.
+- **Reminder the day before.** The day before each confirmed booking, the client gets an email with the time, the add-to-calendar button and the link to change or cancel it. Fewer forgotten bookings.
+- **Your real opening hours.** Split hours and different hours per day (for example, Monday to Thursday morning and afternoon, and Friday mornings only). No booking crosses the break.
 - **Automatic video calls (optional).** If you connect Google Calendar, every confirmed online booking is added to your calendar with a Google Meet link.
 - **In Spanish and English.** The page and the emails use the client's language.
 - **With your name and your colour.** The business name, the hours, the durations and the button colour are set in the configuration.
@@ -498,6 +608,12 @@ It takes four steps and works the same on a phone:
 ### How you manage bookings
 
 The **panel** (`/panel`) lists every booking with its status: pending, confirmed or cancelled. From there you confirm, cancel (with an optional reason that is sent to the client) and block the days you don't work.
+
+The panel opens on **Upcoming** (today onwards). **Today** shows the day's schedule by time and **All** the whole history.
+
+When a client phones you, add the **booking by hand** with the "New booking" button. A name is enough; email and phone are optional and, without an email, nothing is sent. It only offers free times and the booking is confirmed when saved.
+
+If you turn on `APPOINTMENTS_WHATSAPP_LINK`, every booking with a phone gets a **WhatsApp** button that opens the chat with the client, with their booking code already typed.
 
 ![Bookings panel](docs/img/panel.png)
 
@@ -619,6 +735,19 @@ Without `pnpm run build`, pages return a 500 error because the Vite manifest is 
 | `APPOINTMENTS_MODALITY_ONLINE` / `APPOINTMENTS_MODALITY_IN_PERSON` | Meeting types offered (at least one must be `true`). | `true` / `true` |
 | `APPOINTMENTS_PANEL_PASSWORD` | Password for `/panel`. There is no default. Changing it closes every open session. | *(empty: set one)* |
 
+**Hours, self-service, reminders and WhatsApp**
+
+| Variable | What it does | Default |
+|---|---|---|
+| `APPOINTMENTS_HOURS` | Per-day hours (optional). If set, it wins and `APPOINTMENTS_OPEN`/`APPOINTMENTS_CLOSE` and the working days are ignored. Groups split by `;`: the ISO day or range (1 = Monday … 7 = Sunday) and its ranges. Example: `"1-4 09:00-14:00 16:00-19:00; 5 09:00-14:00"` (Monday to Thursday split, Friday mornings only). | *(empty = open and close, Monday to Friday)* |
+| `APPOINTMENTS_SELF_SERVICE` | "Manage my booking" link in the client emails to change or cancel without an account. `false` removes the link and the page. | `true` |
+| `APPOINTMENTS_SELF_SERVICE_HOURS_BEFORE` | Minimum hours before the booking to change or cancel it online. `0` = until it starts. | `24` |
+| `APPOINTMENTS_PHONE` | Phone the client sees when they can no longer change their booking online. | *(empty = email only)* |
+| `APPOINTMENTS_REMINDERS` | Reminder email the day before each confirmed booking. Needs the scheduler. | `true` |
+| `APPOINTMENTS_REMINDERS_FROM` | Local time from which the reminder goes out (so as not to write at night). | `09:00` |
+| `APPOINTMENTS_WHATSAPP_LINK` | WhatsApp button in the panel for bookings with a phone. | `false` |
+| `APPOINTMENTS_WHATSAPP_COUNTRY_CODE` | Country prefix added to phones written without `+` or `00`. | `34` |
+
 **Privacy (GDPR)**
 
 | Variable | What it does | Default |
@@ -657,6 +786,7 @@ Anything not in `.env` is changed in `config/appointments.php`:
 - `schedule.durations`: durations the client can pick, in minutes (`[30, 60]` by default). Others such as 90 or 120 work too, as long as they are multiples of the slot: the booking neither overlaps the next one nor runs past closing time.
 - `schedule.slot_minutes`: slot length (30).
 - `schedule.weekdays`: business days in ISO format (1 = Monday … 7 = Sunday; Monday to Friday by default).
+- `schedule.hours`: per-day hours with several ranges (the same as `APPOINTMENTS_HOURS`, written as an array): `[1 => [['09:00', '14:00'], ['16:00', '19:00']], 5 => [['09:00', '14:00']]]`. Days not listed are closed.
 - `locales` and `default_locale`: languages. Each visit's language comes from the switcher cookie, then the browser (`Accept-Language`), then `default_locale` (`es`).
 
 ### Production deployment
@@ -673,15 +803,46 @@ Anything not in `.env` is changed in `config/appointments.php`:
    `routes/console.php` schedules:
    - `queue:work --stop-when-empty --max-time=55 --tries=3` every minute (sends the emails);
    - `citas:purgar` every day at 03:30 (deletes expired data);
+   - `citas:recordar` every 15 minutes (day-before reminder; never sent twice);
    - `citas:demo` every hour, **only** with `MEETCITA_DEMO=true`.
 
    If you prefer a long-lived queue worker: `php artisan queue:work --tries=3`.
 5. **HTTPS.** Serve the site over HTTPS only. The HSTS header is sent when the request comes in over HTTPS.
 6. **Reverse proxy.** Set `TRUSTED_PROXIES` to your proxy's IP or range (on Coolify, `10.0.1.0/24`). If you leave it empty behind a proxy, Laravel won't see the client's real IP or HTTPS, and the per-IP booking limit will apply to the proxy's IP, shared by everyone.
 7. **Server-side sessions.** `SESSION_DRIVER=database` (the `.env.example` value), `redis` or `file`. Don't use `cookie`.
-8. **Don't change `APP_KEY`** once live: it signs the `.ics` links in the emails, and with a different key the links already sent stop working.
+8. **Don't change `APP_KEY`** once live: it signs the `.ics` and "manage my booking" links in the emails, and with a different key the links already sent stop working.
 9. **Old-data purge.** It is on by default (12 months). If you upgrade an existing install and want to keep everything, set `APPOINTMENTS_RETENTION_MONTHS=0` **before** the scheduler runs. To see what would be deleted: `php artisan citas:purgar --simular`.
 10. **Telegram.** The webhook needs public HTTPS. After deploying, run `php artisan telegram:set-webhook`.
+11. **Email that reaches the inbox.** Set up SPF, DKIM and DMARC on your domain (see the next section). Without them, reminders and confirmations often end up in spam.
+
+### Keeping emails out of spam: SPF, DKIM and DMARC
+
+Reminders only help if they reach the inbox. The big email providers (Gmail, Outlook, Yahoo…) distrust emails from a domain that doesn't prove it sends them, and send them to spam or reject them. Your domain proves it with three DNS records:
+
+- **SPF** says which servers may send email on behalf of your domain. It is a list of authorised senders.
+- **DKIM** signs every email with a private key kept by your email provider. The public key goes in your DNS and the receiver checks that nobody touched the message on the way.
+- **DMARC** ties the other two together: it tells the receiver what to do if an email using your domain passes neither SPF nor DKIM (let it through, send it to spam or reject it) and where to send you reports.
+
+`MAIL_FROM_ADDRESS` must be an address on **your** domain, the same one as these records. Example records for `example.com` (your SMTP provider gives you the real values):
+
+```text
+; SPF: a single TXT record at the domain root (if you already have one, add the include, don't create another)
+example.com.                       TXT  "v=spf1 include:_spf.email-provider.example ~all"
+
+; DKIM: the selector ("s1") and the public key are generated by your provider
+s1._domainkey.example.com.         TXT  "v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA..."
+
+; DMARC: start with p=none (reports only) and move to quarantine or reject once everything passes
+_dmarc.example.com.                TXT  "v=DMARC1; p=none; rua=mailto:dmarc@example.com"
+```
+
+**How to check it:**
+
+1. Check the records are published: `dig +short TXT example.com`, `dig +short TXT s1._domainkey.example.com` and `dig +short TXT _dmarc.example.com` (on Windows, `nslookup -type=TXT _dmarc.example.com`).
+2. Make a test booking with a Gmail address and open the message with "Show original": SPF, DKIM and DMARC must say `PASS`.
+3. In any client, the `Authentication-Results` header of the received email must contain `spf=pass`, `dkim=pass` and `dmarc=pass`.
+
+After a few weeks with everything at `pass` in the DMARC reports, change `p=none` to `p=quarantine` (and later `p=reject`) so nobody can send fake emails with your domain.
 
 ### Docker (not yet tested)
 
@@ -730,6 +891,49 @@ Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 - **Home page**: `resources/views/welcome.blade.php` is a sample landing page; replace it with your own.
 - **Embedding in your site with an iframe**: add your domain to `frame-ancestors` in `config/csp.php`.
 
+### Events to hook your CRM
+
+Every booking change fires a Laravel event. With a *listener* you can send bookings to your CRM, a spreadsheet or anywhere else, without touching Meetcita's code. Each event fires **only once per real change** (if the booking was already in that state, it isn't repeated).
+
+| Event | When | Data |
+|---|---|---|
+| `App\Events\AppointmentRequested` | A booking is created: from the website (pending) or by hand in the panel. | `$appointment`, `$source` (`web` or `panel`) |
+| `App\Events\AppointmentConfirmed` | A booking becomes confirmed: in the panel (also on a manual entry) or with the Telegram button. | `$appointment`, `$source` (`panel` or `telegram`) |
+| `App\Events\AppointmentCancelled` | A booking becomes cancelled. | `$appointment`, `$cancelledBy` (`client`, `owner` or `telegram`), `$reason` (reason or `null`) |
+| `App\Events\AppointmentRescheduled` | The client changes the day or time with their link (the booking goes back to pending). | `$appointment` (already with the new date), `$previousDate`, `$previousTime` |
+
+Example: send every new booking to a CRM. Create `app/Listeners/SendBookingToCrm.php`; Laravel registers it by itself because it lives in `app/Listeners` and the parameter type says which event it listens to:
+
+```php
+<?php
+
+namespace App\Listeners;
+
+use App\Events\AppointmentRequested;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Http;
+
+// EN: Queued (ShouldQueue): the CRM call doesn't keep the client waiting.
+class SendBookingToCrm implements ShouldQueue
+{
+    public function handle(AppointmentRequested $event): void
+    {
+        $booking = $event->appointment;
+
+        Http::post('https://crm.example.com/api/leads', [
+            'name' => $booking->name,
+            'email' => $booking->email,
+            'booking' => $booking->reference,
+            'day' => $booking->date->toDateString(),
+            'time' => $booking->time,
+            'source' => $event->source,
+        ]);
+    }
+}
+```
+
+If a non-queued listener fails, the error is logged (only the exception class) and the booking goes ahead: a CRM outage doesn't break bookings. For slow work or calls to other services, use `ShouldQueue` as in the example.
+
 ### Demo mode
 
 `MEETCITA_DEMO=true` turns the install into a public demo:
@@ -753,6 +957,7 @@ Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 | `pnpm run dev` / `pnpm run build` | Vite dev server / production build. |
 | `php artisan schedule:work` | Scheduler in the foreground (email queue every minute, nightly purge). |
 | `php artisan citas:purgar` | Deletes expired bookings and technical records. With `--simular` it only counts what it would delete. |
+| `php artisan citas:recordar` | Sends the reminder to tomorrow's confirmed bookings that don't have it yet (the scheduler runs it every 15 minutes). |
 | `php artisan citas:demo` | Resets the demo with sample data. Only works with `MEETCITA_DEMO=true`. |
 | `php artisan google:auth` | Google OAuth step 1: prints the authorization URL. |
 | `php artisan google:auth --code=CODE` | Step 2: exchanges the code and prints `GOOGLE_REFRESH_TOKEN`. |
@@ -769,6 +974,7 @@ Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 | GET | `/citas` | Booking wizard. |
 | GET | `/lang/{locale}` | Switches the language (`es` / `en`). |
 | GET | `/cita/{reference}/calendario.ics` | Downloads a booking's `.ics`. Requires the signed link from the emails (at most 20 downloads per minute per IP). |
+| GET | `/cita/{reference}/gestionar` | "Manage my booking": view, change or cancel. Requires the signed link from the emails; the page only shows and the actions go through POST (at most 30 loads per minute per IP). |
 | GET | `/altcha/challenge` | Captcha challenge, as JSON (at most 30 per minute per IP). |
 | POST | `/telegram/webhook` | Bot webhook (no CSRF, protected by a secret). |
 | GET / POST | `/panel/login` | Panel login (at most 5 attempts per minute per IP). |
@@ -780,14 +986,15 @@ Step-by-step guide: [docs/TELEGRAM.md](docs/TELEGRAM.md).
 
 ```text
 app/
-├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:demo
-├── Http/Controllers/    PanelController, AppointmentIcsController, TelegramWebhookController
+├── Console/Commands/    google:auth, telegram:set-webhook, telegram:test, citas:purgar, citas:recordar, citas:demo
+├── Events/              AppointmentRequested, AppointmentConfirmed, AppointmentCancelled, AppointmentRescheduled
+├── Http/Controllers/    PanelController, AppointmentIcsController, GestionarCitaController, TelegramWebhookController
 ├── Http/Middleware/     AdminPanelPassword (panel), SecurityHeaders (CSP and headers), SetLocale (language)
-├── Livewire/            BookAppointment (wizard), PanelCitas, PanelBlockedDays
-├── Mail/                the 4 booking emails (queued)
+├── Livewire/            BookAppointment (wizard), GestionarCita (manage my booking), PanelCitas, PanelNuevaCita, PanelBlockedDays
+├── Mail/                the booking emails, the reminder and the owner notices (queued)
 ├── Models/              Appointment, BlockedDay, User (from the skeleton, unused)
-├── Services/            AvailabilityService, CaptchaService, GoogleCalendarService, TelegramNotifier
-└── Support/             Duracion (duration label), ModoDemo (demo mode)
+├── Services/            AvailabilityService, GestionCitas (cancel, reschedule, manual entry), CaptchaService, GoogleCalendarService, TelegramNotifier
+└── Support/             Duracion (duration label), Eventos (safe dispatch), Horario (per-day hours), ModoDemo (demo mode)
 bootstrap/app.php        middleware, trusted proxies, webhook CSRF exemption
 config/appointments.php  booking system settings
 config/csp.php           Content Security Policy directives
@@ -801,7 +1008,7 @@ resources/css/app.css    Tailwind 4 and theme palettes
 resources/js/            theme toggle and captcha
 resources/views/         layouts, wizard, panel, partials and email templates
 routes/web.php           web routes
-routes/console.php       scheduled tasks (queue, purge, demo)
+routes/console.php       scheduled tasks (queue, reminders, purge, demo)
 tests/                   unit and feature tests
 Dockerfile, compose.yaml production image and Docker Compose example
 .github/workflows/ci.yml continuous integration (GitHub Actions)
@@ -838,6 +1045,9 @@ Good practices when installing: see [SECURITY.md](SECURITY.md#good-practices-whe
 
 - **MySQL/MariaDB**: they don't support partial indexes, so there's no database-level unique index there. Double bookings are prevented only by the app's lock and transaction.
 - The Telegram bot's messages are in Spanish and its buttons in English. The panel login's wrong-password error is always in Spanish.
+- The "manage my booking" link doesn't expire (the reference doesn't change on reschedule). Anyone who has it, including attendees in copy, can change or cancel the booking within the deadline. If that doesn't suit your business, set `APPOINTMENTS_SELF_SERVICE=false`.
+- When rescheduling, the client can only pick the days the public booking offers and keeps their booking's duration; if that duration is no longer in the config, the page asks them to contact you. The panel's manual entry also offers only those days.
+- With Google Calendar, rescheduling deletes the old event (Google notifies invitees of the cancellation) and a new one is created when you confirm again.
 - Single use of each captcha solution relies on the shared cache: with several servers, use a common cache (`database`, the default, or `redis`).
 - Docker: see the note in [Docker (not yet tested)](#docker-not-yet-tested).
 

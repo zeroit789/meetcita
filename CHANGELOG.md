@@ -19,6 +19,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** The Telegram webhook secret is compared in constant time. Logs no longer store the SQL with client data.
 - **ES:** Nuevo `SECURITY.md` con cómo informar de vulnerabilidades.
   **EN:** New `SECURITY.md` explaining how to report vulnerabilities.
+- **ES:** Cada ruta limitada tiene su propio contador por IP. Antes compartían uno: abrir unas cuantas veces el `.ics` o pedir retos del captcha agotaba los 5 intentos del login del panel.
+  **EN:** Each rate-limited route has its own per-IP counter. They used to share one: opening the `.ics` a few times or fetching captcha challenges used up the panel login's 5 attempts.
 
 ### Cambiado · Changed
 
@@ -57,3 +59,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** Public demo mode with `MEETCITA_DEMO=true`: mail to the log, no Telegram or Google, a notice on the pages, a known panel password (`MEETCITA_DEMO_PANEL_PASSWORD`) and an hourly reset with sample data (`citas:demo`). Never on a real installation.
 - **ES:** README reescrito en español e inglés, con una parte para el negocio y otra para el desarrollador, y capturas nuevas.
   **EN:** README rewritten in Spanish and English, with one part for the business and one for the developer, and new screenshots.
+- **ES:** El cliente cambia o cancela su cita él mismo con un enlace firmado de los correos («gestionar mi cita»), sin cuenta y hasta `APPOINTMENTS_SELF_SERVICE_HOURS_BEFORE` horas antes (24 por defecto). La página solo muestra; las acciones van por POST. Al cambiarla vuelve a pendiente y se avisa al dueño por correo y Telegram. Sin doble reserva: bloqueo de los dos días, re-comprobación sin contar la propia cita e índice único como red. `APPOINTMENTS_SELF_SERVICE=false` lo apaga.
+  **EN:** Clients change or cancel their own booking with a signed link from the emails ("manage my booking"), without an account and up to `APPOINTMENTS_SELF_SERVICE_HOURS_BEFORE` hours before (24 by default). The page only shows; actions go through POST. A changed booking goes back to pending and the owner is told by email and Telegram. No double booking: lock on both days, re-check not counting the booking itself and the unique index as a safety net. `APPOINTMENTS_SELF_SERVICE=false` turns it off.
+- **ES:** Recordatorio por correo la víspera de cada cita confirmada (`citas:recordar`, cada 15 minutos, nunca dos veces), en el idioma de la cita y con los enlaces de calendario y de gestionar. `APPOINTMENTS_REMINDERS` y `APPOINTMENTS_REMINDERS_FROM` (09:00). Necesita la migración nueva (`reminded_at`): ejecuta `php artisan migrate`.
+  **EN:** Email reminder the day before each confirmed booking (`citas:recordar`, every 15 minutes, never twice), in the booking's language and with the calendar and manage links. `APPOINTMENTS_REMINDERS` and `APPOINTMENTS_REMINDERS_FROM` (09:00). Needs the new migration (`reminded_at`): run `php artisan migrate`.
+- **ES:** Horario partido y por día de la semana (`APPOINTMENTS_HOURS` o `schedule.hours`). Ninguna cita cruza el descanso y el texto del horario agrupa los días con el mismo horario. Sin él, todo sigue como antes.
+  **EN:** Split and per-weekday hours (`APPOINTMENTS_HOURS` or `schedule.hours`). No booking crosses the break and the schedule text groups days with the same hours. Without it, everything works as before.
+- **ES:** Panel con vistas «Hoy», «Próximas» (por defecto) y «Todas», alta manual de citas telefónicas (correo opcional; sin correo no se envía nada) y botón opcional de WhatsApp (`APPOINTMENTS_WHATSAPP_LINK`, `APPOINTMENTS_WHATSAPP_COUNTRY_CODE`).
+  **EN:** Panel with "Today", "Upcoming" (default) and "All" views, manual entry of phone bookings (optional email; without one nothing is sent) and an optional WhatsApp button (`APPOINTMENTS_WHATSAPP_LINK`, `APPOINTMENTS_WHATSAPP_COUNTRY_CODE`).
+- **ES:** Eventos de Laravel para enganchar un CRM: `AppointmentRequested`, `AppointmentConfirmed`, `AppointmentCancelled` (con quién la canceló y el motivo) y `AppointmentRescheduled` (con la fecha y hora anteriores). Ver el README.
+  **EN:** Laravel events to hook a CRM: `AppointmentRequested`, `AppointmentConfirmed`, `AppointmentCancelled` (with who cancelled it and the reason) and `AppointmentRescheduled` (with the previous date and time). See the README.
+- **ES:** README: cómo configurar SPF, DKIM y DMARC para que los correos no acaben en spam.
+  **EN:** README: how to set up SPF, DKIM and DMARC so emails don't end up in spam.
