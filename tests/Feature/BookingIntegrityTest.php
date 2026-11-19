@@ -201,6 +201,13 @@ class BookingIntegrityTest extends TestCase
             ->assertSee(__('citas.privacy_retention', ['months' => 12]));
     }
 
+    public function test_sin_responsable_en_el_env_sale_la_marca(): void
+    {
+        config(['appointments.privacy.controller' => '', 'appointments.brand.name' => 'Marca Ejemplo SL']);
+
+        $this->wizardMinimo()->assertSee('Marca Ejemplo SL');
+    }
+
     public function test_un_correo_no_puede_acumular_mas_citas_activas_que_el_tope(): void
     {
         Mail::fake();

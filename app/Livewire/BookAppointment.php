@@ -423,20 +423,6 @@ class BookAppointment extends Component
             return;
         }
 
-        // ES: 1d) Tope de citas activas por correo (de hoy en adelante, sin
-        //     cancelar). Evita usar el acuse para escribir una y otra vez a la
-        //     misma dirección. 0 = sin tope.
-        // EN: 1d) Cap of active bookings per email (from today on, not
-        //     cancelled). Stops the acknowledgement from being used to write to
-        //     the same address over and over. 0 = no cap.
-        if ($this->correoEnElTope()) {
-            $this->addError('email', __('citas.err_email_limit', [
-                'max' => (int) config('appointments.booking.max_active_per_email', 2),
-            ]));
-
-            return;
-        }
-
         // ES: 1b) Validación EXTRA de correos de asistentes (campo opcional).
         //     Separados por comas; cada uno debe ser válido. Vacío = no hay nada.
         // EN: 1b) EXTRA validation of attendee emails (optional field). They are
@@ -470,6 +456,24 @@ class BookAppointment extends Component
         // EN: 1c) Consume a rate-limit attempt NOW (1-hour window), after all
         //     validations and before touching the DB.
         RateLimiter::hit($rlKey, 3600);
+
+        // ES: 1d) Tope de citas activas por correo (de hoy en adelante, sin
+        //     cancelar). Va DESPUÉS de gastar el intento del límite por IP: así
+        //     nadie puede preguntar sin freno si un correo ya tiene citas. Evita
+        //     usar el acuse para escribir una y otra vez a la misma dirección.
+        //     0 = sin tope.
+        // EN: 1d) Cap of active bookings per email (from today on, not
+        //     cancelled). It goes AFTER spending the per-IP attempt, so nobody
+        //     can freely probe whether an email already has bookings. Stops the
+        //     acknowledgement from being used to write to the same address over
+        //     and over. 0 = no cap.
+        if ($this->correoEnElTope()) {
+            $this->addError('email', __('citas.err_email_limit', [
+                'max' => (int) config('appointments.booking.max_active_per_email', 2),
+            ]));
+
+            return;
+        }
 
         // ES: 2-3) Creamos la cita de forma ATÓMICA (anti-doble-reserva):
         //   - Lock de aplicación por día ('reserva-dia:FECHA'): serializa de

@@ -134,7 +134,9 @@ return [
     'privacy' => [
         // ES: Responsable del tratamiento (por defecto, la marca).
         // EN: Data controller (defaults to the brand).
-        'controller' => env('APPOINTMENTS_PRIVACY_CONTROLLER', env('APPOINTMENTS_BRAND', 'Acme Inc.')),
+        //     ?: y no el valor por defecto de env(): en el .env vacío vale ''.
+        //     ?: rather than env()'s default: an empty .env value is ''.
+        'controller' => env('APPOINTMENTS_PRIVACY_CONTROLLER') ?: env('APPOINTMENTS_BRAND', 'Acme Inc.'),
 
         // ES: Enlace a tu política de privacidad completa. Vacío = sin enlace.
         // EN: Link to your full privacy policy. Empty = no link.

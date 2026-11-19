@@ -14,11 +14,13 @@
     $meses = (int) ($priv['retention_months'] ?? 12);
     $destinatarios = trim((string) ($priv['recipients'] ?? '')) ?: __('citas.privacy_recipients');
 @endphp
-<details class="rounded-lg border border-brand/15 bg-base/40 px-4 py-3 text-xs text-muted">
-  <summary class="cursor-pointer font-semibold text-ink">{{ __('citas.privacy_title') }}</summary>
+{{-- ES: Siempre visible (la AEPD pide presentar los epígrafes básicos, no esconderlos).
+     EN: Always visible (the Spanish DPA asks to show the basic items, not hide them). --}}
+<section aria-labelledby="privacy-basic-title" class="rounded-lg border border-brand/15 bg-base/40 px-4 py-3 text-xs text-muted">
+  <h3 id="privacy-basic-title" class="font-semibold text-ink">{{ __('citas.privacy_title') }}</h3>
   <dl class="mt-2 grid gap-1 sm:grid-cols-[auto,1fr] sm:gap-x-3">
     <dt class="font-semibold">{{ __('citas.privacy_label_controller') }}</dt>
-    <dd>{{ $priv['controller'] ?? config('appointments.brand.name') }}</dd>
+    <dd>{{ ($priv['controller'] ?? '') ?: config('appointments.brand.name') }}</dd>
     <dt class="font-semibold">{{ __('citas.privacy_label_purpose') }}</dt>
     <dd>{{ __('citas.privacy_purpose') }} @if($meses > 0){{ __('citas.privacy_retention', ['months' => $meses]) }}@endif</dd>
     <dt class="font-semibold">{{ __('citas.privacy_label_basis') }}</dt>
@@ -33,4 +35,4 @@
       @endif
     </dd>
   </dl>
-</details>
+</section>
