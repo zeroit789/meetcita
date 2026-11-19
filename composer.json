@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "zeroit789/meetcita",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "Open-source appointment booking for small businesses, built with Laravel and Livewire.",
+    "keywords": ["laravel", "livewire", "appointments", "booking"],
     "license": "MIT",
     "require": {
         "php": "^8.4.1",
