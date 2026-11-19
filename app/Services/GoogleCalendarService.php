@@ -10,6 +10,7 @@ use Google\Service\Calendar\ConferenceData;
 use Google\Service\Calendar\ConferenceSolutionKey;
 use Google\Service\Calendar\CreateConferenceRequest;
 use Google\Service\Calendar\Event;
+use GuzzleHttp\Client as GuzzleClient;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -90,6 +91,22 @@ class GoogleCalendarService
     protected function cliente(): Client
     {
         $client = new Client;
+        // ES: Tiempo límite en cada llamada (5 s para conectar, 10 s en total).
+        //     Algunas se hacen con el bloqueo del día tomado (30 s): sin límite,
+        //     una llamada colgada podía durar más que el bloqueo y dejar entrar
+        //     otra reserva. Mismas opciones que el cliente por defecto de la
+        //     librería (base_uri y http_errors) más los tiempos.
+        // EN: Time limit on every call (5 s to connect, 10 s in total). Some
+        //     run while holding the day lock (30 s): without a limit, a hung
+        //     call could outlast the lock and let another booking in. Same
+        //     options as the library's default client (base_uri and
+        //     http_errors) plus the timeouts.
+        $client->setHttpClient(new GuzzleClient([
+            'base_uri' => $client->getConfig('base_path'),
+            'http_errors' => false,
+            'connect_timeout' => 5,
+            'timeout' => 10,
+        ]));
         $client->setClientId(config('services.google.client_id'));
         $client->setClientSecret(config('services.google.client_secret'));
         // ES: accessType offline → permite refrescar el token sin reautorizar.

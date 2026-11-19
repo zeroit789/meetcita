@@ -202,4 +202,21 @@ class GoogleCalendarServiceTest extends TestCase
         $this->assertNull($cita->fresh()->google_event_id);
         $this->assertSame('cancelada', $cita->fresh()->status);
     }
+
+    public function test_las_llamadas_a_google_tienen_tiempo_limite(): void
+    {
+        // ES: Se hacen con el bloqueo del día tomado (30 s): sin tiempo límite,
+        //     una llamada colgada podía durar más que el bloqueo.
+        // EN: They run while holding the day lock (30 s): without a time
+        //     limit, a hung call could outlast the lock.
+        $this->configurarGoogle();
+        Cache::put('gcal_access_token', ['access_token' => 'x', 'expires_in' => 3600, 'created' => time()], 3300);
+
+        $cliente = (new \ReflectionMethod(GoogleCalendarService::class, 'cliente'))->invoke(new GoogleCalendarService);
+        $http = $cliente->getHttpClient();
+
+        $this->assertGreaterThan(0, $http->getConfig('timeout'));
+        $this->assertLessThanOrEqual(15, $http->getConfig('timeout') + $http->getConfig('connect_timeout'));
+        $this->assertSame('https://www.googleapis.com', rtrim((string) $http->getConfig('base_uri'), '/'));
+    }
 }
