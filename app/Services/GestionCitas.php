@@ -34,7 +34,8 @@ use Illuminate\Support\Facades\Mail;
 |             día, para que dos operaciones nunca se esperen en cruz;
 |           · una sola transacción que relee la cita y vuelve a comprobar el
 |             hueco EXCLUYENDO la propia cita de la ocupación;
-|           · UPDATE de la misma fila (la referencia y el enlace siguen valiendo)
+|           · UPDATE de la misma fila (la referencia sigue; el enlace de
+|             gestionar cambia de token y el cliente recibe el nuevo)
 |             con el índice único parcial (date, time) como red.
 |         La cita vuelve a «pendiente» (el dueño la confirma de nuevo) y el
 |         recordatorio se vuelve a enviar (reminded_at = null).
@@ -51,7 +52,8 @@ use Illuminate\Support\Facades\Mail;
 |             two operations never wait on each other crosswise;
 |           · a single transaction that re-reads the booking and re-checks the
 |             slot LEAVING the booking itself out of the occupancy;
-|           · UPDATE of the same row (the reference and link stay valid) with
+|           · UPDATE of the same row (the reference stays; the manage link
+|             gets a new token and the client receives the new one) with
 |             the partial unique (date, time) index as a safety net.
 |         The booking goes back to "pending" (the owner confirms it again) and
 |         the reminder is sent again (reminded_at = null).
@@ -100,11 +102,13 @@ class GestionCitas
 
     /**
      * ES: El cliente cancela su cita (solo dentro del plazo). Transición
-     *     ATÓMICA con UPDATE condicional: 0 filas = ya estaba cancelada, y
-     *     entonces no se avisa a nadie ni se dispara el evento.
+     *     ATÓMICA con UPDATE condicional por revisión: 0 filas = ya estaba
+     *     cancelada o cambió entre medias, y entonces no se avisa a nadie ni
+     *     se dispara el evento.
      * EN: The client cancels their booking (only within the notice period).
-     *     ATOMIC transition via conditional UPDATE: 0 rows = already
-     *     cancelled, and then nobody is told and no event is fired.
+     *     ATOMIC transition via a conditional UPDATE on the revision: 0 rows =
+     *     already cancelled or changed meanwhile, and then nobody is told and
+     *     no event is fired.
      */
     public function cancelarPorCliente(Appointment $cita, ?string $token = null): string
     {

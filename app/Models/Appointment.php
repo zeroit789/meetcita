@@ -576,14 +576,17 @@ class Appointment extends Model
 
     /**
      * ES: Devuelve los correos de los asistentes EXTRA (campo attendee_emails)
-     *     como array limpio para Cc de los correos de la cita, de modo que los
-     *     asistentes reciban también la solicitud / confirmación / rechazo, no
-     *     solo la invitación de Google. Limpieza: separa por comas + trim,
+     *     como array limpio, para que los asistentes reciban también la
+     *     solicitud / confirmación / rechazo, no solo la invitación de Google
+     *     (el rechazo en Cc; los correos con el enlace de gestionar, en un
+     *     envío aparte sin él: ver CorreoCliente). Limpieza: separa por comas + trim,
      *     descarta inválidos, deduplica sin distinguir mayúsculas y EXCLUYE el
      *     email principal del cliente (ya va en "To"). Devuelve [] si no hay.
      * EN: Returns the EXTRA attendee emails (attendee_emails field) as a clean
-     *     array to Cc in the booking emails, so invitees also receive the
-     *     request / confirmation / rejection, not just the Google invite.
+     *     array, so invitees also receive the request / confirmation /
+     *     rejection, not just the Google invite (the rejection in Cc; the
+     *     emails with the manage link, in a separate send without it: see
+     *     CorreoCliente).
      *     Cleanup: split by comma + trim, drop invalid, dedupe case-insensitively,
      *     and EXCLUDE the client's main email (already in "To"). Returns [] if none.
      */
