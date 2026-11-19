@@ -33,9 +33,9 @@ return new class extends Migration
         Schema::create('appointments', function (Blueprint $table) {
             $table->id();
 
-            // ES: Código público de la cita ("APT-K7P3Q"). Nullable + unique: el
+            // ES: Código público de la cita ("APT-K7P-3QX"). Nullable + unique: el
             //     modelo lo genera al crear; unique garantiza que no se repita.
-            // EN: Public booking code ("APT-K7P3Q"). Nullable + unique: the model
+            // EN: Public booking code ("APT-K7P-3QX"). Nullable + unique: the model
             //     generates it on create; unique enforces no collisions.
             $table->string('reference', 16)->nullable()->unique();
 

@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\URL;
 |==============================================================================
 |
 | @property int         $id
-| @property string      $reference        Public booking code ("APT-K7P3Q") / código público
+| @property string      $reference        Public booking code ("APT-K7P-3QX") / código público
 | @property string      $name             Client name / nombre del cliente
 | @property string      $email            Client email / email del cliente
 | @property string|null $phone            Phone (optional) / teléfono (opcional)
@@ -267,8 +267,8 @@ class Appointment extends Model
     }
 
     /**
-     * ES: Título del evento de calendario: "<Marca> [APT-XXXXX]". Marca desde config.
-     * EN: Calendar event title: "<Brand> [APT-XXXXX]". Brand from config.
+     * ES: Título del evento de calendario: "<Marca> [APT-XXX-XXX]". Marca desde config.
+     * EN: Calendar event title: "<Brand> [APT-XXX-XXX]". Brand from config.
      */
     public function tituloCalendario(): string
     {

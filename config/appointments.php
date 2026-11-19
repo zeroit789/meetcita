@@ -56,9 +56,9 @@ return [
 
     // ──────────────────────────────────────────────────────────────────────
     // 2. REFERENCE / REFERENCIA
-    // ES: Cada cita recibe un código público tipo "APT-K7P3Q". Cambia el prefijo
+    // ES: Cada cita recibe un código público tipo "APT-K7P-3QX". Cambia el prefijo
     //     por las iniciales de tu marca (p. ej. "ACM"). Córtalo (2-4 letras).
-    // EN: Every booking gets a public code like "APT-K7P3Q". Change the prefix
+    // EN: Every booking gets a public code like "APT-K7P-3QX". Change the prefix
     //     to your brand initials (e.g. "ACM"). Keep it short (2-4 letters).
     // ──────────────────────────────────────────────────────────────────────
     'reference_prefix' => env('APPOINTMENTS_REF_PREFIX', 'APT'),

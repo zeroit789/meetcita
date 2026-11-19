@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 |       - Permite al cliente descargar su cita como evento de calendario estándar
 |         (.ics), compatible con Outlook, Apple Calendar, etc.
 |       - Se enlaza desde el email de confirmación. La ruta es pública pero
-|         requiere la 'reference' exacta (APT-XXXXX), que solo conoce el cliente.
+|         requiere la 'reference' exacta (APT-XXX-XXX) y un enlace firmado que solo tiene el cliente.
 |     Genera un VCALENDAR/VEVENT válido según RFC 5545:
 |       - Fechas en UTC ('Ymd\THis\Z'); las calcula el modelo.
 |       - Texto escapado (comas, puntos y coma, saltos) como exige el RFC.
@@ -24,7 +24,7 @@ use Illuminate\Http\Request;
 |       - Lets the client download their booking as a standard calendar event
 |         (.ics), compatible with Outlook, Apple Calendar, etc.
 |       - Linked from the confirmation email. The route is public but requires
-|         the exact booking 'reference' (APT-XXXXX), which only the client knows.
+|         the exact booking 'reference' (APT-XXX-XXX) and a signed link only the client has.
 |     Generates a valid VCALENDAR/VEVENT per RFC 5545:
 |       - Dates in UTC ('Ymd\THis\Z'); computed by the model.
 |       - Text escaped (commas, semicolons, line breaks) as the RFC requires.
