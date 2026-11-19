@@ -59,6 +59,9 @@ abstract class TestCase extends BaseTestCase
             // ES: Recordatorios activos desde las 09:00. EN: Reminders on from 09:00.
             'appointments.reminders.enabled' => true,
             'appointments.reminders.from' => '09:00',
+            // ES: Botón de WhatsApp apagado (como por defecto). EN: WhatsApp button off (as by default).
+            'appointments.whatsapp.link' => false,
+            'appointments.whatsapp.country_code' => '34',
             // ES: Integraciones externas apagadas: ningún test llama a Google ni a Telegram.
             // EN: External integrations off: no test calls Google or Telegram.
             'services.google.client_id' => null,

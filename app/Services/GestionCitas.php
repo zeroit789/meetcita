@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Events\AppointmentCancelled;
+use App\Events\AppointmentConfirmed as CitaConfirmada;
+use App\Events\AppointmentRequested;
 use App\Events\AppointmentRescheduled;
 use App\Mail\AppointmentChangedToOwner;
 use App\Mail\AppointmentConfirmationToClient;
+use App\Mail\AppointmentConfirmed;
 use App\Models\Appointment;
 use App\Support\Eventos;
 use Carbon\Carbon;
@@ -34,6 +37,8 @@ use Illuminate\Support\Facades\Mail;
 |             con el índice único parcial (date, time) como red.
 |         La cita vuelve a «pendiente» (el dueño la confirma de nuevo) y el
 |         recordatorio se vuelve a enviar (reminded_at = null).
+|       - altaManual(): el dueño da de alta en el panel una cita telefónica,
+|         con el mismo bloqueo y la misma re-comprobación.
 |     Google, correos, Telegram y eventos van DESPUÉS de la transacción y fuera
 |     del bloqueo (llamadas lentas). Devuelve un código de resultado (constantes).
 | EN: Self-service logic (the signed-link "manage my booking" page):
@@ -49,6 +54,8 @@ use Illuminate\Support\Facades\Mail;
 |             the partial unique (date, time) index as a safety net.
 |         The booking goes back to "pending" (the owner confirms it again) and
 |         the reminder is sent again (reminded_at = null).
+|       - altaManual(): the owner adds a phone booking in the panel, with
+|         the same lock and the same re-check.
 |     Google, emails, Telegram and events run AFTER the transaction and
 |     outside the lock (slow calls). Returns a result code (constants).
 |==============================================================================
@@ -233,6 +240,100 @@ class GestionCitas
         Eventos::disparar(new AppointmentRescheduled($cita, $fechaAntes, $horaAntes));
 
         return self::OK;
+    }
+
+    // ── Alta manual (panel) / Manual entry (panel) ──────────────────────────
+
+    /**
+     * ES: El dueño da de alta una cita a mano (cliente que llama por teléfono).
+     *     Mismo cuidado que la reserva pública: bloqueo del día, transacción,
+     *     re-comprobación del hueco e índice único como red. Se crea ya
+     *     CONFIRMADA (evento de Google si está configurado). Correo de cita
+     *     confirmada solo si hay email. Dispara AppointmentRequested y
+     *     AppointmentConfirmed con origen "panel".
+     *     $datos: name, email ('' si no hay), phone, date, time, duration,
+     *     modality, locale, message (ya validados por el componente).
+     * EN: The owner adds a booking by hand (a client who phones). Same care
+     *     as the public booking: day lock, transaction, slot re-check and the
+     *     unique index as a safety net. Created already CONFIRMED (Google
+     *     event if configured). Confirmed email only if there is an email.
+     *     Fires AppointmentRequested and AppointmentConfirmed with source
+     *     "panel". $datos: name, email ('' if none), phone, date, time,
+     *     duration, modality, locale, message (already validated by the component).
+     *
+     * @param  array<string, mixed>  $datos
+     */
+    public function altaManual(array $datos): Appointment|string
+    {
+        $fecha = (string) $datos['date'];
+        $hora = (string) $datos['time'];
+        $duracion = (int) $datos['duration'];
+
+        $resultado = $this->conBloqueosDeDias([$fecha], function () use ($datos, $fecha, $hora, $duracion) {
+            try {
+                return DB::transaction(function () use ($datos, $fecha, $hora, $duracion) {
+                    // ES: Segunda barrera en motores que la respetan. EN: Second barrier on engines that honour it.
+                    Appointment::whereDate('date', $fecha)->where('status', '!=', 'cancelada')->lockForUpdate()->get();
+
+                    if (! app(AvailabilityService::class)->slotSigueLibre($fecha, $hora, $duracion)) {
+                        return self::OCUPADO;
+                    }
+
+                    $mensaje = trim((string) ($datos['message'] ?? ''));
+                    $cita = new Appointment([
+                        'name' => trim((string) $datos['name']),
+                        'email' => trim((string) ($datos['email'] ?? '')),
+                        'phone' => trim((string) ($datos['phone'] ?? '')) ?: null,
+                        'date' => $fecha,
+                        'time' => $hora,
+                        'duration' => $duracion,
+                        'modality' => (string) $datos['modality'],
+                        'locale' => (string) $datos['locale'],
+                        'message' => $mensaje !== '' ? $mensaje : null,
+                        'reason' => $mensaje,   // ES: columna antigua NOT NULL / EN: legacy NOT NULL column
+                    ]);
+                    // ES: El estado lo fija el sistema (fuera del fillable). EN: Status is system-set (outside fillable).
+                    $cita->status = 'confirmada';
+                    $cita->save();
+
+                    return $cita;
+                });
+            } catch (QueryException $e) {
+                Log::warning('Manual booking rejected by slot collision (unique index) ('.$e::class.').');
+
+                return self::OCUPADO;
+            }
+        });
+
+        if (! $resultado instanceof Appointment) {
+            return $resultado;
+        }
+
+        $cita = $resultado;
+
+        // ES: Evento de Google (+ Meet si es online); no-op sin Google.
+        // EN: Google event (+ Meet if online); no-op without Google.
+        try {
+            app(GoogleCalendarService::class)->crearEvento($cita);
+        } catch (\Throwable $e) {
+            Log::error('Manual booking '.$cita->reference.': Google failed ('.$e::class.').');
+        }
+
+        // ES: Confirmación al cliente solo si dejó correo. EN: Confirmation to the client only if they left an email.
+        if ($cita->tieneEmail()) {
+            try {
+                Mail::to($cita->email)
+                    ->locale($cita->idiomaCita())
+                    ->send(new AppointmentConfirmed($cita));
+            } catch (\Throwable $e) {
+                Log::error('Manual booking '.$cita->reference.': client email failed ('.$e::class.').');
+            }
+        }
+
+        Eventos::disparar(new AppointmentRequested($cita, AppointmentRequested::SOURCE_PANEL));
+        Eventos::disparar(new CitaConfirmada($cita, CitaConfirmada::SOURCE_PANEL));
+
+        return $cita;
     }
 
     // ── Ayudas / Helpers ────────────────────────────────────────────────────

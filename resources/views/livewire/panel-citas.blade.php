@@ -4,10 +4,13 @@
   Vista PanelCitas — tabla de citas para el dueño
   ============================================================================
   ES: Tema claro u oscuro con el acento de config. Todas las etiquetas pasan por __('citas.*')
-      para que el panel también sea bilingüe. El div raíz único es obligatorio
-      en Livewire.
+      para que el panel también sea bilingüe. Filtro «Hoy / Próximas / Todas»
+      (aria-pressed) y botón opcional de WhatsApp por cita. El div raíz único
+      es obligatorio en Livewire.
   EN: Light or dark theme with the config accent. All labels go through __('citas.*') so the
-      panel is bilingual too. The single root div is mandatory in Livewire.
+      panel is bilingual too. "Today / Upcoming / All" filter (aria-pressed)
+      and an optional WhatsApp button per booking. The single root div is
+      mandatory in Livewire.
   ============================================================================
 --}}
 <div class="w-full">
@@ -16,7 +19,25 @@
   <div class="glass p-4 sm:p-6 overflow-x-auto">
 
     {{-- ES: Título de la sección (nombra también la tabla). EN: Section heading (also names the table). --}}
-    <h2 id="citas-titulo" class="font-sans font-bold text-xl text-ink mb-4">{{ __('citas.panel_list_title') }}</h2>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+      <h2 id="citas-titulo" class="font-sans font-bold text-xl text-ink">
+        {{ __('citas.panel_list_title') }}
+        {{-- ES: En «Hoy», la fecha de hoy junto al título. EN: In "Today", today's date next to the heading. --}}
+        @if($vista === 'hoy')
+          <span class="font-normal text-muted text-base">· {{ __('citas.panel_today_heading', ['date' => $hoyTexto]) }}</span>
+        @endif
+      </h2>
+
+      {{-- ES: Filtro de vistas: grupo con nombre; el activo lleva aria-pressed.
+           EN: View filter: named group; the active one carries aria-pressed. --}}
+      <div class="inline-flex rounded-lg border border-line bg-base p-1 gap-1" role="group" aria-label="{{ __('citas.panel_view_aria') }}">
+        @foreach(['hoy' => __('citas.panel_view_today'), 'proximas' => __('citas.panel_view_upcoming'), 'todas' => __('citas.panel_view_all')] as $clave => $etiqueta)
+          <button type="button" wire:click="verVista('{{ $clave }}')"
+                  aria-pressed="{{ $vista === $clave ? 'true' : 'false' }}"
+                  class="rounded-md px-3 py-1.5 text-sm transition-colors {{ $vista === $clave ? 'bg-brand text-white' : 'text-muted hover:text-brand-glow' }}">{{ $etiqueta }}</button>
+        @endforeach
+      </div>
+    </div>
 
     {{-- ES: Error controlado de una acción (p. ej. confirmar una cita que no está pendiente).
          EN: Handled action error (e.g. confirming a booking that is not pending). --}}
@@ -27,7 +48,7 @@
     @if($citas->isEmpty())
       {{-- No appointments yet / Sin citas todavía --}}
       <div class="rounded-lg border border-[var(--card-border)] bg-base p-8 text-center">
-        <p class="text-sm text-muted">{{ __('citas.panel_empty') }}</p>
+        <p class="text-sm text-muted">{{ match($vista) { 'hoy' => __('citas.panel_empty_today'), 'proximas' => __('citas.panel_empty_upcoming'), default => __('citas.panel_empty') } }}</p>
       </div>
     @else
       {{-- ES: La tabla toma su nombre del título de la sección (lectores de pantalla).
@@ -89,7 +110,7 @@
               {{-- Name / Nombre --}}
               <td class="py-3 px-2 whitespace-nowrap">{{ $cita->name }}</td>
               {{-- Email --}}
-              <td class="py-3 px-2 text-muted text-xs whitespace-nowrap">{{ $cita->email }}</td>
+              <td class="py-3 px-2 text-muted text-xs whitespace-nowrap">{{ $cita->email !== '' ? $cita->email : '—' }}</td>
               {{-- Phone / Teléfono --}}
               <td class="py-3 px-2 text-muted text-xs whitespace-nowrap">{{ $cita->phone ?: '—' }}</td>
               {{-- Attendees / Personas asistentes --}}
@@ -121,6 +142,13 @@
               {{-- Actions: confirm / cancel / Acciones: confirmar / cancelar --}}
               <td class="py-3 px-2 text-right whitespace-nowrap">
                 <div class="inline-flex gap-1">
+                  {{-- ES: WhatsApp (opcional, si hay teléfono): pestaña nueva y rel="noopener".
+                       EN: WhatsApp (optional, if there is a phone): new tab and rel="noopener". --}}
+                  @if($wa = $cita->urlWhatsapp())
+                    <a href="{{ $wa }}" target="_blank" rel="noopener"
+                       aria-label="{{ __('citas.whatsapp_aria', ['name' => $cita->name]) }}"
+                       class="rounded-md border border-success/40 px-2 py-1 text-xs text-success hover:bg-success/10 transition-colors">{{ __('citas.action_whatsapp') }}</a>
+                  @endif
                   {{-- ES: Confirmar (solo si está pendiente) / EN: Confirm (only if pending) --}}
                   @if($cita->status === 'pendiente')
                     <button type="button" wire:click="confirmar({{ $cita->id }})"

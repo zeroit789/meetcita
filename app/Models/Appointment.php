@@ -377,6 +377,50 @@ class Appointment extends Model
         return filter_var(trim((string) $this->email), FILTER_VALIDATE_EMAIL) !== false;
     }
 
+    /**
+     * ES: Enlace wa.me para escribir al cliente por WhatsApp con el código de
+     *     la cita, o null si el botón está apagado (whatsapp.link) o el
+     *     teléfono no sirve. El número se deja en solo dígitos: con "+" o "00"
+     *     delante ya trae el prefijo de país; si no, se le pone country_code
+     *     (quitando los ceros iniciales del número nacional).
+     * EN: wa.me link to message the client on WhatsApp with the booking
+     *     code, or null if the button is off (whatsapp.link) or the phone is
+     *     unusable. The number is reduced to digits: with "+" or "00" in front
+     *     it already carries the country prefix; otherwise country_code is
+     *     added (dropping the national number's leading zeros).
+     */
+    public function urlWhatsapp(): ?string
+    {
+        $telefono = trim((string) $this->phone);
+        if (! config('appointments.whatsapp.link', false) || $telefono === '') {
+            return null;
+        }
+
+        $digitos = preg_replace('/\D+/', '', $telefono);
+        if (str_starts_with($telefono, '+')) {
+            $numero = $digitos;
+        } elseif (str_starts_with($digitos, '00')) {
+            $numero = substr($digitos, 2);
+        } else {
+            $numero = preg_replace('/\D+/', '', (string) config('appointments.whatsapp.country_code', '34')).ltrim($digitos, '0');
+        }
+
+        // ES: E.164: entre 8 y 15 cifras con el prefijo. EN: E.164: 8 to 15 digits with the prefix.
+        if (strlen($numero) < 8 || strlen($numero) > 15) {
+            return null;
+        }
+
+        $idioma = $this->idiomaCita();
+        $texto = __('citas.whatsapp_text', [
+            'name' => $this->name,
+            'reference' => $this->reference,
+            'date' => $this->date->locale($idioma)->isoFormat($idioma === 'en' ? 'dddd, MMMM D' : 'dddd D [de] MMMM'),
+            'time' => $this->time,
+        ], $idioma);
+
+        return 'https://wa.me/'.$numero.'?text='.rawurlencode($texto);
+    }
+
     // ── 5. Attendees — emails de los asistentes extra ───────────────────────
 
     /**

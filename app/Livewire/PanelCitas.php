@@ -10,8 +10,11 @@ use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Services\GoogleCalendarService;
 use App\Support\Eventos;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -39,7 +42,8 @@ use Livewire\WithPagination;
 |   1. confirmar() ............ confirmar + calendario + email / confirm + calendar + email
 |   2. pedirCancelacion() ..... abrir el formulario del motivo / open the reason form
 |   3. cancelar() ............. cancelar + liberar hueco + email / cancel + free slot + email
-|   4. render() ............... datos paginados de la tabla / paginated table data
+|   4. verVista() ............. Hoy / Próximas / Todas / Today / Upcoming / All
+|   5. render() ............... datos paginados de la tabla / paginated table data
 |==============================================================================
 */
 class PanelCitas extends Component
@@ -49,6 +53,15 @@ class PanelCitas extends Component
     // EN: Livewire pagination: serve the table in pages (30/page) instead of
     //     loading all rows at once. Keeps the panel fast with many appointments.
     use WithPagination;
+
+    // ES: Qué citas se ven: 'hoy' (por hora), 'proximas' (de hoy en adelante,
+    //     la vista por defecto) o 'todas' (las más recientes primero). La fija
+    //     el servidor con verVista().
+    // EN: Which bookings are shown: 'hoy' (by time), 'proximas' (today
+    //     onwards, the default view) or 'todas' (most recent first). Set by
+    //     the server with verVista().
+    #[Locked]
+    public string $vista = 'proximas';
 
     // ES: Cita cuyo formulario de cancelación está abierto (null = ninguno).
     // EN: Booking whose cancellation form is open (null = none).
@@ -226,21 +239,61 @@ class PanelCitas extends Component
         Eventos::disparar(new AppointmentCancelled($cita, AppointmentCancelled::BY_OWNER, $motivo !== '' ? $motivo : null));
     }
 
-    // ── 4. render() ──────────────────────────────────────────────────────
+    // ── 4. verVista() ────────────────────────────────────────────────────
 
     /**
-     * ES: Render: todas las citas ordenadas por fecha+hora desc (las más
-     *     próximas/recientes arriba), paginadas a 30 por página.
-     * EN: Render: all appointments ordered by date+time desc (soonest/most
-     *     recent first), paginated to 30 per page.
+     * ES: Cambia la vista (solo valores conocidos) y vuelve a la página 1.
+     * EN: Switches the view (known values only) and goes back to page 1.
+     */
+    public function verVista(string $vista): void
+    {
+        if (! in_array($vista, ['hoy', 'proximas', 'todas'], true)) {
+            return;
+        }
+
+        $this->vista = $vista;
+        $this->cerrarCancelacion();
+        $this->resetPage();
+    }
+
+    /**
+     * ES: Repinta la tabla cuando se da de alta una cita a mano (PanelNuevaCita).
+     * EN: Re-renders the table when a booking is added by hand (PanelNuevaCita).
+     */
+    #[On('cita-creada')]
+    public function refrescar(): void
+    {
+        // ES: Basta con repintar. EN: Re-rendering is enough.
+    }
+
+    // ── 5. render() ──────────────────────────────────────────────────────
+
+    /**
+     * ES: Render según la vista, con «hoy» en la zona del negocio:
+     *       - hoy: las de hoy por hora;
+     *       - proximas: de hoy en adelante, la más cercana arriba;
+     *       - todas: fecha+hora desc (las más recientes arriba).
+     *     Paginadas a 30 por página.
+     * EN: Render by view, with "today" in the business zone:
+     *       - hoy: today's, by time;
+     *       - proximas: today onwards, the nearest first;
+     *       - todas: date+time desc (most recent first).
+     *     Paginated to 30 per page.
      */
     public function render()
     {
+        $hoy = Carbon::today(config('appointments.timezone', 'UTC'));
+        $consulta = Appointment::query();
+
+        match ($this->vista) {
+            'hoy' => $consulta->whereDate('date', $hoy->toDateString())->orderBy('time'),
+            'todas' => $consulta->orderBy('date', 'desc')->orderBy('time', 'desc'),
+            default => $consulta->whereDate('date', '>=', $hoy->toDateString())->orderBy('date')->orderBy('time'),
+        };
+
         return view('livewire.panel-citas', [
-            'citas' => Appointment::query()
-                ->orderBy('date', 'desc')
-                ->orderBy('time', 'desc')
-                ->paginate(30),
+            'citas' => $consulta->paginate(30),
+            'hoyTexto' => $hoy->locale(app()->getLocale())->isoFormat(app()->getLocale() === 'en' ? 'dddd, MMMM D' : 'dddd D [de] MMMM'),
         ]);
     }
 }

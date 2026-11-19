@@ -255,6 +255,22 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // 5b. WHATSAPP
+    // ES: Botón opcional en el panel para escribir al cliente por WhatsApp
+    //     (enlace wa.me con el código de la cita). Solo si la cita tiene
+    //     teléfono. Los números sin prefijo internacional (+ o 00) llevan
+    //     delante country_code (34 = España).
+    // EN: Optional panel button to message the client on WhatsApp (wa.me
+    //     link with the booking code). Only if the booking has a phone.
+    //     Numbers without an international prefix (+ or 00) get country_code
+    //     in front (34 = Spain).
+    // ──────────────────────────────────────────────────────────────────────
+    'whatsapp' => [
+        'link' => (bool) env('APPOINTMENTS_WHATSAPP_LINK', false),
+        'country_code' => (string) env('APPOINTMENTS_WHATSAPP_COUNTRY_CODE', '34'),
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // 6. PANEL / PANEL
     // ES: Contraseña única para el panel privado en /panel.
     //     DEFÍNELA en tu .env — no hay valor por defecto a propósito.
