@@ -178,7 +178,7 @@ class TelegramWebhookController extends Controller
                     //     El servicio degrada con gracia si Google no está configurado.
                     // EN: Create the Google Calendar event (+ Meet if online). The
                     //     service degrades gracefully if Google isn't configured.
-                    app(GoogleCalendarService::class)->crearEvento($cita);
+                    app(GoogleCalendarService::class)->crearEvento($foto);
 
                     // ES: Titular con el enlace de gestionar; asistentes aparte y sin él.
                     // EN: Holder with the manage link; attendees separately without it.

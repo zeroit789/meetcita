@@ -203,6 +203,30 @@ class GoogleCalendarServiceTest extends TestCase
         $this->assertSame('cancelada', $cita->fresh()->status);
     }
 
+    public function test_si_la_cita_vuelve_a_la_misma_hora_y_se_reconfirma_el_evento_viejo_no_se_guarda(): void
+    {
+        $this->configurarGoogle();
+        $cita = Appointment::factory()->confirmada()->create(['date' => '2026-09-23', 'time' => '10:00', 'revision' => 1]);
+
+        // ES: Mientras Google crea el evento, la cita se mueve y vuelve a la
+        //     misma hora y se confirma otra vez (revisión 5): mismo día, hora y
+        //     estado, pero esa confirmación creará su propio evento.
+        // EN: While Google creates the event, the booking moves, comes back to
+        //     the same time and is confirmed again (revision 5): same day, time
+        //     and status, but that confirmation will create its own event.
+        $eventos = Mockery::mock(EventsResource::class);
+        $eventos->shouldReceive('insert')->once()->andReturnUsing(function () use ($cita) {
+            Appointment::whereKey($cita->id)->update(['revision' => 5]);
+
+            return new Event(['id' => 'evento-viejo']);
+        });
+        $eventos->shouldReceive('delete')->once()->withArgs(fn ($cal, $id) => $id === 'evento-viejo');
+
+        $this->servicioConEventos($eventos)->crearEvento($cita);
+
+        $this->assertNull($cita->fresh()->google_event_id);
+    }
+
     public function test_las_llamadas_a_google_tienen_tiempo_limite(): void
     {
         // ES: Se hacen con el bloqueo del día tomado (30 s): sin tiempo límite,

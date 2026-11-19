@@ -307,7 +307,12 @@ class GoogleCalendarService
             if ($cita->modality === 'online') {
                 $datos['google_meet_url'] = $created->getHangoutLink();
             }
+            //     También la misma revisión: si volvió a la misma hora y se
+            //     reconfirmó, esa confirmación crea su propio evento.
+            //     Also the same revision: if it came back to the same time and
+            //     was confirmed again, that confirmation creates its own event.
             $guardado = Appointment::whereKey($cita->id)
+                ->where('revision', $cita->revision)
                 ->where('status', 'confirmada')
                 ->whereDate('date', $cita->date->toDateString())
                 ->where('time', $cita->time)

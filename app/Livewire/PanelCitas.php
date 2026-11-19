@@ -151,7 +151,7 @@ class PanelCitas extends Component
         //     gracefully if Google isn't configured; wrapped so a Google error
         //     doesn't 500 the panel.
         try {
-            app(GoogleCalendarService::class)->crearEvento($cita);
+            app(GoogleCalendarService::class)->crearEvento($foto);
         } catch (\Throwable $e) {
             Log::error('Could not create the Google Calendar event on confirm ('.$e::class.').');
         }
