@@ -218,10 +218,10 @@
       {{-- One-off error (slot taken between steps), announced on arrival.
            Error puntual (hueco ocupado entre pasos), anunciado al aparecer. --}}
       @error('selectedTime')
-        <p class="text-sm text-danger mb-4" role="alert">{{ $message }}</p>
+        <p class="text-sm text-danger mb-4" role="alert" tabindex="-1" data-error-envio>{{ $message }}</p>
       @enderror
       @error('time')
-        <p class="text-sm text-danger mb-4" role="alert">{{ $message }}</p>
+        <p class="text-sm text-danger mb-4" role="alert" tabindex="-1" data-error-envio>{{ $message }}</p>
       @enderror
 
       @if(count($freeSlots) > 0)

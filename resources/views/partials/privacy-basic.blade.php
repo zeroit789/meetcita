@@ -30,7 +30,8 @@
     <dt class="font-semibold">{{ __('citas.privacy_label_rights') }}</dt>
     <dd>
       {{ __('citas.privacy_rights', ['email' => config('appointments.brand.owner_email')]) }}
-      @if(! empty($priv['policy_url']))
+      {{-- ES: Solo enlaces http(s). EN: http(s) links only. --}}
+      @if(! empty($priv['policy_url']) && preg_match('#^https?://#i', (string) $priv['policy_url']))
         {!! __('citas.privacy_more', ['link' => '<a href="'.e($priv['policy_url']).'" class="underline" target="_blank" rel="noopener">'.e(__('citas.privacy_link')).'</a>']) !!}
       @endif
     </dd>

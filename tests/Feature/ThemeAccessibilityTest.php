@@ -91,6 +91,24 @@ class ThemeAccessibilityTest extends TestCase
      *     default is checked: the local .env may set another), and the layout
      *     hands it to the anti-FOUC script.
      */
+    public function test_un_acento_demasiado_claro_para_texto_blanco_usa_el_de_por_defecto(): void
+    {
+        // ES: #ffffff dejaría blanco sobre blanco en los botones. EN: #ffffff would be white on white.
+        config(['appointments.accent' => '#ffffff']);
+
+        $this->get('/citas')->assertOk()->assertSee('--accent: #1d4ed8;', false)->assertDontSee('--accent: #ffffff;', false);
+    }
+
+    public function test_los_enlaces_configurables_solo_aceptan_http(): void
+    {
+        config([
+            'appointments.privacy.policy_url' => 'javascript:alert(1)',
+            'appointments.brand.website' => 'javascript:alert(2)',
+        ]);
+
+        $this->get('/citas')->assertOk()->assertDontSee('javascript:alert', false);
+    }
+
     public function test_el_tema_por_defecto_es_claro(): void
     {
         $this->assertStringContainsString(

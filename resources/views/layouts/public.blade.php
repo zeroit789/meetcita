@@ -168,7 +168,8 @@
       <div class="flex items-center gap-4">
         {{-- ES: Web pública de config (oculta si es el valor por defecto).
              EN: Public website from config (hidden if it's the placeholder). --}}
-        @if(config('appointments.brand.website') && config('appointments.brand.website') !== 'https://example.com')
+        {{-- ES: Solo enlaces http(s). EN: http(s) links only. --}}
+        @if(config('appointments.brand.website') && config('appointments.brand.website') !== 'https://example.com' && preg_match('#^https?://#i', (string) config('appointments.brand.website')))
           <a href="{{ config('appointments.brand.website') }}" target="_blank" rel="noopener"
              class="underline hover:text-brand-glow transition-colors">{{ __('citas.footer_website') }}</a>
         @endif

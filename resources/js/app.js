@@ -172,7 +172,9 @@ document.addEventListener('livewire:init', () => {
             const esEnvio = acciones.some((a) => a && a.name === 'reserve');
 
             // ES: 1) Envío con errores → primer error. EN: 1) Submit with errors → first error.
-            const error = esEnvio ? raiz.querySelector('[aria-invalid="true"], [data-error-envio]') : null;
+            //    (también si el envío devuelve al paso 2 porque la hora se ocupó)
+            //    (also if the submit goes back to step 2 because the time was taken)
+            const error = esEnvio ? raiz.querySelector('[data-error-envio], [aria-invalid="true"]') : null;
             if (error) {
                 error.focus();
                 return;
@@ -197,7 +199,15 @@ document.addEventListener('livewire:init', () => {
             const foco = document.activeElement;
             if (focoDentro && (foco === document.body || (foco && foco.matches(':disabled')))) {
                 const otraFlecha = eraFlechaDeMes ? raiz.querySelector('[data-cal-nav] button:not(:disabled)') : null;
-                const destino = activoAntes.isConnected && !activoAntes.disabled ? activoAntes : (otraFlecha || marca);
+                // ES: En el panel no hay título de paso: el respaldo es el primer
+                //     encabezado del componente (al cerrar el formulario de
+                //     cancelar, confirmar o quitar un día, el botón desaparece).
+                // EN: The panel has no step heading: the fallback is the
+                //     component's first heading (closing the cancel form,
+                //     confirming or removing a day makes the button disappear).
+                let respaldo = marca || raiz.querySelector('h1, h2, h3');
+                if (respaldo && !respaldo.hasAttribute('tabindex')) respaldo.setAttribute('tabindex', '-1');
+                const destino = activoAntes.isConnected && !activoAntes.disabled ? activoAntes : (otraFlecha || respaldo);
                 if (destino) destino.focus();
             }
         });
