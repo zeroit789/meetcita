@@ -38,8 +38,17 @@ return new class extends Migration
         //     de cómo sea el modelo en el futuro).
         // EN: A different one per booking (no models loaded: the migration
         //     doesn't depend on what the model looks like in the future).
-        DB::table('appointments')->whereNull('manage_token')->orderBy('id')->pluck('id')
-            ->each(fn ($id) => DB::table('appointments')->where('id', $id)->update(['manage_token' => Str::random(40)]));
+        //     Por lotes (sin cargar todos los ids en memoria) y sin pisar un
+        //     token que ya tenga la fila.
+        //     In batches (without loading every id into memory) and without
+        //     overwriting a token the row already has.
+        DB::table('appointments')->whereNull('manage_token')->select('id')
+            ->chunkById(500, function ($filas) {
+                foreach ($filas as $fila) {
+                    DB::table('appointments')->where('id', $fila->id)->whereNull('manage_token')
+                        ->update(['manage_token' => Str::random(40)]);
+                }
+            });
     }
 
     /**

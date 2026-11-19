@@ -10,6 +10,7 @@ use App\Livewire\BookAppointment;
 use App\Livewire\PanelCitas;
 use App\Models\Appointment;
 use App\Services\GestionCitas;
+use App\Services\GoogleCalendarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
@@ -161,5 +162,24 @@ class EventosTest extends TestCase
         $this->assertFalse(isset($evento->appointment->email));
         $this->assertFalse(isset($evento->appointment->phone));
         $this->assertSame('cliente@example.com', $evento->appointment->current()?->email);
+    }
+
+    public function test_la_foto_del_evento_es_la_del_cambio_aunque_la_cita_cambie_despues(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
+
+        // ES: Mientras se crea el evento de Google (lento), la cita se cancela.
+        // EN: While the Google event is being created (slow), the booking is cancelled.
+        $google = \Mockery::mock(GoogleCalendarService::class)->makePartial();
+        $google->shouldReceive('crearEvento')->andReturnUsing(function () use ($cita) {
+            Appointment::whereKey($cita->id)->update(['status' => 'cancelada', 'revision' => 5]);
+        });
+        $this->app->instance(GoogleCalendarService::class, $google);
+
+        $this->entrarAlPanel();
+        Livewire::test(PanelCitas::class)->call('confirmar', $cita->id, '0');
+
+        Event::assertDispatched(AppointmentConfirmed::class, fn ($e) => $e->appointment->status === 'confirmada'
+            && $e->appointment->revision === 1);
     }
 }
