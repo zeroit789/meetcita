@@ -13,6 +13,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** A booking's duration, day and time are set by the server only. Before, a non-offered duration (e.g. 240 min) could be booked while blocking only half an hour, or a malformed date could skip the per-day lock.
 - **ES:** Laravel 13.43.0 (CVE-2026-128083) y Symfony 8.1.11 (avisos del 04-11-2026). `composer audit` limpio.
   **EN:** Laravel 13.43.0 (CVE-2026-128083) and Symfony 8.1.11 (advisories of 2026-11-04). Clean `composer audit`.
+- **ES:** ⚠️ El enlace del `.ics` de los correos va firmado: la referencia corta sola ya no basta para descargar el asunto y el enlace de la videollamada. Los enlaces viejos ya enviados siguen valiendo para citas creadas antes de `APPOINTMENTS_ICS_UNSIGNED_UNTIL` (pon el día en que actualizas).
+  **EN:** ⚠️ The emailed `.ics` link is signed: the short reference alone no longer downloads the topic and the video call link. Old links already sent keep working for bookings created before `APPOINTMENTS_ICS_UNSIGNED_UNTIL` (use the day you upgrade).
 - **ES:** El secreto del webhook de Telegram se compara en tiempo constante. Los logs ya no guardan el SQL con datos del cliente.
   **EN:** The Telegram webhook secret is compared in constant time. Logs no longer store the SQL with client data.
 - **ES:** Nuevo `SECURITY.md` con cómo informar de vulnerabilidades.

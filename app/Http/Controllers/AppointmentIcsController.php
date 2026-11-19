@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 /*
 |==============================================================================
@@ -45,11 +46,21 @@ class AppointmentIcsController extends Controller
      * EN: Returns the .ics of the booking identified by its 'reference'.
      *     404 if the reference matches no booking.
      */
-    public function show(string $reference)
+    public function show(Request $request, string $reference)
     {
         // ES: Buscamos la cita por su referencia pública. 404 si no existe.
         // EN: Look the booking up by its public reference. 404 if missing.
         $cita = Appointment::where('reference', $reference)->firstOrFail();
+
+        // ES: El enlace tiene que venir FIRMADO (lo genera Appointment::urlIcs()
+        //     para los correos). Firma manipulada = 403. Sin firma, solo valen
+        //     los enlaces viejos de citas creadas antes del corte configurado.
+        // EN: The link must come SIGNED (Appointment::urlIcs() builds it for
+        //     the emails). Tampered signature = 403. Without a signature, only
+        //     old links of bookings created before the configured cut-off work.
+        $firmado = $request->hasValidSignature(absolute: false);
+        abort_if($request->has('signature') && ! $firmado, 403);
+        abort_if(! $firmado && ! $this->esEnlaceAntiguoValido($cita), 403);
 
         // ES: Fechas del evento en UTC (las calcula el modelo). Formato iCalendar: 20260615T133000Z
         // EN: Event dates in UTC (computed by the model). iCalendar format: 20260615T133000Z
@@ -152,5 +163,24 @@ class AppointmentIcsController extends Controller
         $texto = str_replace(["\r\n", "\r", "\n"], '\\n', $texto);
 
         return $texto;
+    }
+
+    /**
+     * ES: ¿Se acepta el enlace SIN firma de esta cita? Solo si se creó antes de
+     *     config('appointments.ics_unsigned_until') (enlaces ya enviados con el
+     *     formato viejo). Vacío = ningún enlace sin firma vale.
+     * EN: Is this booking's UNSIGNED link accepted? Only if it was created
+     *     before config('appointments.ics_unsigned_until') (links already sent
+     *     in the old format). Empty = no unsigned link is valid.
+     */
+    protected function esEnlaceAntiguoValido(Appointment $cita): bool
+    {
+        $corte = config('appointments.ics_unsigned_until');
+
+        if (! $corte || ! $cita->created_at) {
+            return false;
+        }
+
+        return $cita->created_at->lt(Carbon::parse($corte, config('appointments.timezone', 'UTC'))->startOfDay());
     }
 }

@@ -73,7 +73,7 @@ class AppointmentConfirmationToClient extends Mailable implements ShouldQueue
             view: 'emails.appointments.client',
             with: [
                 'googleCalendarUrl' => $this->appointment->urlGoogleCalendar(),
-                'icsUrl' => url('/cita/'.$this->appointment->reference.'/calendario.ics'),
+                'icsUrl' => $this->appointment->urlIcs(),   // ES: enlace firmado / EN: signed link
             ],
         );
     }

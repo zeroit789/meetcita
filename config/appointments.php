@@ -63,6 +63,14 @@ return [
     // ──────────────────────────────────────────────────────────────────────
     'reference_prefix' => env('APPOINTMENTS_REF_PREFIX', 'APT'),
 
+    // ES: El enlace del .ics va firmado desde la 1.0.0. Los enlaces SIN firma
+    //     que ya se enviaron siguen valiendo solo para citas creadas ANTES de
+    //     esta fecha (YYYY-MM-DD; pon el día en que actualizas). Vacío = ninguno.
+    // EN: The .ics link is signed since 1.0.0. UNSIGNED links already sent keep
+    //     working only for bookings created BEFORE this date (YYYY-MM-DD; use
+    //     the day you upgrade). Empty = none.
+    'ics_unsigned_until' => env('APPOINTMENTS_ICS_UNSIGNED_UNTIL'),
+
     // ──────────────────────────────────────────────────────────────────────
     // 3. TIMEZONE / ZONA HORARIA
     // ES: Zona horaria del negocio. TODAS las horas (huecos, "hoy", calendario)

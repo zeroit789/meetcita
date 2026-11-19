@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Database\Factories\AppointmentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\URL;
 
 /*
 |==============================================================================
@@ -234,6 +235,21 @@ class Appointment extends Model
         $lineas[] = __('citas.cal_desc_reference', ['ref' => $this->reference], $idioma);
 
         return implode("\n", $lineas);
+    }
+
+    /**
+     * ES: Enlace FIRMADO de descarga del .ics (HMAC con APP_KEY). La firma va
+     *     sobre la ruta relativa, así vale igual con o sin www y detrás del
+     *     proxy, pero nadie puede fabricar el de otra cita con su referencia.
+     *     Sin caducidad: el cliente puede necesitarlo hasta el día de la cita.
+     * EN: SIGNED .ics download link (HMAC with APP_KEY). The signature covers
+     *     the relative path, so it works with or without www and behind the
+     *     proxy, yet nobody can forge another booking's link from its
+     *     reference. No expiry: the client may need it until the meeting day.
+     */
+    public function urlIcs(): string
+    {
+        return url(URL::signedRoute('cita.ics', ['reference' => $this->reference], absolute: false));
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Mail\AppointmentConfirmationToClient;
 use App\Models\Appointment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -18,7 +19,7 @@ class AppointmentIcsTest extends TestCase
     {
         $cita = Appointment::factory()->create(['date' => '2026-09-22', 'time' => '10:00', 'duration' => 30, 'status' => 'confirmada']);
 
-        $respuesta = $this->get("/cita/{$cita->reference}/calendario.ics")->assertOk();
+        $respuesta = $this->get($cita->urlIcs())->assertOk();
 
         $this->assertStringStartsWith('text/calendar', $respuesta->headers->get('Content-Type'));
         $ics = $respuesta->getContent();
@@ -31,7 +32,7 @@ class AppointmentIcsTest extends TestCase
     {
         $cita = Appointment::factory()->cancelada()->create();
 
-        $this->assertStringContainsString('STATUS:CANCELLED', $this->get("/cita/{$cita->reference}/calendario.ics")->getContent());
+        $this->assertStringContainsString('STATUS:CANCELLED', $this->get($cita->urlIcs())->getContent());
     }
 
     public function test_una_cita_pendiente_sale_como_tentative(): void
@@ -40,7 +41,7 @@ class AppointmentIcsTest extends TestCase
         // EN: Pending is not a confirmed booking yet: TENTATIVE, not CONFIRMED.
         $cita = Appointment::factory()->create(['status' => 'pendiente']);
 
-        $ics = $this->get("/cita/{$cita->reference}/calendario.ics")->getContent();
+        $ics = $this->get($cita->urlIcs())->getContent();
 
         $this->assertStringContainsString('STATUS:TENTATIVE', $ics);
         $this->assertStringNotContainsString('STATUS:CONFIRMED', $ics);
@@ -63,7 +64,7 @@ class AppointmentIcsTest extends TestCase
     {
         $cita = Appointment::factory()->create(['locale' => 'en', 'modality' => 'presencial', 'message' => 'Budget review']);
 
-        $ics = $this->withCookie('locale', 'es')->get("/cita/{$cita->reference}/calendario.ics")->getContent();
+        $ics = $this->withCookie('locale', 'es')->get($cita->urlIcs())->getContent();
 
         $this->assertStringContainsString('LOCATION:In person', $ics);
         $this->assertStringContainsString('Topic: Budget review', $ics);
@@ -75,6 +76,37 @@ class AppointmentIcsTest extends TestCase
         $cita = Appointment::factory()->create(['message' => null, 'locale' => 'es']);
 
         $this->assertStringNotContainsString('Asunto', $cita->descripcionCalendario());
+    }
+
+    public function test_sin_firma_la_referencia_sola_no_basta(): void
+    {
+        // ES: La referencia corta era la única llave del asunto y del enlace de
+        //     la videollamada. Ahora hace falta el enlace firmado del correo.
+        // EN: The short reference was the only key to the topic and the video
+        //     call link. Now the signed link from the email is required.
+        $cita = Appointment::factory()->create();
+
+        $this->get("/cita/{$cita->reference}/calendario.ics")->assertForbidden();
+        $this->get($cita->urlIcs().'x')->assertForbidden();
+    }
+
+    public function test_los_enlaces_viejos_sin_firma_valen_para_citas_anteriores_al_corte(): void
+    {
+        config(['appointments.ics_unsigned_until' => '2026-09-01']);
+        $vieja = Appointment::factory()->create(['created_at' => '2026-08-20 10:00:00']);
+        $nueva = Appointment::factory()->create(['created_at' => '2026-09-02 10:00:00', 'time' => '11:00']);
+
+        $this->get("/cita/{$vieja->reference}/calendario.ics")->assertOk();
+        $this->get("/cita/{$nueva->reference}/calendario.ics")->assertForbidden();
+    }
+
+    public function test_el_correo_de_solicitud_lleva_el_enlace_firmado(): void
+    {
+        $cita = Appointment::factory()->create();
+
+        $html = (new AppointmentConfirmationToClient($cita))->render();
+
+        $this->assertStringContainsString('signature=', $html);
     }
 
     public function test_una_referencia_inexistente_da_404(): void
