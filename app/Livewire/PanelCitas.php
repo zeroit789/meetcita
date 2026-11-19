@@ -108,9 +108,16 @@ class PanelCitas extends Component
         // EN: $version = updated_at (seconds) of the row the owner sees. If the
         //     client changed the booking after the table loaded, the new time
         //     isn't confirmed unseen.
-        if ($version !== null) {
-            $actual = Appointment::find($id);
-            if ($actual && $actual->updated_at && (string) $actual->updated_at->timestamp !== $version) {
+        //     Sin versión (una página del panel abierta antes de actualizar):
+        //     solo si la cita no se ha tocado desde que se creó.
+        //     Without a version (a panel page opened before upgrading): only if
+        //     the booking was never touched since it was created.
+        $actual = Appointment::find($id);
+        if ($actual && $actual->updated_at) {
+            $cambiada = $version !== null
+                ? (string) $actual->updated_at->timestamp !== $version
+                : $actual->updated_at->ne($actual->created_at);
+            if ($cambiada) {
                 $this->addError('accion', __('citas.panel_err_changed'));
 
                 return;
@@ -123,7 +130,7 @@ class PanelCitas extends Component
         //     (same as Telegram). 0 rows = missing or not pending.
         $filas = Appointment::whereKey($id)
             ->where('status', 'pendiente')
-            ->when(isset($actual) && $actual, fn ($q) => $q->where('updated_at', $actual->updated_at))
+            ->when($actual && $actual->updated_at, fn ($q) => $q->where('updated_at', $actual->updated_at))
             ->update(['status' => 'confirmada']);
 
         if ($filas === 0) {

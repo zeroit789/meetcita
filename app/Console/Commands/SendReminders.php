@@ -114,8 +114,11 @@ class SendReminders extends Command
                 continue;
             }
 
+            // ES: Se relee y se vuelve a comprobar justo antes de enviar.
+            // EN: Re-read and re-checked right before sending.
             $cita = Appointment::find($id);
-            if (! $cita || ! $cita->tieneEmail()) {
+            if (! $cita || ! $cita->tieneEmail() || $cita->status !== 'confirmada'
+                || $cita->date->toDateString() !== $manana) {
                 continue;
             }
 

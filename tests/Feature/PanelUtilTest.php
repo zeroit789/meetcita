@@ -217,4 +217,15 @@ class PanelUtilTest extends TestCase
             ->assertHasNoErrors();
         $this->assertSame('confirmada', $cita->fresh()->status);
     }
+
+    public function test_un_panel_viejo_sin_version_no_confirma_una_cita_cambiada(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
+        $this->travel(5)->seconds();
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+
+        Livewire::test(PanelCitas::class)->call('confirmar', $cita->id)->assertHasErrors('accion');
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
+    }
 }
