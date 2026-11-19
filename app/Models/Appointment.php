@@ -396,6 +396,9 @@ class Appointment extends Model
             return null;
         }
 
+        // ES: Lo que va tras una letra, "#", ";" o "," es una extensión: fuera.
+        // EN: Whatever follows a letter, "#", ";" or "," is an extension: dropped.
+        $telefono = trim(preg_split('/[A-Za-z#;,]/', $telefono)[0]);
         $digitos = preg_replace('/\D+/', '', $telefono);
         if (str_starts_with($telefono, '+')) {
             $numero = $digitos;

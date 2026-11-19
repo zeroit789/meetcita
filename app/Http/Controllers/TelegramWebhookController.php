@@ -96,11 +96,21 @@ class TelegramWebhookController extends Controller
 
                 // ES: callback_data tiene la forma "accion:id" (ac = aceptar, ar = rechazar).
                 // EN: callback_data looks like "action:id" (ac = accept, ar = reject).
-                [$accion, $citaId] = array_pad(explode(':', $data, 2), 2, null);
+                // ES: "accion:id:version"; los avisos anteriores a la 1.0.0 no llevan versión.
+                // EN: "action:id:version"; notices from before 1.0.0 carry no version.
+                [$accion, $citaId, $version] = array_pad(explode(':', $data, 3), 3, null);
                 $cita = Appointment::find((int) $citaId);
 
                 if (! $cita) {
                     $tg->responderCallback($cb['id'], 'Esa cita ya no existe.');
+
+                    return response('ok');
+                }
+
+                // ES: El cliente cambió la cita después de este aviso: sus botones ya no valen.
+                // EN: The client changed the booking after this notice: its buttons no longer work.
+                if ($version !== null && $version !== TelegramNotifier::version($cita)) {
+                    $tg->responderCallback($cb['id'], 'Esa cita ha cambiado: usa el aviso más reciente.');
 
                     return response('ok');
                 }
@@ -127,8 +137,13 @@ class TelegramWebhookController extends Controller
                     //     'pendiente' -> 'confirmada' via conditional UPDATE. If it
                     //     affects 0 rows, another request resolved it meanwhile:
                     //     return 200 and exit without resending email or creating event.
+                    //     Además, la misma versión que se acaba de leer (si el cliente la
+                    //     reprograma en medio, no se confirma la hora nueva sin verla).
+                    //     Also the same version just read (if the client reschedules
+                    //     meanwhile, the new time isn't confirmed unseen).
                     $n = Appointment::where('id', $cita->id)
                         ->where('status', 'pendiente')
+                        ->where('updated_at', $cita->updated_at)
                         ->update(['status' => 'confirmada']);
 
                     if ($n === 0) {
@@ -163,7 +178,9 @@ class TelegramWebhookController extends Controller
                 } elseif ($accion === 'ar') {
                     // ES: RECHAZAR -> pedir el motivo por el siguiente mensaje.
                     // EN: REJECT -> ask for the reason via the next message.
-                    Cache::put("tg_motivo_{$ownerChatId}", $cita->id, now()->addMinutes(15));
+                    // ES: Se guarda id y versión: si el cliente la cambia antes del motivo, no se cancela.
+                    // EN: Id and version are stored: if the client changes it before the reason, it isn't cancelled.
+                    Cache::put("tg_motivo_{$ownerChatId}", $cita->id.':'.TelegramNotifier::version($cita), now()->addMinutes(15));
 
                     $tg->responderCallback($cb['id'], 'Escribe el motivo…');
                     $tg->enviar(
@@ -197,8 +214,16 @@ class TelegramWebhookController extends Controller
                 if ($citaIdEsperando && $texto !== '' && ! str_starts_with($texto, '/')) {
                     // ES: Consumimos la espera: el motivo solo vale para una cita.
                     // EN: Consume the wait: the reason only applies to one booking.
-                    $cita = Appointment::find((int) $citaIdEsperando);
+                    [$idEsperando, $versionEsperada] = array_pad(explode(':', (string) $citaIdEsperando, 2), 2, null);
+                    $cita = Appointment::find((int) $idEsperando);
                     Cache::forget("tg_motivo_{$ownerChatId}");
+
+                    // ES: La cita cambió desde que se pulsó «rechazar»: no se toca.
+                    // EN: The booking changed since "reject" was tapped: left alone.
+                    if ($cita && $versionEsperada !== null && $versionEsperada !== TelegramNotifier::version($cita)) {
+                        $tg->enviar("ℹ️ La cita <code>{$cita->reference}</code> ha cambiado desde que pulsaste rechazar; no he hecho cambios.");
+                        $cita = null;
+                    }
 
                     if ($cita) {
                         // ES: Limitamos el motivo (fix I3). EN: Limit the reason length (fix I3).
@@ -214,6 +239,7 @@ class TelegramWebhookController extends Controller
                         //     don't touch Google nor resend email.
                         $n = Appointment::where('id', $cita->id)
                             ->where('status', 'pendiente')
+                            ->where('updated_at', $cita->updated_at)
                             ->update(['status' => 'cancelada']);
 
                         if ($n === 1) {
@@ -249,7 +275,7 @@ class TelegramWebhookController extends Controller
         } catch (\Throwable $e) {
             // ES: Cualquier fallo se registra y se responde 200 igualmente (sin reintentos).
             // EN: Any failure is logged and still answered with 200 (no retries).
-            Log::error('Telegram webhook error: '.$e->getMessage());
+            Log::error('Telegram webhook error ('.$e::class.').');
         }
 
         return response('ok');

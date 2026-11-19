@@ -525,6 +525,7 @@ Buenas prácticas al instalar: las de [SECURITY.md](SECURITY.md#buenas-práctica
 - El enlace de «gestionar mi cita» no caduca (la referencia no cambia al reprogramar). Cualquiera que lo tenga, también los asistentes que van en copia, puede cambiar o cancelar la cita dentro del plazo. Si eso no encaja con tu negocio, pon `APPOINTMENTS_SELF_SERVICE=false`.
 - Al reprogramar, el cliente solo puede elegir los días que ofrece la reserva pública y mantiene la duración de su cita; si esa duración ya no está en la config, la página le pide que te contacte. El alta manual del panel también ofrece solo esos días.
 - Si tienes Google Calendar, al reprogramar se borra el evento viejo (Google avisa a los invitados de la cancelación) y se crea uno nuevo cuando vuelves a confirmar.
+- El recordatorio se envía **como mucho una vez**: la cita se marca justo antes de dejar el correo en la cola. Si el servidor se cae en ese instante o el correo falla en todos sus reintentos, esa cita se queda sin recordatorio (preferimos eso a mandarlo dos veces).
 - El uso único de cada solución del captcha depende de la caché compartida: con varios servidores, usa una caché común (`database`, que es la de por defecto, o `redis`).
 - Docker: ver el aviso de [Docker (pendiente de probar)](#docker-pendiente-de-probar).
 
@@ -1048,6 +1049,7 @@ Good practices when installing: see [SECURITY.md](SECURITY.md#good-practices-whe
 - The "manage my booking" link doesn't expire (the reference doesn't change on reschedule). Anyone who has it, including attendees in copy, can change or cancel the booking within the deadline. If that doesn't suit your business, set `APPOINTMENTS_SELF_SERVICE=false`.
 - When rescheduling, the client can only pick the days the public booking offers and keeps their booking's duration; if that duration is no longer in the config, the page asks them to contact you. The panel's manual entry also offers only those days.
 - With Google Calendar, rescheduling deletes the old event (Google notifies invitees of the cancellation) and a new one is created when you confirm again.
+- The reminder is sent **at most once**: the booking is marked right before the email is queued. If the server crashes at that instant or the email fails all its retries, that booking gets no reminder (better than sending it twice).
 - Single use of each captcha solution relies on the shared cache: with several servers, use a common cache (`database`, the default, or `redis`).
 - Docker: see the note in [Docker (not yet tested)](#docker-not-yet-tested).
 

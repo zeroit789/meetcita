@@ -300,7 +300,7 @@ class GoogleCalendarService
             $this->olvidarTokenSiNoAutorizado($e);
             // ES: Nunca rompemos la confirmación de la cita por un fallo de Google.
             // EN: Never break the booking confirmation due to a Google failure.
-            Log::error('GoogleCalendar: error creando evento para la cita '.$cita->reference.': '.$e->getMessage());
+            Log::error('GoogleCalendar: error creando evento para la cita '.$cita->reference.' ('.$e::class.').');
         }
     }
 
@@ -413,7 +413,29 @@ class GoogleCalendarService
             $this->olvidarTokenSiNoAutorizado($e);
             // ES: Un fallo al borrar no debe romper la cancelación de la cita.
             // EN: A delete failure must not break the booking cancellation.
-            Log::error('GoogleCalendar: error borrando evento de la cita '.$cita->reference.': '.$e->getMessage());
+            Log::error('GoogleCalendar: error borrando evento de la cita '.$cita->reference.' ('.$e::class.').');
+        }
+    }
+
+    /**
+     * ES: Borra un evento por su id sin tocar ninguna cita (reprogramar: la
+     *     cita ya soltó el id en su transacción). No-op sin Google. No relanza.
+     * EN: Deletes an event by its id without touching any booking
+     *     (reschedule: the booking already dropped the id in its transaction).
+     *     No-op without Google. Never re-throws.
+     */
+    public function borrarEventoPorId(string $eventoId): void
+    {
+        if (! $this->estaConfigurado() || $eventoId === '') {
+            return;
+        }
+
+        try {
+            $this->servicioCalendar()->events->delete($this->calendarId(), $eventoId, ['sendUpdates' => 'all']);
+            Cache::forget(self::CLAVE_OCUPADOS);
+        } catch (\Throwable $e) {
+            $this->olvidarTokenSiNoAutorizado($e);
+            Log::error('GoogleCalendar: could not delete an event ('.$e::class.').');
         }
     }
 
@@ -549,7 +571,7 @@ class GoogleCalendarService
                 $this->olvidarTokenSiNoAutorizado($e);
                 // ES: Cualquier error de Google → el calendario no aporta ocupación.
                 // EN: Any Google error → no occupancy contributed.
-                Log::error('GoogleCalendar: error listando eventos del rango: '.$e->getMessage());
+                Log::error('GoogleCalendar: error listando eventos del rango ('.$e::class.').');
 
                 return [];
             }

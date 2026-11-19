@@ -199,4 +199,12 @@ class HorarioPorDiaTest extends TestCase
         $this->assertNotContains('15:00', $servicio->huecosParaDuracion('2026-09-22', 30, $cita->id));
         $this->assertNotContains('10:00', $servicio->huecosParaDuracion('2026-09-22', 30));
     }
+
+    public function test_los_tramos_solapados_se_fusionan(): void
+    {
+        $this->assertSame([1 => [['09:00', '14:00']]], Horario::normalizar([1 => [['11:00', '14:00'], ['09:00', '12:00']]]));
+
+        config(['appointments.schedule.hours' => [1 => [['09:00', '12:00'], ['11:00', '14:00']]]]);
+        $this->assertContains('11:30', $this->servicio()->huecosParaDuracion('2026-09-21', 60));
+    }
 }

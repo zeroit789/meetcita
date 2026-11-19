@@ -155,9 +155,15 @@ class GestionCitas
         $dias = array_values(array_unique([$fechaAntes, $fecha]));
         sort($dias);
 
-        $resultado = $this->conBloqueosDeDias($dias, function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes) {
+        // ES: Id del evento de Google de la hora vieja: se captura DENTRO de la
+        //     transacción (si el panel confirma justo después y crea otro, no se toca).
+        // EN: Google event id of the old time: captured INSIDE the transaction
+        //     (if the panel confirms right after and creates another, it isn't touched).
+        $eventoViejo = null;
+
+        $resultado = $this->conBloqueosDeDias($dias, function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, &$eventoViejo) {
             try {
-                return DB::transaction(function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes) {
+                return DB::transaction(function () use ($cita, $fecha, $hora, $fechaAntes, $horaAntes, &$eventoViejo) {
                     // ES: Relectura con la cita bloqueada: si cambió o se canceló
                     //     mientras esperábamos, no seguimos.
                     // EN: Re-read with the booking locked: if it changed or was
@@ -168,6 +174,14 @@ class GestionCitas
                         || $actual->date->toDateString() !== $fechaAntes
                         || (string) $actual->time !== $horaAntes) {
                         return self::NO_VALIDO;
+                    }
+
+                    // ES: El plazo se vuelve a mirar con la fila bloqueada (la espera
+                    //     de los bloqueos puede haberlo pasado).
+                    // EN: The notice is checked again with the row locked (waiting
+                    //     for the locks may have run past it).
+                    if (! $actual->puedeAutogestionarse()) {
+                        return self::FUERA_DE_PLAZO;
                     }
 
                     // ES: Segunda barrera en motores que la respetan: las citas del día nuevo.
@@ -188,6 +202,9 @@ class GestionCitas
                     $actual->time = $hora;
                     $actual->status = 'pendiente';
                     $actual->reminded_at = null;
+                    $eventoViejo = $actual->google_event_id;
+                    $actual->google_event_id = null;
+                    $actual->google_meet_url = null;
                     $actual->save();
 
                     return self::OK;
@@ -210,9 +227,17 @@ class GestionCitas
         // ── Después de la transacción y del bloqueo / After the transaction and the lock ──
         $cita->refresh();
 
-        // ES: El evento de Google era de la hora vieja: se borra (se creará otro al confirmar).
-        // EN: The Google event was for the old time: delete it (a new one comes on confirm).
-        $this->borrarEventoGoogle($cita);
+        // ES: El evento de Google era de la hora vieja: se borra por su id (se
+        //     creará otro al confirmar).
+        // EN: The Google event was for the old time: deleted by its id (a new
+        //     one comes on confirm).
+        if ($eventoViejo) {
+            try {
+                app(GoogleCalendarService::class)->borrarEventoPorId($eventoViejo);
+            } catch (\Throwable $e) {
+                Log::error('Could not delete the old Google event of '.$cita->reference.' ('.$e::class.').');
+            }
+        }
 
         // ES: Aviso al dueño (correo + Telegram con botones, vuelve a estar pendiente).
         // EN: Notice to the owner (email + Telegram with buttons, it is pending again).

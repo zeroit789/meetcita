@@ -98,9 +98,12 @@ class SendReminders extends Command
             //     (o cambió de estado entre medias).
             // EN: Claim BEFORE sending: 0 rows = another process took it (or
             //     its state changed meanwhile).
+            //     También tiene que seguir siendo de mañana (pudo reprogramarse).
+            //     It must also still be for tomorrow (it may have been rescheduled).
             $reclamada = Appointment::whereKey($id)
                 ->whereNull('reminded_at')
                 ->where('status', 'confirmada')
+                ->whereDate('date', $manana)
                 ->update(['reminded_at' => now()]);
 
             if ($reclamada === 0) {

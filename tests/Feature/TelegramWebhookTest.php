@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
+use App\Services\GestionCitas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -120,5 +121,39 @@ class TelegramWebhookTest extends TestCase
 
         $this->assertSame('cancelada', $cita->fresh()->status);
         Mail::assertNothingQueued();
+    }
+
+    public function test_un_boton_viejo_no_confirma_una_cita_que_el_cliente_ha_cambiado(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
+        $version = $cita->updated_at->timestamp;
+
+        // ES: El cliente la cambia (otra versión). EN: The client changes it (another version).
+        $this->travel(5)->seconds();
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+
+        $this->webhook($this->boton("ac:{$cita->id}:{$version}"))->assertOk();
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
+        Mail::assertNotQueued(AppointmentConfirmed::class);
+
+        // ES: El botón del aviso nuevo sí vale. EN: The new notice's button works.
+        $nueva = $cita->fresh()->updated_at->timestamp;
+        $this->webhook($this->boton("ac:{$cita->id}:{$nueva}"))->assertOk();
+        $this->assertSame('confirmada', $cita->fresh()->status);
+    }
+
+    public function test_un_motivo_pedido_antes_de_que_el_cliente_cambie_la_cita_no_la_cancela(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
+        $version = $cita->updated_at->timestamp;
+
+        $this->webhook($this->boton("ar:{$cita->id}:{$version}"));
+        $this->travel(5)->seconds();
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+        $this->webhook($this->texto('No puedo ese día'));
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
+        Mail::assertNotQueued(AppointmentRejected::class);
     }
 }

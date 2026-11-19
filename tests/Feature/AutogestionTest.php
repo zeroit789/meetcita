@@ -192,7 +192,7 @@ class AutogestionTest extends TestCase
         $cita->save();
         $google = Mockery::mock(GoogleCalendarService::class)->makePartial();
         $google->shouldReceive('eventosOcupados')->andReturn([]);
-        $google->shouldReceive('borrarEvento')->once()->withArgs(fn ($c) => $c->google_event_id === 'evento-viejo');
+        $google->shouldReceive('borrarEventoPorId')->once()->with('evento-viejo');
         $this->app->instance(GoogleCalendarService::class, $google);
 
         Livewire::test(GestionarCita::class, ['citaId' => $cita->id])
@@ -207,6 +207,9 @@ class AutogestionTest extends TestCase
         $this->assertSame('12:00', $cita->time);
         $this->assertSame('pendiente', $cita->status);
         $this->assertNull($cita->reminded_at);
+        // ES: El id viejo se suelta en la misma escritura: una confirmación posterior guarda el suyo.
+        // EN: The old id is dropped in the same write: a later confirmation stores its own.
+        $this->assertNull($cita->google_event_id);
         Mail::assertQueued(AppointmentChangedToOwner::class, fn ($m) => $m->cambio === 'reprogramada' && $m->fechaAnterior === '2026-09-23');
         Mail::assertQueued(AppointmentConfirmationToClient::class, fn ($m) => $m->hasTo('cliente@example.com') && $m->reprogramada);
         Event::assertDispatched(AppointmentRescheduled::class, fn ($e) => $e->previousDate === '2026-09-23'

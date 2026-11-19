@@ -53,9 +53,21 @@ class Horario
             }
 
             if ($validos !== []) {
-                // ES: Ordenados por apertura. EN: Sorted by opening time.
+                // ES: Ordenados por apertura y fusionados si se solapan o se tocan
+                //     (09:00-12:00 + 11:00-14:00 = 09:00-14:00).
+                // EN: Sorted by opening time and merged if they overlap or touch
+                //     (09:00-12:00 + 11:00-14:00 = 09:00-14:00).
                 usort($validos, fn (array $a, array $b) => strcmp($a[0], $b[0]));
-                $limpio[$dia] = $validos;
+                $fusion = [];
+                foreach ($validos as $tramo) {
+                    $ultimo = count($fusion) - 1;
+                    if ($ultimo >= 0 && $tramo[0] <= $fusion[$ultimo][1]) {
+                        $fusion[$ultimo][1] = max($fusion[$ultimo][1], $tramo[1]);
+                    } else {
+                        $fusion[] = $tramo;
+                    }
+                }
+                $limpio[$dia] = $fusion;
             }
         }
 

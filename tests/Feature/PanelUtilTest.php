@@ -187,4 +187,13 @@ class PanelUtilTest extends TestCase
             ->assertSeeHtml('rel="noopener"')
             ->assertSeeHtml('target="_blank"');
     }
+
+    public function test_whatsapp_ignora_las_extensiones_del_telefono(): void
+    {
+        config(['appointments.whatsapp.link' => true]);
+
+        $cita = Appointment::factory()->make(['phone' => '612 345 678 ext. 12']);
+
+        $this->assertStringStartsWith('https://wa.me/34612345678?text=', $cita->urlWhatsapp());
+    }
 }

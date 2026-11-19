@@ -109,7 +109,9 @@ class TelegramNotifier
 
             return $res->json('result.message_id');
         } catch (\Throwable $e) {
-            Log::error('Telegram enviar() falló: '.$e->getMessage());
+            // ES: Solo la clase: el mensaje puede llevar la URL con el token del bot.
+            // EN: Class only: the message may carry the URL with the bot token.
+            Log::error('Telegram enviar() falló ('.$e::class.').');
 
             return null;
         }
@@ -137,7 +139,7 @@ class TelegramNotifier
                 'text' => $aviso,
             ]));
         } catch (\Throwable $e) {
-            Log::error('Telegram responderCallback() falló: '.$e->getMessage());
+            Log::error('Telegram responderCallback() falló ('.$e::class.').');
         }
     }
 
@@ -168,7 +170,7 @@ class TelegramNotifier
                 'disable_web_page_preview' => true,
             ]);
         } catch (\Throwable $e) {
-            Log::error('Telegram editarMensaje() falló: '.$e->getMessage());
+            Log::error('Telegram editarMensaje() falló ('.$e::class.').');
         }
     }
 
@@ -200,10 +202,24 @@ class TelegramNotifier
             $texto .= "\n↩️ <s>".e($antes).'</s>';
         }
 
+        // ES: Los botones llevan la versión de la cita (updated_at): si el cliente
+        //     la cambia, los botones de este aviso dejan de valer.
+        // EN: The buttons carry the booking version (updated_at): if the client
+        //     changes it, this notice's buttons stop working.
+        $version = self::version($cita);
         $this->enviar($texto, [[
-            ['text' => '✅ Confirm', 'callback_data' => "ac:{$cita->id}"],
-            ['text' => '❌ Reject',  'callback_data' => "ar:{$cita->id}"],
+            ['text' => '✅ Confirm', 'callback_data' => "ac:{$cita->id}:{$version}"],
+            ['text' => '❌ Reject',  'callback_data' => "ar:{$cita->id}:{$version}"],
         ]]);
+    }
+
+    /**
+     * ES: Versión de una cita para los botones: segundos de su updated_at.
+     * EN: A booking's version for the buttons: its updated_at seconds.
+     */
+    public static function version(Appointment $cita): string
+    {
+        return (string) ($cita->updated_at?->timestamp ?? 0);
     }
 
     /**
