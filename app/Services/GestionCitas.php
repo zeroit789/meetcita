@@ -93,7 +93,7 @@ class GestionCitas
 
         $filas = Appointment::whereKey($cita->id)
             ->where('status', '!=', 'cancelada')
-            ->update(['status' => 'cancelada']);
+            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
 
         if ($filas === 0) {
             return self::NO_VALIDO;
@@ -202,6 +202,9 @@ class GestionCitas
                     $actual->time = $hora;
                     $actual->status = 'pendiente';
                     $actual->reminded_at = null;
+                    // ES: Nueva revisión: los botones del panel y de Telegram de la hora vieja dejan de valer.
+                    // EN: New revision: the panel and Telegram buttons of the old time stop working.
+                    $actual->revision = $actual->revision + 1;
                     $eventoViejo = $actual->google_event_id;
                     $actual->google_event_id = null;
                     $actual->google_meet_url = null;

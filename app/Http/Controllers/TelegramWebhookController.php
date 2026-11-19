@@ -122,17 +122,16 @@ class TelegramWebhookController extends Controller
 
                 // ES: Pendiente, pero el cliente la cambió después de este aviso: sus botones
                 //     ya no valen. Va DESPUÉS del estado: confirmar o cancelar también
-                //     cambian updated_at y ahí debe salir «ya está confirmada».
+                //     suben la revisión y ahí debe salir «ya está confirmada».
                 // EN: Pending, but the client changed it after this notice: its buttons no
                 //     longer work. Goes AFTER the state: confirming or cancelling also
-                //     changes updated_at and there it must say "already confirmed".
+                //     bump the revision and there it must say "already confirmed".
                 //     Sin versión (aviso anterior a la 1.0.0): solo si la cita no se
-                //     ha tocado desde que se creó.
+                //     ha tocado nunca (revisión 0).
                 //     Without a version (pre-1.0.0 notice): only if the booking was
-                //     never touched since it was created.
-                $cambiada = $version !== null
-                    ? $version !== TelegramNotifier::version($cita)
-                    : $cita->updated_at?->ne($cita->created_at);
+                //     never touched (revision 0).
+                $version ??= '0';
+                $cambiada = $version !== TelegramNotifier::version($cita);
                 if ($cambiada) {
                     $tg->responderCallback($cb['id'], 'Esa cita ha cambiado: usa el aviso más reciente.');
 
@@ -154,8 +153,8 @@ class TelegramWebhookController extends Controller
                     //     meanwhile, the new time isn't confirmed unseen).
                     $n = Appointment::where('id', $cita->id)
                         ->where('status', 'pendiente')
-                        ->where('updated_at', $cita->updated_at)
-                        ->update(['status' => 'confirmada']);
+                        ->where('revision', $cita->revision)
+                        ->update(['status' => 'confirmada', 'revision' => Appointment::revisionSiguiente()]);
 
                     if ($n === 0) {
                         // ES: Ya estaba resuelta (doble clic / carrera): no duplicamos nada.
@@ -250,8 +249,8 @@ class TelegramWebhookController extends Controller
                         //     don't touch Google nor resend email.
                         $n = Appointment::where('id', $cita->id)
                             ->where('status', 'pendiente')
-                            ->where('updated_at', $cita->updated_at)
-                            ->update(['status' => 'cancelada']);
+                            ->where('revision', $cita->revision)
+                            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
 
                         if ($n === 1) {
                             // ES: La cancelamos nosotros. Recargamos con el estado nuevo.

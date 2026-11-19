@@ -201,9 +201,8 @@ class PanelUtilTest extends TestCase
     public function test_el_panel_no_confirma_una_cita_que_cambio_despues_de_cargar_la_tabla(): void
     {
         $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
-        $vista = (string) $cita->updated_at->timestamp;
+        $vista = (string) $cita->revision;
 
-        $this->travel(5)->seconds();
         app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
 
         Livewire::test(PanelCitas::class)
@@ -213,7 +212,7 @@ class PanelUtilTest extends TestCase
 
         // ES: Con la versión que se ve ahora, sí. EN: With the version shown now, it works.
         Livewire::test(PanelCitas::class)
-            ->call('confirmar', $cita->id, (string) $cita->fresh()->updated_at->timestamp)
+            ->call('confirmar', $cita->id, (string) $cita->fresh()->revision)
             ->assertHasNoErrors();
         $this->assertSame('confirmada', $cita->fresh()->status);
     }
@@ -221,7 +220,6 @@ class PanelUtilTest extends TestCase
     public function test_un_panel_viejo_sin_version_no_confirma_una_cita_cambiada(): void
     {
         $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
-        $this->travel(5)->seconds();
         app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
 
         Livewire::test(PanelCitas::class)->call('confirmar', $cita->id)->assertHasErrors('accion');

@@ -151,7 +151,7 @@
                   @endif
                   {{-- ES: Confirmar (solo si está pendiente) / EN: Confirm (only if pending) --}}
                   @if($cita->status === 'pendiente')
-                    <button type="button" wire:click="confirmar({{ $cita->id }}, '{{ $cita->updated_at?->timestamp }}')"
+                    <button type="button" wire:click="confirmar({{ $cita->id }}, '{{ $cita->revision }}')"
                             class="rounded-md border border-success/40 px-2 py-1 text-xs text-success hover:bg-success/10 transition-colors">
                       <span aria-hidden="true">✓</span> {{ __('citas.action_confirm') }}
                     </button>

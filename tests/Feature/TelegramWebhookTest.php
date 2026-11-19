@@ -6,6 +6,7 @@ use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
 use App\Services\GestionCitas;
+use App\Services\TelegramNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
@@ -126,10 +127,9 @@ class TelegramWebhookTest extends TestCase
     public function test_un_boton_viejo_no_confirma_una_cita_que_el_cliente_ha_cambiado(): void
     {
         $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
-        $version = $cita->updated_at->timestamp;
+        $version = TelegramNotifier::version($cita);
 
         // ES: El cliente la cambia (otra versión). EN: The client changes it (another version).
-        $this->travel(5)->seconds();
         app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
 
         $this->webhook($this->boton("ac:{$cita->id}:{$version}"))->assertOk();
@@ -138,7 +138,7 @@ class TelegramWebhookTest extends TestCase
         Mail::assertNotQueued(AppointmentConfirmed::class);
 
         // ES: El botón del aviso nuevo sí vale. EN: The new notice's button works.
-        $nueva = $cita->fresh()->updated_at->timestamp;
+        $nueva = TelegramNotifier::version($cita->fresh());
         $this->webhook($this->boton("ac:{$cita->id}:{$nueva}"))->assertOk();
         $this->assertSame('confirmada', $cita->fresh()->status);
     }
@@ -146,10 +146,9 @@ class TelegramWebhookTest extends TestCase
     public function test_un_motivo_pedido_antes_de_que_el_cliente_cambie_la_cita_no_la_cancela(): void
     {
         $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
-        $version = $cita->updated_at->timestamp;
+        $version = TelegramNotifier::version($cita);
 
         $this->webhook($this->boton("ar:{$cita->id}:{$version}"));
-        $this->travel(5)->seconds();
         app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
         $this->webhook($this->texto('No puedo ese día'));
 
@@ -160,15 +159,13 @@ class TelegramWebhookTest extends TestCase
     public function test_un_boton_con_version_de_una_cita_ya_confirmada_dice_su_estado(): void
     {
         $cita = Appointment::factory()->create();
-        $version = $cita->updated_at->timestamp;
+        $version = TelegramNotifier::version($cita);
 
-        $this->travel(5)->seconds();
         $this->webhook($this->boton("ac:{$cita->id}:{$version}"))->assertOk();
         $this->assertSame('confirmada', $cita->fresh()->status);
 
         // ES: Segundo toque: avisa de que ya está confirmada y edita el mensaje.
         // EN: Second tap: says it is already confirmed and edits the message.
-        $this->travel(5)->seconds();
         $this->webhook($this->boton("ac:{$cita->id}:{$version}"))->assertOk();
 
         Http::assertSent(fn ($r) => str_contains($r->url(), 'answerCallbackQuery') && str_contains((string) $r['text'], 'confirmada'));
@@ -179,12 +176,26 @@ class TelegramWebhookTest extends TestCase
     public function test_un_boton_sin_version_no_confirma_una_cita_que_ya_se_cambio(): void
     {
         $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
-        $this->travel(5)->seconds();
         app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
 
         // ES: Botón de un aviso anterior a la 1.0.0 (sin versión). EN: Button from a pre-1.0.0 notice (no version).
         $this->webhook($this->boton("ac:{$cita->id}"))->assertOk();
 
         $this->assertSame('pendiente', $cita->fresh()->status);
+    }
+
+    public function test_un_cambio_del_cliente_en_el_mismo_segundo_invalida_el_boton_viejo(): void
+    {
+        $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
+        $version = TelegramNotifier::version($cita->fresh());
+
+        // ES: Sin avanzar el reloj: el cambio cae en el mismo segundo que el aviso.
+        // EN: Without moving the clock: the change lands in the same second as the notice.
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+
+        $this->webhook($this->boton("ac:{$cita->id}:{$version}"))->assertOk();
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
+        Mail::assertNotQueued(AppointmentConfirmed::class);
     }
 }

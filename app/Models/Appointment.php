@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Database\Factories\AppointmentFactory;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 
 /*
@@ -47,6 +49,7 @@ use Illuminate\Support\Facades\URL;
 | @property string|null $google_event_id  Google Calendar event id / id del evento
 | @property string|null $google_meet_url  Google Meet link (online only) / enlace Meet
 | @property \Carbon\Carbon|null $reminded_at  Day-before reminder sent at / recordatorio enviado
+| @property int         $revision         Change counter (version of buttons) / contador de cambios
 */
 class Appointment extends Model
 {
@@ -101,6 +104,11 @@ class Appointment extends Model
         'status' => 'pendiente',
         'duration' => 30,
         'modality' => 'online',   // ES: online por defecto · EN: online (videocall) by default
+        // ES: Revisión inicial (también en memoria: el aviso de Telegram de una
+        //     cita recién creada lleva esta versión en sus botones).
+        // EN: Initial revision (in memory too: the Telegram notice of a just
+        //     created booking carries this version on its buttons).
+        'revision' => 0,
     ];
 
     /**
@@ -117,6 +125,7 @@ class Appointment extends Model
             'date' => 'date:Y-m-d',
             'duration' => 'integer',
             'reminded_at' => 'datetime',
+            'revision' => 'integer',
         ];
     }
 
@@ -128,6 +137,22 @@ class Appointment extends Model
     protected function zona(): string
     {
         return config('appointments.timezone', 'UTC');
+    }
+
+    /**
+     * ES: Expresión para subir la revisión en un UPDATE condicional
+     *     ('revision' => Appointment::revisionSiguiente()). Se usa en cada
+     *     cambio que importa (confirmar, cancelar, reprogramar); no en las
+     *     marcas internas (recordatorio, ids de Google), que no cambian lo que
+     *     el dueño ha visto.
+     * EN: Expression to bump the revision in a conditional UPDATE
+     *     ('revision' => Appointment::revisionSiguiente()). Used on every
+     *     change that matters (confirm, cancel, reschedule); not on internal
+     *     marks (reminder, Google ids), which don't change what the owner saw.
+     */
+    public static function revisionSiguiente(): Expression
+    {
+        return DB::raw('revision + 1');
     }
 
     // ── 2. Reference — código público único de la cita ──────────────────────

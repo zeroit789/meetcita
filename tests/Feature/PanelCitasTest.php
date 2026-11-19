@@ -6,6 +6,7 @@ use App\Livewire\PanelCitas;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
 use App\Models\Appointment;
+use App\Services\GestionCitas;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
@@ -182,5 +183,29 @@ class PanelCitasTest extends TestCase
         Livewire::test(PanelCitas::class)->call('cancelar', $cita->id);
 
         Mail::assertNothingQueued();
+    }
+
+    public function test_un_cambio_del_cliente_en_el_mismo_segundo_invalida_el_boton_del_panel(): void
+    {
+        Mail::fake();
+        $cita = Appointment::factory()->create(['date' => '2026-09-23', 'time' => '10:00']);
+        $this->entrarAlPanel();
+
+        // ES: La versión que lleva el botón «Confirmar» de la tabla que ve el dueño.
+        // EN: The version carried by the "Confirm" button of the table the owner sees.
+        $html = Livewire::test(PanelCitas::class)->html();
+        $this->assertSame(1, preg_match("/confirmar\({$cita->id}, '([^']*)'\)/", $html, $m));
+        $version = $m[1];
+
+        // ES: El cliente cambia la hora en el MISMO segundo (reloj congelado).
+        // EN: The client changes the time in the SAME second (frozen clock).
+        $this->assertSame(GestionCitas::OK, app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00'));
+
+        Livewire::test(PanelCitas::class)
+            ->call('confirmar', $cita->id, $version)
+            ->assertHasErrors('accion');
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
+        Mail::assertNotQueued(AppointmentConfirmed::class);
     }
 }

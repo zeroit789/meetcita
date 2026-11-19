@@ -526,7 +526,6 @@ Buenas prácticas al instalar: las de [SECURITY.md](SECURITY.md#buenas-práctica
 - Al reprogramar, el cliente solo puede elegir los días que ofrece la reserva pública y mantiene la duración de su cita; si esa duración ya no está en la config, la página le pide que te contacte. El alta manual del panel también ofrece solo esos días.
 - Si tienes Google Calendar, al reprogramar se borra el evento viejo (Google avisa a los invitados de la cancelación) y se crea uno nuevo cuando vuelves a confirmar.
 - El recordatorio sale **una vez por cita**: se marca justo antes de enviarlo, así dos procesos nunca lo mandan a la vez. Si el envío da error, se suelta y se reintenta 15 minutos después (con un corte de red justo cuando el servidor de correo ya lo había aceptado, podría llegar repetido). Si el servidor se cae entre marcar y enviar, esa cita se queda sin recordatorio.
-- Los botones de Telegram y del panel reconocen una cita cambiada por la hora de su última modificación, al segundo. Dos cambios de la misma cita en el mismo segundo no se distinguen.
 - Los eventos de tu Google Calendar se redondean a la rejilla de huecos (cada 30 minutos desde las 00:00). Con tramos que no empiezan en un múltiplo del hueco (por ejemplo, 09:15), un evento corto puede bloquear también el hueco vecino.
 - El uso único de cada solución del captcha depende de la caché compartida: con varios servidores, usa una caché común (`database`, que es la de por defecto, o `redis`).
 - Docker: ver el aviso de [Docker (pendiente de probar)](#docker-pendiente-de-probar).
@@ -1052,7 +1051,6 @@ Good practices when installing: see [SECURITY.md](SECURITY.md#good-practices-whe
 - When rescheduling, the client can only pick the days the public booking offers and keeps their booking's duration; if that duration is no longer in the config, the page asks them to contact you. The panel's manual entry also offers only those days.
 - With Google Calendar, rescheduling deletes the old event (Google notifies invitees of the cancellation) and a new one is created when you confirm again.
 - The reminder goes out **once per booking**: it is marked right before sending, so two processes never send it at the same time. If sending errors, it is released and retried 15 minutes later (with a network cut right after the mail server had accepted it, it could arrive twice). If the server crashes between marking and sending, that booking gets no reminder.
-- The Telegram and panel buttons spot a changed booking by its last-modified time, to the second. Two changes to the same booking within the same second can't be told apart.
 - Your Google Calendar events are rounded to the slot grid (every 30 minutes from 00:00). With ranges that don't start on a slot multiple (e.g. 09:15), a short event may also block the neighbouring slot.
 - Single use of each captcha solution relies on the shared cache: with several servers, use a common cache (`database`, the default, or `redis`).
 - Docker: see the note in [Docker (not yet tested)](#docker-not-yet-tested).

@@ -102,36 +102,35 @@ class PanelCitas extends Component
     {
         $this->resetErrorBag();
 
-        // ES: $version = updated_at (segundos) de la fila que ve el dueño. Si el
-        //     cliente cambió la cita después de cargar la tabla, no se confirma
-        //     la hora nueva sin verla.
-        // EN: $version = updated_at (seconds) of the row the owner sees. If the
-        //     client changed the booking after the table loaded, the new time
-        //     isn't confirmed unseen.
-        //     Sin versión (una página del panel abierta antes de actualizar):
-        //     solo si la cita no se ha tocado desde que se creó.
-        //     Without a version (a panel page opened before upgrading): only if
-        //     the booking was never touched since it was created.
+        // ES: $version = revisión de la fila que ve el dueño. Si el cliente
+        //     cambió la cita después de cargar la tabla (aunque sea en el mismo
+        //     segundo), no se confirma la hora nueva sin verla. Sin versión
+        //     (una página del panel abierta antes de actualizar): solo si la
+        //     cita no se ha tocado nunca (revisión 0).
+        // EN: $version = revision of the row the owner sees. If the client
+        //     changed the booking after the table loaded (even in the same
+        //     second), the new time isn't confirmed unseen. Without a version
+        //     (a panel page opened before upgrading): only if the booking was
+        //     never touched (revision 0).
+        $version ??= '0';
+        $revision = ctype_digit($version) ? (int) $version : -1;
         $actual = Appointment::find($id);
-        if ($actual && $actual->updated_at) {
-            $cambiada = $version !== null
-                ? (string) $actual->updated_at->timestamp !== $version
-                : $actual->updated_at->ne($actual->created_at);
-            if ($cambiada) {
-                $this->addError('accion', __('citas.panel_err_changed'));
+        if ($actual && $actual->revision !== $revision) {
+            $this->addError('accion', __('citas.panel_err_changed'));
 
-                return;
-            }
+            return;
         }
 
         // ES: Transición ATÓMICA pendiente -> confirmada con UPDATE condicional
-        //     (igual que en Telegram). 0 filas = no existía o no estaba pendiente.
+        //     (igual que en Telegram) y la misma revisión: 0 filas = no existía,
+        //     no estaba pendiente o cambió entre medias.
         // EN: ATOMIC pending -> confirmed transition via conditional UPDATE
-        //     (same as Telegram). 0 rows = missing or not pending.
+        //     (same as Telegram) and the same revision: 0 rows = missing, not
+        //     pending or changed meanwhile.
         $filas = Appointment::whereKey($id)
             ->where('status', 'pendiente')
-            ->when($actual && $actual->updated_at, fn ($q) => $q->where('updated_at', $actual->updated_at))
-            ->update(['status' => 'confirmada']);
+            ->where('revision', $revision)
+            ->update(['status' => 'confirmada', 'revision' => Appointment::revisionSiguiente()]);
 
         if ($filas === 0) {
             $this->addError('accion', __('citas.panel_err_only_pending'));
@@ -219,7 +218,7 @@ class PanelCitas extends Component
         //     cancelled, so the email is not sent again.
         $filas = Appointment::whereKey($id)
             ->where('status', '!=', 'cancelada')
-            ->update(['status' => 'cancelada']);
+            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
 
         if ($filas === 0) {
             $this->addError('accion', __('citas.panel_err_already_cancelled'));

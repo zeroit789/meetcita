@@ -202,10 +202,10 @@ class TelegramNotifier
             $texto .= "\n↩️ <s>".e($antes).'</s>';
         }
 
-        // ES: Los botones llevan la versión de la cita (updated_at): si el cliente
-        //     la cambia, los botones de este aviso dejan de valer.
-        // EN: The buttons carry the booking version (updated_at): if the client
-        //     changes it, this notice's buttons stop working.
+        // ES: Los botones llevan la versión de la cita (su revisión): si el
+        //     cliente la cambia, los botones de este aviso dejan de valer.
+        // EN: The buttons carry the booking version (its revision): if the
+        //     client changes it, this notice's buttons stop working.
         $version = self::version($cita);
         $this->enviar($texto, [[
             ['text' => '✅ Confirm', 'callback_data' => "ac:{$cita->id}:{$version}"],
@@ -214,12 +214,15 @@ class TelegramNotifier
     }
 
     /**
-     * ES: Versión de una cita para los botones: segundos de su updated_at.
-     * EN: A booking's version for the buttons: its updated_at seconds.
+     * ES: Versión de una cita para los botones: su revisión (sube con cada
+     *     cambio; no depende del reloj como updated_at, que solo tiene segundos).
+     * EN: A booking's version for the buttons: its revision (it goes up with
+     *     every change; unlike updated_at, which only has seconds, it doesn't
+     *     depend on the clock).
      */
     public static function version(Appointment $cita): string
     {
-        return (string) ($cita->updated_at?->timestamp ?? 0);
+        return (string) (int) $cita->revision;
     }
 
     /**
