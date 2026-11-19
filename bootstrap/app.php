@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminPanelPassword;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -54,6 +55,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
         ]);
+
+        // ES: Cabeceras de seguridad (CSP con nonce, nosniff, etc.) en todas las respuestas.
+        // EN: Security headers (CSP with nonce, nosniff, etc.) on every response.
+        $middleware->append(SecurityHeaders::class);
 
         // ES: Alias para proteger el panel de citas con contraseña
         //     (config appointments.panel.password).

@@ -36,7 +36,7 @@
        EN: Runs BEFORE @vite/CSS so the right theme is painted with no flash.
            Priority: (1) the visitor's saved choice in localStorage; else
            (2) the config default — if 'auto', follow the OS color scheme. --}}
-  <script>
+  <script nonce="{{ \Illuminate\Support\Facades\Vite::cspNonce() }}">
     (function () {
       try {
         // ES: 1) Gana la elección guardada. / EN: 1) Saved visitor choice wins.
@@ -72,8 +72,6 @@
 
   {{-- ES: Fuentes vía Bunny Fonts (RGPD) + assets compilados vía Vite.
        EN: Fonts via Bunny Fonts (GDPR-friendly) + compiled assets via Vite. --}}
-  <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
-  <link rel="stylesheet" href="https://fonts.bunny.net/css?family=jetbrains-mono:400,500,700|space-grotesk:400,500,700">
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 
   {{-- ES: Cabeza extra por página. EN: Per-page extra head tags (optional). --}}
