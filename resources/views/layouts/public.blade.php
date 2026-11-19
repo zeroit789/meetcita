@@ -4,19 +4,19 @@
   LAYOUT PÚBLICO — envoltorio de la página de reserva /citas
   ============================================================================
   ES: Envoltorio mínimo, autónomo y profesional para la página pública de
-      reserva. Sin marca personal de ningún dueño: el título sale de config.
-      Tema oscuro neutro (ver resources/css/app.css). Incluye un pequeño
-      selector de idioma ES/EN y carga los assets vía Vite.
+      reserva. El nombre del negocio y su color de acento salen de config.
+      Tema claro por defecto con oscuro opcional (ver resources/css/app.css).
+      Incluye un selector de idioma ES/EN y carga los assets vía Vite.
   EN: Minimal, standalone, professional shell for the public booking page.
-      No personal branding of any owner: the title comes from config. Dark
-      neutral theme (see resources/css/app.css). Includes a tiny ES/EN
-      language toggle and loads assets through Vite.
+      The business name and its accent colour come from config. Light theme
+      by default with an optional dark one (see resources/css/app.css).
+      Includes an ES/EN language toggle and loads assets through Vite.
 
   INDEX / ÍNDICE
-    1. HEAD ............. meta, title, favicon, fonts, vite / cabeza del doc
-    2. TOPBAR .......... brand name + language toggle / marca + idioma
+    1. HEAD ............. meta, title, vite, accent + favicon / cabeza del doc
+    2. TOPBAR .......... business name + theme + language / negocio + tema + idioma
     3. CONTENT ......... @yield('content') / contenido de la página
-    4. FOOTER .......... neutral credit + repo link / crédito neutro + repo
+    4. FOOTER .......... business name + website / negocio + web
   ============================================================================
 --}}
 <!DOCTYPE html>
@@ -26,7 +26,7 @@
      EN: data-default-theme carries the config('appointments.theme') default
          ('dark' | 'light' | 'auto') so the inline anti-FOUC script below can
          read it when the visitor has not chosen a theme yet. --}}
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-default-theme="{{ config('appointments.theme', 'dark') }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-default-theme="{{ config('appointments.theme', 'light') }}">
 
 {{-- ── 1. HEAD EN / ES ──────────────────────────────────────────────────── --}}
 <head>
@@ -51,15 +51,15 @@
           return;
         }
         // ES: 2) Si no, el default de config. / EN: 2) Fall back to the config default.
-        var def = document.documentElement.dataset.defaultTheme || 'dark';
+        var def = document.documentElement.dataset.defaultTheme || 'light';
         if (def === 'auto') {
           // ES: 'auto' → seguir el SO. / EN: 'auto' → follow the OS preference.
           def = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         }
-        document.documentElement.dataset.theme = (def === 'light') ? 'light' : 'dark';
+        document.documentElement.dataset.theme = (def === 'dark') ? 'dark' : 'light';
       } catch (e) {
-        // ES: Si algo falla → oscuro seguro. / EN: Anything fails → safe dark default.
-        document.documentElement.dataset.theme = 'dark';
+        // ES: Si algo falla → claro por defecto. / EN: Anything fails → light default.
+        document.documentElement.dataset.theme = 'light';
       }
     })();
   </script>
@@ -74,22 +74,18 @@
        EN: /citas is a tool, not SEO content → don't index, but follow links. --}}
   <meta name="robots" content="noindex,follow">
 
-  {{-- ES: Favicon simple y neutro: cuadrado redondeado con la inicial de la
-           marca, pintado con el acento actual. No requiere fichero externo.
-       EN: Simple, neutral favicon: a rounded square with the brand initial,
-           painted with the current accent. No external file required. --}}
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%239333ea'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-size='34' font-weight='700' fill='white'%3E{{ strtoupper(mb_substr(config('appointments.brand.name'), 0, 1)) }}%3C/text%3E%3C/svg%3E">
 
-  {{-- ES: Fuentes vía Bunny Fonts (sin tracking de Google, RGPD). Space Grotesk
-           = sans de la UI, JetBrains Mono = toque terminal. Para cambiar la
-           tipografía, edita este <link> y las vars --font-* en app.css.
-       EN: Fonts via Bunny Fonts (GDPR-friendly, no Google tracking). Space
-           Grotesk = UI sans, JetBrains Mono = terminal accent. To change the
-           typeface, edit this <link> and the --font-* vars in app.css. --}}
-
-  {{-- ES: CSS + JS compilados (ejecuta `npm run build` o `npm run dev`).
-       EN: Compiled CSS + JS (run `npm run build` or `npm run dev`). --}}
+  {{-- ES: CSS + JS compilados (ejecuta `pnpm run build` o `pnpm run dev`). Sin
+           fuentes externas: se usan las del sistema (ver app.css).
+       EN: Compiled CSS + JS (run `pnpm run build` or `pnpm run dev`). No
+           external fonts: system ones are used (see app.css). --}}
   @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+  {{-- ES: Color de acento de config (validado) + favicon. Va tras @vite para
+           pisar los valores de reserva del CSS.
+       EN: Accent colour from config (validated) + favicon. Goes after @vite to
+           override the CSS fallbacks. --}}
+  @include('partials.theme-vars')
 
   {{-- ES: Cabeza extra por página. EN: Per-page extra head tags (optional). --}}
   @stack('head')
@@ -102,14 +98,14 @@
   @endif
 
   {{-- ── 2. TOPBAR EN / ES ──────────────────────────────────────────────────
-       ES: Nombre de marca (de config) a la izquierda, toggle ES/EN a la dcha.
-       EN: Brand name (from config) on the left, ES/EN toggle on the right. --}}
-  <header class="border-b border-brand/10">
+       ES: Nombre del negocio (de config) a la izquierda; tema e idioma a la dcha.
+       EN: Business name (from config) on the left; theme and language on the right. --}}
+  <header class="border-b border-[var(--card-border)] bg-surface">
     <div class="max-w-5xl mx-auto px-5 py-4 flex items-center justify-between gap-4">
 
-      {{-- ES: La marca enlaza al inicio. EN: Brand name links to home. --}}
-      <a href="{{ url('/') }}" class="font-mono text-sm font-bold text-ink hover:text-brand-glow transition-colors">
-        <span class="text-term">$</span> {{ config('appointments.brand.name') }}
+      {{-- ES: El nombre del negocio enlaza al inicio. EN: The business name links to home. --}}
+      <a href="{{ url('/') }}" class="text-lg font-semibold text-ink hover:text-brand-glow transition-colors">
+        {{ config('appointments.brand.name') }}
       </a>
 
       {{-- ── Right controls: theme toggle + language toggle ─────────────────────
@@ -135,9 +131,9 @@
              EN: One pill per locale from config('appointments.locales'). Each
                  points to /lang/{locale} (route provided by the backend agent).
                  The active locale is highlighted with the accent. --}}
-        <nav class="inline-flex rounded-lg border border-brand/20 bg-base/60 p-1 gap-1 font-mono text-xs" aria-label="{{ __('citas.lang_aria') }}">
+        <nav class="inline-flex rounded-lg border border-[var(--card-border)] bg-base p-1 gap-1 text-xs font-medium" aria-label="{{ __('citas.lang_aria') }}">
           @foreach(config('appointments.locales', ['es']) as $loc)
-            <a href="{{ url('/lang/' . $loc) }}"
+            <a href="{{ url('/lang/' . $loc) }}" hreflang="{{ $loc }}" lang="{{ $loc }}"
                @if(app()->getLocale() === $loc) aria-current="true" @endif
                @class([
                  'rounded-md px-3 py-1.5 uppercase tracking-wide transition-all',
@@ -162,23 +158,20 @@
   </main>
 
   {{-- ── 4. FOOTER EN / ES ──────────────────────────────────────────────────
-       ES: Footer neutro: nombre de marca (config) + enlace a la web pública
-           (config) + enlace al repo open-source. Sin datos personales.
-       EN: Neutral footer: brand name (config) + link to the public website
-           (config) + link to the open-source repo. No personal data. --}}
-  <footer class="border-t border-brand/10 mt-10">
-    <div class="max-w-5xl mx-auto px-5 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs text-faint">
+       ES: Footer neutro de cara al cliente: nombre del negocio (config) y
+           enlace a su web (config). Sin enlaces técnicos ni datos personales.
+       EN: Neutral, client-facing footer: business name (config) and a link to
+           its website (config). No technical links or personal data. --}}
+  <footer class="border-t border-[var(--card-border)] mt-10">
+    <div class="max-w-5xl mx-auto px-5 py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-faint">
       <span>© {{ date('Y') }} {{ config('appointments.brand.name') }}</span>
       <div class="flex items-center gap-4">
         {{-- ES: Web pública de config (oculta si es el valor por defecto).
              EN: Public website from config (hidden if it's the placeholder). --}}
         @if(config('appointments.brand.website') && config('appointments.brand.website') !== 'https://example.com')
           <a href="{{ config('appointments.brand.website') }}" target="_blank" rel="noopener"
-             class="hover:text-brand-glow transition-colors">{{ __('citas.footer_website') }} ↗</a>
+             class="underline hover:text-brand-glow transition-colors">{{ __('citas.footer_website') }}</a>
         @endif
-        {{-- ES: Enlace al repo open-source. EN: Open-source repo link. --}}
-        <a href="https://github.com/zeroit789/meetcita" target="_blank" rel="noopener"
-           class="hover:text-brand-glow transition-colors">{{ __('citas.footer_repo') }} ↗</a>
       </div>
     </div>
   </footer>

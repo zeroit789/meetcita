@@ -233,6 +233,26 @@ return [
     //       'light' → light by default (black text on white)
     //       'auto'  → follow the visitor's OS setting (prefers-color-scheme)
     // ──────────────────────────────────────────────────────────────────────
-    'theme' => env('APPOINTMENTS_THEME', 'dark'),
+    'theme' => env('APPOINTMENTS_THEME', 'light'),
+
+    // ES: Color de acento del negocio (botones, día elegido, enlaces), en hex
+    //     de 6 cifras (#rrggbb). Va de fondo con texto blanco encima, así que
+    //     elige un tono oscuro que dé al menos 4,5:1 con el blanco (el azul por
+    //     defecto da 6,7:1). Si el valor no es un hex válido se usa el de por
+    //     defecto (lo valida resources/views/partials/theme-vars.blade.php).
+    //     En el .env, entre comillas: APPOINTMENTS_ACCENT="#1d4ed8".
+    // EN: Business accent colour (buttons, chosen day, links), as a 6-digit
+    //     hex (#rrggbb). It is used as a background under white text, so pick
+    //     a dark shade giving at least 4.5:1 against white (the default blue
+    //     gives 6.7:1). Invalid values fall back to the default (validated in
+    //     resources/views/partials/theme-vars.blade.php). Quote it in the
+    //     .env: APPOINTMENTS_ACCENT="#1d4ed8".
+    'accent' => env('APPOINTMENTS_ACCENT', '#1d4ed8'),
+
+    // ES: Opcional: tono CLARO del acento para textos en el tema oscuro. Vacío
+    //     = se calcula solo mezclando el acento con blanco.
+    // EN: Optional: LIGHT shade of the accent for text in the dark theme.
+    //     Empty = derived automatically by mixing the accent with white.
+    'accent_glow' => env('APPOINTMENTS_ACCENT_GLOW'),
 
 ];

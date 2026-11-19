@@ -3,11 +3,13 @@
   BookAppointment view — public 4-step booking wizard
   Vista BookAppointment — wizard público de reserva en 4 pasos
   ============================================================================
-  ES: Tema oscuro neutro + acento (resources/css/app.css). Pasos reactivos sin
+  ES: Tema claro u oscuro con el acento de config (resources/css/app.css),
+      sin jerga técnica de cara al cliente. Pasos reactivos sin
       recargar la página (wire:click / wire:submit). El div raíz único es
       obligatorio en Livewire. Las duraciones vienen de config; las modalidades
       se muestran solo si están activas en config('appointments.modalities').
-  EN: Neutral dark + accent theme (resources/css/app.css). Reactive steps
+  EN: Light or dark theme with the config accent (resources/css/app.css),
+      no technical jargon for the client. Reactive steps
       without page reloads (wire:click / wire:submit). The single root div is
       mandatory in Livewire. Durations come from config; modalities are shown
       only if enabled in config('appointments.modalities').
@@ -32,7 +34,7 @@
   @endphp
 
   {{-- ── A. Breadcrumb EN / ES — step indicator / indicador de pasos ──────── --}}
-  <div class="flex items-center justify-center gap-2 mb-8 font-mono text-xs">
+  <div class="flex items-center justify-center gap-2 mb-8 text-xs">
     <span class="px-2 py-1 rounded {{ $step >= 1 ? 'text-brand-glow' : 'text-faint' }}">{{ __('citas.steps_01') }}</span>
     <span class="text-faint">/</span>
     <span class="px-2 py-1 rounded {{ $step >= 2 ? 'text-brand-glow' : 'text-faint' }}">{{ __('citas.steps_02') }}</span>
@@ -47,17 +49,16 @@
     {{-- ES: Menos padding en móvil para que las celdas sigan siendo pulsables.
          EN: Smaller padding on mobile so calendar cells stay tappable. --}}
     <div class="glass p-3 sm:p-8">
-      <p class="font-mono text-sm text-term/70 mb-1">{{ __('citas.step1_cmd') }}</p>
       <h2 class="font-sans font-bold text-2xl text-ink mb-6">{{ __('citas.step1_title') }}</h2>
 
       {{-- ── MONTHLY CALENDAR / CALENDARIO MENSUAL ─────────────────────────── --}}
-      <div class="rounded-xl border border-brand/15 bg-base/40 p-2 sm:p-5">
+      <div class="rounded-xl border border-[var(--card-border)] bg-base p-2 sm:p-5">
 
         {{-- Header: month navigation + month/year / Cabecera: navegación + mes/año --}}
         <div class="flex items-center justify-between mb-4">
           {{-- Previous month / Mes anterior --}}
           <button type="button" wire:click="prevMonth" @disabled(! $canPrev)
-                  class="flex h-9 w-9 items-center justify-center rounded-lg border border-brand/20 text-brand-glow transition-all hover:border-brand hover:bg-brand/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  class="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--card-border)] text-brand-glow transition-all hover:border-brand hover:bg-brand/10 disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="{{ __('citas.cal_prev_aria') }}">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
@@ -69,7 +70,7 @@
 
           {{-- Next month / Mes siguiente --}}
           <button type="button" wire:click="nextMonth" @disabled(! $canNext)
-                  class="flex h-9 w-9 items-center justify-center rounded-lg border border-brand/20 text-brand-glow transition-all hover:border-brand hover:bg-brand/10 disabled:opacity-30 disabled:cursor-not-allowed"
+                  class="flex h-9 w-9 items-center justify-center rounded-lg border border-[var(--card-border)] text-brand-glow transition-all hover:border-brand hover:bg-brand/10 disabled:opacity-30 disabled:cursor-not-allowed"
                   aria-label="{{ __('citas.cal_next_aria') }}">
             <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2">
               <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
@@ -82,7 +83,7 @@
              Día de semana (L -> D). Decorativo para lectores de pantalla. --}}
         <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2" aria-hidden="true">
           @foreach(explode(',', __('citas.cal_weekdays')) as $wd)
-            <div class="text-center font-mono text-[0.7rem] uppercase tracking-wide text-faint py-1">{{ $wd }}</div>
+            <div class="text-center text-xs uppercase tracking-wide text-faint py-1">{{ $wd }}</div>
           @endforeach
         </div>
 
@@ -116,12 +117,12 @@
                             // Selected day: accent fill / Día seleccionado: relleno acento
                             'border-brand bg-brand text-white font-bold' => $cell['isSelected'],
                             // Normal bookable day: faint border + hover / Día normal
-                            'border-brand/25 bg-base/60 text-ink hover:border-brand hover:bg-brand/10 hover:-translate-y-0.5' => ! $cell['isSelected'],
+                            'border-[var(--card-border)] bg-base text-ink hover:border-brand hover:bg-brand/10 hover:-translate-y-0.5' => ! $cell['isSelected'],
                           ])>
                     <span>{{ $cell['day'] }}</span>
                     {{-- "Today" dot / Punto "hoy" --}}
                     @if($cell['isToday'])
-                      <span class="mt-0.5 h-1 w-1 rounded-full bg-term"></span>
+                      <span class="mt-0.5 h-1 w-1 rounded-full bg-success"></span>
                     @endif
                   </button>
                 @else
@@ -143,8 +144,8 @@
       </div>
 
       {{-- Working-hours note / Nota de horario laboral --}}
-      <div class="mt-6 flex items-center gap-3 rounded-lg border border-brand/15 bg-base/40 px-4 py-3">
-        <svg class="h-5 w-5 flex-shrink-0 text-term" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+      <div class="mt-6 flex items-center gap-3 rounded-lg border border-[var(--card-border)] bg-base px-4 py-3">
+        <svg class="h-5 w-5 flex-shrink-0 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
         </svg>
         <p class="font-sans text-base text-ink">
@@ -160,7 +161,6 @@
        ══════════════════════════════════════════════════════════════════════ --}}
   @if($step === 2)
     <div class="glass p-6 sm:p-8">
-      <p class="font-mono text-sm text-term/70 mb-1">{{ __('citas.step2_cmd') }} {{ $selectedDate }}</p>
       <h2 class="font-sans font-bold text-2xl text-ink mb-2">{{ __('citas.step2_title') }}</h2>
       <p class="text-muted text-sm mb-5">
         {{ __('citas.step2_subtitle_pre') }}
@@ -176,8 +176,8 @@
            Selector de DURACIÓN — un botón por duración de config. Cambiarlo
            recalcula los huecos. --}}
       <div class="mb-6">
-        <p class="font-mono text-xs text-muted mb-2">{{ __('citas.step2_duration_label') }}</p>
-        <div class="inline-flex rounded-lg border border-brand/20 bg-base/60 p-1 gap-1">
+        <p class="text-xs text-muted mb-2">{{ __('citas.step2_duration_label') }}</p>
+        <div class="inline-flex rounded-lg border border-[var(--card-border)] bg-base p-1 gap-1">
           @foreach($durations as $dur)
             {{-- ES: Etiqueta: claves dedicadas para 30/60, genérica para otras.
                  EN: Label: dedicated keys for 30/60, generic for others. --}}
@@ -189,7 +189,7 @@
               };
             @endphp
             <button type="button" wire:click="setDuration({{ (int) $dur }})"
-                    class="rounded-md px-4 py-2 font-mono text-sm transition-all
+                    class="rounded-md px-4 py-2 text-sm transition-all
                            {{ $duration === (int) $dur ? 'bg-brand text-white' : 'text-muted hover:text-brand-glow' }}">
               {{ $durLabel }}
             </button>
@@ -199,7 +199,7 @@
 
       {{-- One-off error (slot taken between steps) / Error puntual (hueco ocupado) --}}
       @error('selectedTime')
-        <p class="font-mono text-xs text-red-400 mb-4">// {{ $message }}</p>
+        <p class="text-xs text-danger mb-4">{{ $message }}</p>
       @enderror
 
       @if(count($freeSlots) > 0)
@@ -208,22 +208,22 @@
           @foreach($freeSlots as $slot)
             <button type="button"
                     wire:click="selectTime('{{ $slot }}')"
-                    class="rounded-lg border border-brand/20 bg-base/60 px-2 py-3 font-mono text-sm text-ink transition-all hover:border-brand hover:bg-brand/10 hover:-translate-y-0.5 focus:outline-none focus:border-brand">
+                    class="rounded-lg border border-[var(--card-border)] bg-base px-2 py-3 text-sm text-ink transition-all hover:border-brand hover:bg-brand/10 hover:-translate-y-0.5 focus:outline-none focus:border-brand">
               {{ $slot }}
             </button>
           @endforeach
         </div>
       @else
         {{-- No slots that day / Sin huecos ese día --}}
-        <div class="rounded-lg border border-brand/15 bg-base/60 p-6 text-center">
-          <p class="font-mono text-sm text-muted">{{ __('citas.step2_no_slots') }}</p>
+        <div class="rounded-lg border border-[var(--card-border)] bg-base p-6 text-center">
+          <p class="text-sm text-muted">{{ __('citas.step2_no_slots') }}</p>
           <p class="text-faint text-sm mt-1">{{ __('citas.step2_no_slots_hint') }}</p>
         </div>
       @endif
 
       {{-- Back to step 1 / Volver al paso 1 --}}
       <button type="button" wire:click="back"
-              class="mt-6 inline-flex items-center gap-2 font-mono text-sm text-muted hover:text-brand-glow transition-colors">
+              class="mt-6 inline-flex items-center gap-2 text-sm text-muted hover:text-brand-glow transition-colors">
         {{ __('citas.step2_back') }}
       </button>
     </div>
@@ -234,7 +234,6 @@
        ══════════════════════════════════════════════════════════════════════ --}}
   @if($step === 3)
     <div class="glass p-6 sm:p-8">
-      <p class="font-mono text-sm text-term/70 mb-1">{{ __('citas.step3_cmd') }}</p>
       <h2 class="font-sans font-bold text-2xl text-ink mb-2">{{ __('citas.step3_title') }}</h2>
 
       {{-- Selected-appointment summary (date + time + duration) / Resumen de la cita --}}
@@ -262,29 +261,29 @@
         {{-- ── MODALITY: online (video call) / in person ─────────────────────
              ES: Dos botones toggle. Se muestran solo si están activos en config.
                  Si solo hay una modalidad activa, el toggle se oculta entero (el
-                 valor por defecto del componente ya encaja). Online = acento
-                 term (Meet), Presencial = acento de marca.
+                 valor por defecto del componente ya encaja). Las dos opciones
+                 usan el mismo estilo: la elegida va con el acento.
              EN: Two toggle buttons. Shown only if enabled in config. If only
                  one modality is enabled, the toggle is hidden entirely (the
-                 component default already matches). Online = term accent (Meet),
-                 In person = brand accent. --}}
+                 component default already matches). Both options share one
+                 style: the chosen one gets the accent. --}}
         @if($modOnline && $modInPerson)
           <div>
-            <label class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_modality') }}</label>
+            <label class="block text-xs text-muted mb-1.5">{{ __('citas.field_modality') }}</label>
             <div class="grid grid-cols-2 gap-3">
               {{-- Online (with Meet) / Online (con Meet) --}}
               <button type="button" wire:click="setModality('online')"
                       @class([
                         'flex items-center gap-2 rounded-lg border px-3 py-3 font-sans text-sm transition-all focus:outline-none',
-                        'border-term bg-term/10 text-term font-medium' => $modality === 'online',
-                        'border-brand/20 bg-base/60 text-muted hover:border-term/60 hover:text-term' => $modality !== 'online',
+                        'border-brand bg-brand/10 text-brand-glow font-medium' => $modality === 'online',
+                        'border-line bg-base text-muted hover:border-brand hover:text-brand-glow' => $modality !== 'online',
                       ])>
                 <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
                 </svg>
                 <span class="text-left leading-tight">
                   {{ __('citas.modality_online') }}
-                  <span class="block font-mono text-[0.72rem] opacity-90">{{ __('citas.modality_online_sub') }}</span>
+                  <span class="block text-xs opacity-90">{{ __('citas.modality_online_sub') }}</span>
                 </span>
               </button>
 
@@ -292,8 +291,8 @@
               <button type="button" wire:click="setModality('presencial')"
                       @class([
                         'flex items-center gap-2 rounded-lg border px-3 py-3 font-sans text-sm transition-all focus:outline-none',
-                        'border-brand bg-brand/10 text-brand-bright font-medium' => $modality === 'presencial',
-                        'border-brand/20 bg-base/60 text-muted hover:border-brand hover:text-brand-glow' => $modality !== 'presencial',
+                        'border-brand bg-brand/10 text-brand-glow font-medium' => $modality === 'presencial',
+                        'border-line bg-base text-muted hover:border-brand hover:text-brand-glow' => $modality !== 'presencial',
                       ])>
                 <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -301,44 +300,44 @@
                 </svg>
                 <span class="text-left leading-tight">
                   {{ __('citas.modality_inperson') }}
-                  <span class="block font-mono text-[0.72rem] opacity-90">{{ __('citas.modality_inperson_sub') }}</span>
+                  <span class="block text-xs opacity-90">{{ __('citas.modality_inperson_sub') }}</span>
                 </span>
               </button>
             </div>
-            @error('modality') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
+            @error('modality') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
           </div>
         @endif
 
         {{-- Name / Nombre --}}
         <div>
-          <label for="appt-name" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_name') }}</label>
+          <label for="appt-name" class="block text-xs text-muted mb-1.5">{{ __('citas.field_name') }}</label>
           <input type="text" id="appt-name" wire:model="name" placeholder="{{ __('citas.ph_name') }}" required
-                 class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('name') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
+          @error('name') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
         </div>
 
         {{-- Email --}}
         <div>
-          <label for="appt-email" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_email') }}</label>
+          <label for="appt-email" class="block text-xs text-muted mb-1.5">{{ __('citas.field_email') }}</label>
           <input type="email" id="appt-email" wire:model="email" placeholder="{{ __('citas.ph_email') }}" required
-                 class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('email') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
+          @error('email') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
         </div>
 
         {{-- Phone (optional) / Teléfono (opcional) --}}
         <div>
-          <label for="appt-phone" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_phone') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <label for="appt-phone" class="block text-xs text-muted mb-1.5">{{ __('citas.field_phone') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
           <input type="tel" id="appt-phone" wire:model="phone" placeholder="{{ __('citas.ph_phone') }}"
-                 class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('phone') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
+          @error('phone') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
         </div>
 
         {{-- People attending / Personas que asistirán --}}
         <div>
-          <label for="appt-attendees" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_attendees') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <label for="appt-attendees" class="block text-xs text-muted mb-1.5">{{ __('citas.field_attendees') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
           <input type="text" id="appt-attendees" wire:model="attendees" placeholder="{{ __('citas.ph_attendees') }}"
-                 class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-          @error('attendees') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
+                 class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
+          @error('attendees') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
         </div>
 
         {{-- Attendee emails (OPTIONAL) — only meaningful for ONLINE meetings
@@ -349,21 +348,21 @@
              forma reactiva solo cuando modality === 'online'. --}}
         @if($modOnline && $modality === 'online')
           <div>
-            <label for="appt-attendee-emails" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_attendee_emails') }} <span class="text-faint">{{ __('citas.field_attendee_emails_optional') }}</span></label>
+            <label for="appt-attendee-emails" class="block text-xs text-muted mb-1.5">{{ __('citas.field_attendee_emails') }} <span class="text-faint">{{ __('citas.field_attendee_emails_optional') }}</span></label>
             <input type="text" id="appt-attendee-emails" wire:model="attendeeEmails" placeholder="{{ __('citas.ph_attendee_emails') }}"
-                   class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
-            <p class="font-mono text-xs text-faint mt-1">{{ __('citas.help_attendee_emails') }}</p>
-            @error('attendeeEmails') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
+                   class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors" />
+            <p class="text-xs text-faint mt-1">{{ __('citas.help_attendee_emails') }}</p>
+            @error('attendeeEmails') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
           </div>
         @endif
 
         {{-- Message: what to discuss / Mensaje: qué tratar --}}
         <div>
-          <label for="appt-message" class="block font-mono text-xs text-muted mb-1.5">{{ __('citas.field_message') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
+          <label for="appt-message" class="block text-xs text-muted mb-1.5">{{ __('citas.field_message') }} <span class="text-faint">{{ __('citas.field_phone_optional') }}</span></label>
           <textarea id="appt-message" wire:model="message" rows="4" placeholder="{{ __('citas.ph_message') }}"
-                    class="w-full rounded-lg bg-base/60 border border-brand/20 px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
-          <p class="font-mono text-xs text-faint mt-1">{{ __('citas.help_message') }}</p>
-          @error('message') <p class="font-mono text-xs text-red-400 mt-1">// {{ $message }}</p> @enderror
+                    class="w-full rounded-lg bg-base border border-line px-3 py-2.5 text-sm text-ink focus:outline-none focus:border-brand transition-colors resize-none"></textarea>
+          <p class="text-xs text-faint mt-1">{{ __('citas.help_message') }}</p>
+          @error('message') <p class="text-xs text-danger mt-1">{{ $message }}</p> @enderror
         </div>
 
         {{-- First-layer data-protection notice (GDPR art. 13 / LOPDGDD art. 11), right before booking.
@@ -373,19 +372,19 @@
         {{-- Own ALTCHA captcha (no third parties) / Captcha propio ALTCHA (sin terceros) --}}
         @if(config('services.altcha.enabled', true))
           @include('partials.captcha')
-          @error('altcha') <p class="text-xs text-red-500" role="alert">{{ $message }}</p> @enderror
+          @error('altcha') <p class="text-xs text-danger" role="alert">{{ $message }}</p> @enderror
         @endif
 
         {{-- Booking-level notice (e.g. "try again in a moment") right above the button.
              Aviso de la reserva (p. ej. «inténtalo en un momento») justo encima del botón. --}}
         @error('selectedTime')
-          <p class="font-mono text-xs text-red-400" role="alert">// {{ $message }}</p>
+          <p class="text-xs text-danger" role="alert">{{ $message }}</p>
         @enderror
 
         {{-- Actions: back + book / Acciones: atrás + reservar --}}
         <div class="flex items-center justify-between gap-4 pt-2">
           <button type="button" wire:click="back"
-                  class="font-mono text-sm text-muted hover:text-brand-glow transition-colors">
+                  class="text-sm text-muted hover:text-brand-glow transition-colors">
             {{ __('citas.step3_back') }}
           </button>
 
@@ -407,14 +406,13 @@
        ══════════════════════════════════════════════════════════════════════ --}}
   @if($step === 4)
     <div class="glass p-8 sm:p-10 text-center">
-      {{-- Terminal-green check icon / Icono check verde terminal --}}
-      <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-term/40 bg-term/10">
-        <svg class="h-8 w-8 text-term" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      {{-- Success check icon / Icono de éxito (check) --}}
+      <div class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full border border-success/40 bg-success/10">
+        <svg class="h-8 w-8 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
           <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
         </svg>
       </div>
 
-      <p class="font-mono text-sm text-term/70 mb-2">{{ __('citas.step4_cmd') }}</p>
       <h2 class="font-sans font-bold text-2xl sm:text-3xl text-brand-glow mb-3">{{ __('citas.step4_title') }}</h2>
 
       <p class="text-muted mb-2" style="line-height:1.7;">
@@ -429,14 +427,14 @@
       {{-- Booking reference: the client can quote it when contacting us.
            Identificador de la cita: el cliente puede citarlo al contactarnos. --}}
       @if($confirmedRef)
-        <div class="inline-flex items-center gap-2 rounded-lg border border-brand/25 bg-base/60 px-4 py-2 mb-4">
-          <span class="font-mono text-xs text-faint uppercase tracking-wide">{{ __('citas.step4_ref_label') }}</span>
-          <span class="font-mono text-lg font-bold text-white">{{ $confirmedRef }}</span>
+        <div class="inline-flex items-center gap-2 rounded-lg border border-[var(--card-border)] bg-base px-4 py-2 mb-4">
+          <span class="text-xs text-faint uppercase tracking-wide">{{ __('citas.step4_ref_label') }}</span>
+          <span class="font-mono text-lg font-bold text-ink">{{ $confirmedRef }}</span>
         </div>
-        <p class="font-mono text-xs text-faint mb-6">{{ __('citas.step4_ref_hint') }}</p>
+        <p class="text-xs text-faint mb-6">{{ __('citas.step4_ref_hint') }}</p>
       @endif
 
-      <p class="font-mono text-sm text-faint mb-8">{{ __('citas.step4_email_note') }}</p>
+      <p class="text-sm text-faint mb-8">{{ __('citas.step4_email_note') }}</p>
 
       {{-- Book another (restart the flow) / Pedir otra cita (reinicia el flujo) --}}
       <button type="button" wire:click="resetFlow"

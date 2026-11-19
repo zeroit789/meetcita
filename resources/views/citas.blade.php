@@ -4,10 +4,10 @@
   CITAS — página pública de reserva
   ============================================================================
   ES: Renderiza el wizard <livewire:book-appointment /> dentro del layout
-      público, con cabecera con toque terminal. Envoltorio server-side; Livewire
+      público, con una cabecera sencilla y sin jerga. Envoltorio server-side; Livewire
       aporta la reactividad de los pasos sin recargar. Título desde config.
   EN: Renders the <livewire:book-appointment /> wizard inside the public
-      layout, with a terminal-flavoured header. Server-rendered shell; Livewire
+      layout, with a simple, jargon-free header. Server-rendered shell; Livewire
       adds the step reactivity without reloads. Title from config.
   ============================================================================
 --}}
@@ -22,11 +22,8 @@
     {{-- ES: Volver al inicio ARRIBA (no hay que bajar para volver atrás).
          EN: Back-to-home link at the TOP (no need to scroll to go back). --}}
     <a href="{{ url('/') }}"
-       class="inline-flex items-center gap-2 font-mono text-sm text-muted hover:text-brand-glow transition-colors mb-8">{{ __('citas.wrapper_back_home') }}</a>
+       class="inline-flex items-center gap-2 text-sm text-muted hover:text-brand-glow transition-colors mb-8">{{ __('citas.wrapper_back_home') }}</a>
 
-    {{-- ES: Cabecera estilo terminal, coherente con el resto de la UI.
-         EN: Terminal-style header, coherent with the rest of the UI. --}}
-    <p class="font-mono text-sm text-term/70 mb-3">$ ./book.sh --new</p>
     <h1 class="font-sans font-bold text-3xl sm:text-[2rem] text-ink mb-2">{{ __('citas.wrapper_title') }}</h1>
     <p class="text-muted mb-10 max-w-2xl" style="line-height:1.7;">{{ __('citas.wrapper_intro') }}</p>
 

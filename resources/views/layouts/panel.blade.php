@@ -3,14 +3,15 @@
   PANEL LAYOUT — private admin panel wrapper (/panel)
   LAYOUT DEL PANEL — envoltorio del panel privado de administración (/panel)
   ============================================================================
-  ES: Envoltorio autónomo del panel privado. Mismo tema oscuro neutro que la
-      parte pública pero los assets vienen de Vite (SIN Tailwind CDN). Nunca
-      se indexa.
-  EN: Standalone shell for the private panel. Same neutral dark theme as the
-      public side but assets come from Vite (NO Tailwind CDN). Never indexed.
+  ES: Envoltorio autónomo del panel privado. Mismo tema que la parte pública
+      (claro por defecto, oscuro opcional, acento de config); assets vía Vite.
+      Nunca se indexa.
+  EN: Standalone shell for the private panel. Same theme as the public side
+      (light by default, optional dark, accent from config); assets via Vite.
+      Never indexed.
 
   INDEX / ÍNDICE
-    1. HEAD ............. meta, title, favicon, fonts, vite / cabeza del doc
+    1. HEAD ............. meta, title, vite, accent + favicon / cabeza del doc
     2. CONTENT ......... @yield('content') / contenido del panel
   ============================================================================
 --}}
@@ -21,7 +22,7 @@
      EN: data-default-theme carries the config('appointments.theme') default
          ('dark' | 'light' | 'auto') so the inline anti-FOUC script below can
          read it when the visitor has not chosen a theme yet. --}}
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-default-theme="{{ config('appointments.theme', 'dark') }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-default-theme="{{ config('appointments.theme', 'light') }}">
 
 {{-- ── 1. HEAD EN / ES ──────────────────────────────────────────────────── --}}
 <head>
@@ -46,15 +47,15 @@
           return;
         }
         // ES: 2) Si no, el default de config. / EN: 2) Fall back to the config default.
-        var def = document.documentElement.dataset.defaultTheme || 'dark';
+        var def = document.documentElement.dataset.defaultTheme || 'light';
         if (def === 'auto') {
           // ES: 'auto' → seguir el SO. / EN: 'auto' → follow the OS preference.
           def = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
         }
-        document.documentElement.dataset.theme = (def === 'light') ? 'light' : 'dark';
+        document.documentElement.dataset.theme = (def === 'dark') ? 'dark' : 'light';
       } catch (e) {
-        // ES: Si algo falla → oscuro seguro. / EN: Anything fails → safe dark default.
-        document.documentElement.dataset.theme = 'dark';
+        // ES: Si algo falla → claro por defecto. / EN: Anything fails → light default.
+        document.documentElement.dataset.theme = 'light';
       }
     })();
   </script>
@@ -66,13 +67,14 @@
   {{-- ES: Título de config + "panel". EN: Title from config + the word "panel". --}}
   <title>{{ __('citas.panel_title') }} · {{ config('appointments.brand.name') }}</title>
 
-  {{-- ES: Mismo favicon neutro que el layout público (inicial + acento).
-       EN: Same neutral favicon as the public layout (brand initial + accent). --}}
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%239333ea'/%3E%3Ctext x='50%25' y='54%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-size='34' font-weight='700' fill='white'%3E{{ strtoupper(mb_substr(config('appointments.brand.name'), 0, 1)) }}%3C/text%3E%3C/svg%3E">
 
-  {{-- ES: Fuentes vía Bunny Fonts (RGPD) + assets compilados vía Vite.
-       EN: Fonts via Bunny Fonts (GDPR-friendly) + compiled assets via Vite. --}}
+  {{-- ES: Assets compilados vía Vite (fuentes del sistema, sin descargas).
+       EN: Compiled assets via Vite (system fonts, no downloads). --}}
   @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+  {{-- ES: Color de acento de config (validado) + favicon, tras @vite.
+       EN: Accent colour from config (validated) + favicon, after @vite. --}}
+  @include('partials.theme-vars')
 
   {{-- ES: Cabeza extra por página. EN: Per-page extra head tags (optional). --}}
   @stack('head')

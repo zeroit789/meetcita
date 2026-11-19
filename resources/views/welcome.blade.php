@@ -3,12 +3,12 @@
   WELCOME — minimal landing for "/"
   WELCOME — landing mínima para "/"
   ============================================================================
-  ES: Página de inicio mínima y limpia que explica que esto es una demo del
-      sistema de reservas open-source y enlaza a /citas y al repo. Bilingüe vía
-      __('citas.*'). Usa el layout público (tema oscuro neutro + acento).
-  EN: A tiny, clean home page that explains this is a demo of the open-source
-      appointments system and links to /citas and to the repo. Bilingual via
-      __('citas.*'). Uses the public layout (neutral dark + accent theme).
+  ES: Página de inicio mínima y de cara al cliente: invita a pedir cita y
+      enlaza a /citas. El enlace al código solo sale en modo demo. Bilingüe vía
+      __('citas.*'). Usa el layout público (tema claro u oscuro + acento).
+  EN: A tiny, client-facing home page: invites to book and links to /citas.
+      The source-code link only shows in demo mode. Bilingual via
+      __('citas.*'). Uses the public layout (light or dark theme + accent).
   ============================================================================
 --}}
 @extends('layouts.public')
@@ -18,8 +18,9 @@
 @section('content')
   <section class="max-w-3xl mx-auto px-5 py-20 sm:py-28 min-h-[70vh] flex flex-col justify-center">
 
-    {{-- Terminal-style intro line / Línea de intro estilo terminal --}}
-    <p class="font-mono text-sm text-term/70 mb-4">$ ./appointments --demo</p>
+
+    {{-- Business name / Nombre del negocio --}}
+    <p class="text-sm font-semibold uppercase tracking-wide text-brand-glow mb-3">{{ config('appointments.brand.name') }}</p>
 
     {{-- Main heading / Título principal --}}
     <h1 class="font-sans font-bold text-4xl sm:text-5xl text-ink mb-5 leading-tight">
@@ -31,26 +32,29 @@
       {{ __('citas.home_lead') }}
     </p>
 
-    {{-- Call to action: book + repo / Llamada a la acción: reservar + repo --}}
+    {{-- Call to action: book (+ repo only in demo) / Llamada a la acción: reservar (+ repo solo en demo) --}}
     <div class="flex flex-col sm:flex-row gap-4">
       {{-- Primary: go to the booking wizard / Primario: ir al wizard de reserva --}}
       <a href="{{ url('/citas') }}"
          class="btn-primary inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-7 py-3.5 text-white font-medium font-sans">
         {{ __('citas.home_cta_book') }} →
       </a>
-      {{-- Secondary: the open-source repo / Secundario: el repo open-source --}}
-      <a href="https://github.com/zeroit789/meetcita" target="_blank" rel="noopener"
-         class="inline-flex items-center justify-center gap-2 rounded-lg border border-brand/30 px-7 py-3.5 text-brand-glow font-medium font-sans hover:bg-brand/10 transition-colors">
-        {{ __('citas.home_cta_repo') }} ↗
-      </a>
+      {{-- ES: Secundario, solo en la demo pública: el repo open-source.
+           EN: Secondary, only in the public demo: the open-source repo. --}}
+      @if(config('appointments.demo.enabled'))
+        <a href="https://github.com/zeroit789/meetcita" target="_blank" rel="noopener"
+           class="inline-flex items-center justify-center gap-2 rounded-lg border border-brand px-7 py-3.5 text-brand-glow font-medium font-sans hover:bg-brand/10 transition-colors">
+          {{ __('citas.home_cta_repo') }}
+        </a>
+      @endif
     </div>
 
-    {{-- Tiny feature hints / Pequeñas pistas de funcionalidad --}}
-    <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-xs text-faint">
-      <div class="rounded-lg border border-brand/10 bg-base/40 px-4 py-3">// {{ __('citas.home_feat_1') }}</div>
-      <div class="rounded-lg border border-brand/10 bg-base/40 px-4 py-3">// {{ __('citas.home_feat_2') }}</div>
-      <div class="rounded-lg border border-brand/10 bg-base/40 px-4 py-3">// {{ __('citas.home_feat_3') }}</div>
-    </div>
+    {{-- How it works, in three short points / Cómo funciona, en tres puntos --}}
+    <ul class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm text-muted">
+      <li class="rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3">{{ __('citas.home_feat_1') }}</li>
+      <li class="rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3">{{ __('citas.home_feat_2') }}</li>
+      <li class="rounded-lg border border-[var(--card-border)] bg-surface px-4 py-3">{{ __('citas.home_feat_3') }}</li>
+    </ul>
 
   </section>
 @endsection

@@ -32,12 +32,11 @@ return [
 
     // ── 2. WIZARD / WIZARD DE RESERVA ─────────────────────────────────────
     // Step indicator / Indicador de pasos
-    'steps_01' => '01 día',
-    'steps_02' => '02 hora',
-    'steps_03' => '03 datos',
+    'steps_01' => 'Día',
+    'steps_02' => 'Hora',
+    'steps_03' => 'Tus datos',
 
     // Step 1: pick a day / Paso 1: elegir día
-    'step1_cmd' => '$ ./availability.sh --calendar',
     'step1_title' => 'Elige un día',
     'cal_prev_aria' => 'Mes anterior',
     'cal_next_aria' => 'Mes siguiente',
@@ -53,21 +52,19 @@ return [
     'cal_days_join' => ', ',
 
     // Step 2: pick a time / Paso 2: elegir hora
-    'step2_cmd' => '$ ./availability.sh --slots',
     'step2_title' => 'Elige duración y hora',
     'step2_subtitle_pre' => 'Huecos libres para el',
-    'step2_duration_label' => '// duración de la reunión',
+    'step2_duration_label' => 'Duración de la reunión',
     'btn_30min' => '30 min',
     'btn_1hour' => '1 hora',
     // ES: etiqueta genérica para duraciones no estándar (:min minutos).
     // EN: generic label for non-standard durations (:min minutes).
     'btn_minutes' => ':min min',
-    'step2_no_slots' => '// no quedan huecos libres este día',
+    'step2_no_slots' => 'No quedan horas libres este día.',
     'step2_no_slots_hint' => 'Prueba con otro día.',
-    'step2_back' => '← cambiar día',
+    'step2_back' => '← Cambiar día',
 
     // Step 3: details form / Paso 3: formulario de datos
-    'step3_cmd' => '$ ./book.sh --details',
     'step3_title' => 'Tus datos',
     'step3_summary_pre' => 'Cita para el',
     'step3_summary_at' => 'a las',
@@ -89,9 +86,9 @@ return [
     'field_attendee_emails' => 'Correos de los asistentes',
     'field_attendee_emails_optional' => '(opcional)',
     'ph_attendee_emails' => 'ana@email.com, juan@email.com',
-    'help_attendee_emails' => '// les llegará la invitación con el enlace de la videollamada. Sepáralos por comas.',
+    'help_attendee_emails' => 'Les llegará la invitación con el enlace de la videollamada. Sepáralos por comas.',
     'field_message' => '¿Qué te gustaría tratar en la cita?',
-    'help_message' => '// no incluyas datos de salud ni otros datos sensibles: no hacen falta para la cita.',
+    'help_message' => 'No incluyas datos de salud ni otros datos sensibles: no hacen falta para la cita.',
     'ph_message' => 'Cuéntanos brevemente qué quieres hacer o tratar...',
     // ES: Primera capa de protección de datos (bajo el formulario).
     // EN: First-layer data-protection notice (under the form).
@@ -108,19 +105,18 @@ return [
     'privacy_retention' => 'Se conservan :months meses tras la cita y después se borran.',
     'privacy_more' => 'Más información en la :link.',
     'privacy_link' => 'política de privacidad',
-    'step3_back' => '← cambiar hora',
+    'step3_back' => '← Cambiar hora',
     'btn_book' => 'Reservar cita',
     'btn_booking' => 'Reservando...',
 
     // Step 4: confirmation / Paso 4: confirmación
-    'step4_cmd' => '$ appointment --status requested',
     'step4_title' => '¡Cita solicitada!',
     'step4_summary_pre' => 'Tu cita para el',
     'step4_summary_at' => 'a las',
     'step4_summary_post' => 'está registrada.',
     'step4_ref_label' => 'Tu nº de cita',
-    'step4_ref_hint' => '// guárdalo: identifícate con él si necesitas escribirnos sobre esta cita',
-    'step4_email_note' => '// te confirmaremos por email lo antes posible',
+    'step4_ref_hint' => 'Guárdalo: indícalo si necesitas escribirnos sobre esta cita.',
+    'step4_email_note' => 'Te confirmaremos la cita por email lo antes posible.',
     'btn_book_another' => 'Pedir otra cita',
 
     // Duration labels (used across steps) / Etiquetas de duración (varios pasos)
@@ -160,23 +156,22 @@ return [
     // EN: aria-label for the sun/moon theme toggle button.
     'theme_toggle' => 'Cambiar tema',
     'footer_website' => 'Web',
-    'footer_repo' => 'Código',
 
     // ── 5. LANDING / PÁGINA DE INICIO ─────────────────────────────────────
-    'home_title' => 'Sistema de reservas de citas',
-    'home_lead' => 'Una demo limpia y open-source de un sistema de reservas: calendario, selección de hora, modalidad online o presencial y panel de gestión. Pruébalo reservando una cita de ejemplo.',
+    'home_title' => 'Pide tu cita',
+    'home_lead' => 'Reserva una cita en un par de minutos: elige el día y la hora que mejor te vengan, online o en persona, y te la confirmamos por email.',
     'home_cta_book' => 'Reservar una cita',
-    'home_cta_repo' => 'Ver el código',
-    'home_feat_1' => 'calendario reactivo sin recargar',
-    'home_feat_2' => 'online (Meet) o presencial',
-    'home_feat_3' => 'panel de gestión bilingüe',
+    'home_cta_repo' => 'Ver el código de la demo',
+    'home_feat_1' => 'Eliges día y hora libres',
+    'home_feat_2' => 'Online por videollamada o en persona',
+    'home_feat_3' => 'Confirmación por email',
 
     // ── 6. PANEL / TABLA DE CITAS ─────────────────────────────────────────
     'panel_title' => 'Panel de citas',
     'panel_heading' => 'Panel de citas',
-    'panel_subtitle' => 'Todas las solicitudes recibidas desde /citas.',
-    'panel_logout' => 'cerrar sesión',
-    'panel_empty' => 'todavía no hay citas registradas',
+    'panel_subtitle' => 'Todas las solicitudes de cita recibidas.',
+    'panel_logout' => 'Cerrar sesión',
+    'panel_empty' => 'Todavía no hay citas registradas.',
     // Table columns / Columnas de la tabla
     'col_ref' => 'Nº Cita',
     'col_date' => 'Fecha',
@@ -192,18 +187,18 @@ return [
     'col_actions' => 'Acciones',
     'meet_link' => 'Meet',
     // Statuses / Estados
-    'status_pending' => 'pendiente',
-    'status_confirmed' => 'confirmada',
-    'status_cancelled' => 'cancelada',
+    'status_pending' => 'Pendiente',
+    'status_confirmed' => 'Confirmada',
+    'status_cancelled' => 'Cancelada',
     // Actions / Acciones
-    'action_confirm' => 'confirmar',
-    'action_cancel' => 'cancelar',
+    'action_confirm' => 'Confirmar',
+    'action_cancel' => 'Cancelar',
     // ES: Cancelación desde el panel (motivo opcional) y errores de estado.
     // EN: Cancelling from the panel (optional reason) and status errors.
     'cancel_reason_label' => 'Motivo para el cliente (opcional)',
     'cancel_reason_placeholder' => 'Se le enviará por email tal cual lo escribas.',
-    'cancel_submit' => 'cancelar cita y avisar',
-    'cancel_back' => 'volver',
+    'cancel_submit' => 'Cancelar cita y avisar',
+    'cancel_back' => 'Volver',
     'panel_err_only_pending' => 'Solo se pueden confirmar las citas pendientes.',
     'panel_err_already_cancelled' => 'Esa cita ya estaba cancelada.',
 
@@ -215,8 +210,8 @@ return [
     'blocked_field_reason_optional' => '(opcional)',
     'blocked_ph_reason' => 'Vacaciones, festivo...',
     'blocked_add' => 'Bloquear día',
-    'blocked_empty' => 'no hay días bloqueados. Estás disponible todos los días laborables.',
-    'blocked_remove' => 'quitar',
+    'blocked_empty' => 'No hay días bloqueados. Estás disponible todos los días laborables.',
+    'blocked_remove' => 'Quitar',
     'blocked_confirm_remove' => '¿Quitar el bloqueo de este día? Volverá a estar disponible para reservas.',
     // Blocked-day validation messages / Mensajes de validación de día bloqueado
     'blocked_err_required' => 'Elige una fecha.',
@@ -230,6 +225,6 @@ return [
     'login_title' => 'Acceso al panel',
     'login_password' => 'Contraseña',
     'login_submit' => 'Entrar',
-    'login_back' => '← volver al sitio',
+    'login_back' => '← Volver al sitio',
 
 ];

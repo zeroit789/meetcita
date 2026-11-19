@@ -32,12 +32,11 @@ return [
 
     // ── 2. WIZARD / WIZARD DE RESERVA ─────────────────────────────────────
     // Step indicator / Indicador de pasos
-    'steps_01' => '01 day',
-    'steps_02' => '02 time',
-    'steps_03' => '03 details',
+    'steps_01' => 'Day',
+    'steps_02' => 'Time',
+    'steps_03' => 'Your details',
 
     // Step 1: pick a day / Paso 1: elegir día
-    'step1_cmd' => '$ ./availability.sh --calendar',
     'step1_title' => 'Pick a day',
     'cal_prev_aria' => 'Previous month',
     'cal_next_aria' => 'Next month',
@@ -53,19 +52,17 @@ return [
     'cal_days_join' => ', ',
 
     // Step 2: pick a time / Paso 2: elegir hora
-    'step2_cmd' => '$ ./availability.sh --slots',
     'step2_title' => 'Pick a length and time',
     'step2_subtitle_pre' => 'Open slots for',
-    'step2_duration_label' => '// meeting length',
+    'step2_duration_label' => 'Meeting length',
     'btn_30min' => '30 min',
     'btn_1hour' => '1 hour',
     'btn_minutes' => ':min min',
-    'step2_no_slots' => '// no slots left on this day',
+    'step2_no_slots' => 'No free times left on this day.',
     'step2_no_slots_hint' => 'Try another day.',
-    'step2_back' => '← change day',
+    'step2_back' => '← Change day',
 
     // Step 3: details form / Paso 3: formulario de datos
-    'step3_cmd' => '$ ./book.sh --details',
     'step3_title' => 'Your details',
     'step3_summary_pre' => 'Appointment for',
     'step3_summary_at' => 'at',
@@ -87,9 +84,9 @@ return [
     'field_attendee_emails' => "Attendees' emails",
     'field_attendee_emails_optional' => '(optional)',
     'ph_attendee_emails' => 'anna@email.com, john@email.com',
-    'help_attendee_emails' => "// they'll get the invite with the video call link. Separate them with commas.",
+    'help_attendee_emails' => 'They\'ll get the invite with the video call link. Separate them with commas.',
     'field_message' => 'What would you like to discuss?',
-    'help_message' => "// please don't include health data or other sensitive data: it isn't needed for the booking.",
+    'help_message' => 'Please don\'t include health data or other sensitive data: it isn\'t needed for the booking.',
     'ph_message' => 'Tell us briefly what you want to do or talk about...',
     // ES: Primera capa de protección de datos (bajo el formulario).
     // EN: First-layer data-protection notice (under the form).
@@ -106,19 +103,18 @@ return [
     'privacy_retention' => 'Kept for :months months after the booking and then deleted.',
     'privacy_more' => 'More information in the :link.',
     'privacy_link' => 'privacy policy',
-    'step3_back' => '← change time',
+    'step3_back' => '← Change time',
     'btn_book' => 'Book appointment',
     'btn_booking' => 'Booking...',
 
     // Step 4: confirmation / Paso 4: confirmación
-    'step4_cmd' => '$ appointment --status requested',
     'step4_title' => 'Appointment requested!',
     'step4_summary_pre' => 'Your appointment for',
     'step4_summary_at' => 'at',
     'step4_summary_post' => 'is registered.',
     'step4_ref_label' => 'Your booking no.',
-    'step4_ref_hint' => '// keep it: quote it if you need to write to us about this appointment',
-    'step4_email_note' => "// we'll confirm by email as soon as possible",
+    'step4_ref_hint' => 'Keep it: quote it if you need to write to us about this appointment.',
+    'step4_email_note' => 'We\'ll confirm your appointment by email as soon as possible.',
     'btn_book_another' => 'Book another appointment',
 
     // Duration labels (used across steps) / Etiquetas de duración (varios pasos)
@@ -158,23 +154,22 @@ return [
     // EN: aria-label for the sun/moon theme toggle button.
     'theme_toggle' => 'Toggle theme',
     'footer_website' => 'Website',
-    'footer_repo' => 'Source',
 
     // ── 5. LANDING / PÁGINA DE INICIO ─────────────────────────────────────
-    'home_title' => 'Appointment booking system',
-    'home_lead' => 'A clean, open-source demo of a booking system: calendar, time selection, online or in-person format and a management panel. Try it by booking a sample appointment.',
+    'home_title' => 'Book your appointment',
+    'home_lead' => 'Book an appointment in a couple of minutes: pick the day and time that suit you best, online or in person, and we\'ll confirm it by email.',
     'home_cta_book' => 'Book an appointment',
-    'home_cta_repo' => 'View the source',
-    'home_feat_1' => 'reactive calendar, no reloads',
-    'home_feat_2' => 'online (Meet) or in person',
-    'home_feat_3' => 'bilingual management panel',
+    'home_cta_repo' => 'View the demo source code',
+    'home_feat_1' => 'You pick a free day and time',
+    'home_feat_2' => 'Online by video call or in person',
+    'home_feat_3' => 'Confirmation by email',
 
     // ── 6. PANEL / TABLA DE CITAS ─────────────────────────────────────────
     'panel_title' => 'Appointments panel',
     'panel_heading' => 'Appointments panel',
-    'panel_subtitle' => 'All requests received from /citas.',
-    'panel_logout' => 'log out',
-    'panel_empty' => 'no appointments registered yet',
+    'panel_subtitle' => 'All appointment requests received.',
+    'panel_logout' => 'Log out',
+    'panel_empty' => 'No appointments registered yet.',
     // Table columns / Columnas de la tabla
     'col_ref' => 'Booking #',
     'col_date' => 'Date',
@@ -190,18 +185,18 @@ return [
     'col_actions' => 'Actions',
     'meet_link' => 'Meet',
     // Statuses / Estados
-    'status_pending' => 'pending',
-    'status_confirmed' => 'confirmed',
-    'status_cancelled' => 'cancelled',
+    'status_pending' => 'Pending',
+    'status_confirmed' => 'Confirmed',
+    'status_cancelled' => 'Cancelled',
     // Actions / Acciones
-    'action_confirm' => 'confirm',
-    'action_cancel' => 'cancel',
+    'action_confirm' => 'Confirm',
+    'action_cancel' => 'Cancel',
     // ES: Cancelación desde el panel (motivo opcional) y errores de estado.
     // EN: Cancelling from the panel (optional reason) and status errors.
     'cancel_reason_label' => 'Reason for the client (optional)',
     'cancel_reason_placeholder' => 'It will be emailed exactly as you write it.',
-    'cancel_submit' => 'cancel and notify',
-    'cancel_back' => 'back',
+    'cancel_submit' => 'Cancel and notify',
+    'cancel_back' => 'Back',
     'panel_err_only_pending' => 'Only pending appointments can be confirmed.',
     'panel_err_already_cancelled' => 'That appointment was already cancelled.',
 
@@ -213,8 +208,8 @@ return [
     'blocked_field_reason_optional' => '(optional)',
     'blocked_ph_reason' => 'Holiday, day off...',
     'blocked_add' => 'Block day',
-    'blocked_empty' => "no blocked days. You're available every working day.",
-    'blocked_remove' => 'remove',
+    'blocked_empty' => 'No blocked days. You\'re available every working day.',
+    'blocked_remove' => 'Remove',
     'blocked_confirm_remove' => 'Remove the block on this day? It will be bookable again.',
     // Blocked-day validation messages / Mensajes de validación de día bloqueado
     'blocked_err_required' => 'Pick a date.',
@@ -228,6 +223,6 @@ return [
     'login_title' => 'Panel access',
     'login_password' => 'Password',
     'login_submit' => 'Sign in',
-    'login_back' => '← back to the site',
+    'login_back' => '← Back to the site',
 
 ];

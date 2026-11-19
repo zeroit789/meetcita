@@ -16,10 +16,8 @@
 @section('content')
   <section class="max-w-7xl mx-auto px-5 py-10 min-h-screen">
 
-    {{-- Terminal-style header / Cabecera estilo terminal --}}
     <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
       <div>
-        <p class="font-mono text-sm text-term/70 mb-1">$ ./panel.sh --appointments</p>
         <h1 class="font-sans font-bold text-3xl text-ink">{{ __('citas.panel_heading') }}</h1>
         <p class="text-muted text-sm mt-1">{{ __('citas.panel_subtitle') }}</p>
       </div>
@@ -34,7 +32,7 @@
         <form method="POST" action="{{ route('panel.logout') }}">
           @csrf
           <button type="submit"
-                  class="inline-flex items-center gap-2 rounded-lg border border-brand/30 px-4 py-2 font-mono text-sm text-muted hover:text-brand-glow hover:border-brand transition-colors">
+                  class="inline-flex items-center gap-2 rounded-lg border border-brand/30 px-4 py-2 text-sm text-muted hover:text-brand-glow hover:border-brand transition-colors">
             {{ __('citas.panel_logout') }} →
           </button>
         </form>

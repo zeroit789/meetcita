@@ -5,17 +5,19 @@
 |==============================================================================
 | ES: Punto de entrada único. Tailwind 4 lee el bloque @theme de abajo y
 |     convierte cada token en una utilidad real (bg-base, text-ink,
-|     border-brand, ...). La identidad visual es oscura + acento, con toque
-|     terminal pero NEUTRA: sin marca de ninguna empresa concreta.
+|     border-brand, ...). Estética sobria y neutra pensada para negocios
+|     (asesorías, consultas, despachos): tema claro por defecto, oscuro
+|     opcional y un único color de acento que sale de la config.
 | EN: Single entry point. Tailwind 4 reads the @theme block below and turns
 |     every token into a real utility (bg-base, text-ink, border-brand, ...).
-|     The visual identity is dark + accent, terminal-flavoured but NEUTRAL:
-|     no brand of any specific company.
+|     Sober, neutral look aimed at businesses (advisors, practices, offices):
+|     light theme by default, optional dark one and a single accent colour
+|     taken from config.
 |
 | INDEX / ÍNDICE
 |   1. IMPORTS .............. tailwind + content sources / fuentes de contenido
-|   2. RE-THEME ............. ⭐ change the accent here / cambia el acento aquí
-|   3. SURFACES ............. 🌓 dark + light palettes / paletas oscura y clara
+|   2. ACCENT ............... from config / sale de la config
+|   3. SURFACES ............. 🌓 light + dark palettes / paletas clara y oscura
 |   4. THEME TOKENS ......... colors + fonts + shadows / colores, fuentes, sombra
 |   5. BASE ................. body background / fondo del body
 |   6. COMPONENTS ........... .glass + .btn-primary / clases reutilizables
@@ -32,166 +34,167 @@
 
 /*
 | ─────────────────────────────────────────────────────────────────────────
-| 2. RE-THEME — ⭐ THE ONLY PLACE YOU NEED TO TOUCH TO CHANGE THE COLOR ⭐
-|    RE-TEMATIZAR — ⭐ EL ÚNICO SITIO QUE TOCAR PARA CAMBIAR EL COLOR ⭐
+| 2. ACCENT — the business colour, set from config (APPOINTMENTS_ACCENT)
+|    ACENTO — el color del negocio, sale de la config (APPOINTMENTS_ACCENT)
 | ─────────────────────────────────────────────────────────────────────────
-| ES: Elige tu color de acento UNA SOLA VEZ aquí. Todo lo demás (botones,
-|     bordes, día seleccionado del calendario, anillos de foco) se deriva de
-|     estas variables. ¿Lo quieres azul? --accent: #2563eb;
-|     --accent-glow: #3b82f6;  — listo.
-| EN: Pick your accent colour ONCE here. Everything else (buttons, borders,
-|     calendar selection, focus rings) is derived from these variables.
-|     Want blue? --accent: #2563eb; --accent-glow: #3b82f6;  — done.
+| ES: --accent y --accent-glow NO se fijan aquí: los inyecta el parcial
+|     resources/views/partials/theme-vars.blade.php (en los dos layouts) con el
+|     hex validado de config('appointments.accent'). Estos valores son solo la
+|     red de seguridad si el parcial no está. El acento se usa como RELLENO con
+|     texto blanco encima (botones, día elegido), así que debe ser oscuro (AA
+|     4,5:1 con blanco). Para el TEXTO de acento se derivan tonos por tema en la
+|     sección 3, así sigue legible sobre fondo claro y sobre fondo oscuro.
+| EN: --accent and --accent-glow are NOT set here: the partial
+|     resources/views/partials/theme-vars.blade.php (in both layouts) injects
+|     them with the validated hex from config('appointments.accent'). These
+|     values are only the safety net if the partial is missing. The accent is
+|     used as a FILL with white text on top (buttons, chosen day), so it must be
+|     dark (AA 4.5:1 against white). Accent TEXT gets per-theme shades derived
+|     in section 3, so it stays readable on both light and dark backgrounds.
 */
 :root {
-    /* ES: Acento principal (botones, día seleccionado, bordes primarios).
-       EN: Main accent (buttons, selected day, primary borders). */
-    --accent: #9333ea;
+    /* ES: Acento principal (relleno de botones y del día elegido, bordes).
+       EN: Main accent (button and chosen-day fill, borders). */
+    --accent: #1d4ed8;
 
-    /* ES: Acento más vivo para hover / texto luminoso sobre fondos oscuros.
-       EN: Brighter accent for hover / glowing text on dark backgrounds. */
-    --accent-glow: #a855f7;
-
-    /* ES: Acento muy claro, texto legible SOBRE rellenos de acento tenues.
-       EN: Very light accent, readable text ON faint accent fills. */
-    --accent-bright: #e9d5ff;
-
-    /* ES: Color "terminal" de éxito (badge online, confirmar, punto de hoy).
-          Cámbialo también si choca con tu acento.
-       EN: "Terminal" success colour (online badge, confirm, today dot).
-          Change it too if your accent clashes with green. */
-    --term: #22ff88;
+    /* ES: Acento claro para texto sobre fondo OSCURO (derivado si no se configura).
+       EN: Light accent for text on DARK backgrounds (derived when not configured). */
+    --accent-glow: color-mix(in srgb, var(--accent) 45%, white);
 }
 
 /*
 | ─────────────────────────────────────────────────────────────────────────
-| 3. SURFACES — 🌓 PALETTES PER THEME (dark / light)
-|    SUPERFICIES — 🌓 PALETAS POR TEMA (oscuro / claro)
+| 3. SURFACES — 🌓 PALETTES PER THEME (light / dark)
+|    SUPERFICIES — 🌓 PALETAS POR TEMA (claro / oscuro)
 | ─────────────────────────────────────────────────────────────────────────
-| ES: Las superficies y textos (base, surface, ink, muted, faint) YA NO son
-|     fijos: pasan a ser variables CSS reactivas gobernadas por el atributo
-|     <html data-theme>. El pequeño script anti-parpadeo de los layouts fija
-|     ese atributo antes de pintar, así las utilidades bg-base / text-ink /
-|     border-brand siguen el tema elegido solas — SIN tocar ningún blade.
-|     • [data-theme="dark"]  → la paleta oscura original (también la default).
-|     • [data-theme="light"] → una paleta clara profesional y legible.
-|     El acento (sección 2) sigue re-tematizable y sirve para AMBOS temas.
-| EN: The surfaces and texts (base, surface, ink, muted, faint) are NO LONGER
-|     fixed: they become reactive CSS variables driven by the <html data-theme>
-|     attribute. The tiny anti-FOUC script in the layouts sets that attribute
-|     before paint, so utilities like bg-base / text-ink / border-brand follow
-|     the chosen theme automatically — WITHOUT touching any blade.
-|     • [data-theme="dark"]  → the original dark palette (also the default).
-|     • [data-theme="light"] → a professional, readable light palette.
-|     The accent (section 2) stays re-themable and serves BOTH themes.
+| ES: Superficies, textos y colores de estado son variables reactivas al
+|     atributo <html data-theme>, que fija el script anti-parpadeo de los
+|     layouts antes de pintar. Los pares texto/fondo están elegidos para
+|     cumplir WCAG 2.1 AA (4,5:1) en los dos temas. El claro es el de partida
+|     (config 'theme'); el visitante cambia con el botón sol/luna.
+| EN: Surfaces, texts and status colours are variables driven by the
+|     <html data-theme> attribute, which the layouts' anti-FOUC script sets
+|     before paint. Text/background pairs are chosen to meet WCAG 2.1 AA
+|     (4.5:1) in both themes. Light is the default (config 'theme'); visitors
+|     switch with the sun/moon button.
 | ─────────────────────────────────────────────────────────────────────────
 */
 
-/* ES: Tema OSCURO = el aspecto original. Se aplica por defecto (:root) y cuando
-       el html tiene data-theme="dark". Edita aquí las superficies/texto OSCUROS.
-   EN: DARK theme = the original look. Applied by default (:root) and when the
-       html has data-theme="dark". Edit these to tune the DARK surfaces/text. */
+/* ES: Tema CLARO (por defecto): texto oscuro sobre superficies claras.
+   EN: LIGHT theme (default): dark text on light surfaces. */
 :root,
-[data-theme='dark'] {
-    --surface-base: #1d1d2a;    /* ES: fondo de página / EN: page background */
-    --surface-card: #282838;    /* ES: tarjetas / EN: cards */
-    --text-ink: #e4e4e7;        /* ES: texto principal / EN: main text */
-    --text-muted: #a1a1aa;      /* ES: texto secundario / EN: secondary text */
-    --text-faint: #8b8b9c;      /* ES: textos de ayuda / EN: hints */
+[data-theme='light'] {
+    color-scheme: light;        /* ES: controles nativos claros / EN: light native controls */
+    --surface-base: #f6f7f9;    /* ES: fondo de página / EN: page background */
+    --surface-card: #ffffff;    /* ES: tarjetas / EN: cards */
+    --text-ink: #18181b;        /* ES: texto principal / EN: main text */
+    --text-muted: #4b4b55;      /* ES: texto secundario / EN: secondary text */
+    --text-faint: #5c5c66;      /* ES: textos de ayuda (AA sobre blanco y gris) / EN: hints (AA on white and grey) */
 
-    /* ES: Ajuste del glass en OSCURO: % de tinte de surface + alfa del borde de acento.
-       EN: Glass tuning for DARK: surface tint % + accent border alpha (subtle). */
-    --glass-surface-mix: 60%;   /* ES: opacidad de la tarjeta / EN: how opaque the card is */
-    --glass-border-alpha: 15%;  /* ES: alfa borde acento (reposo) / EN: accent border alpha (rest) */
-    --glass-border-hover: 25%;  /* ES: alfa borde acento (hover) / EN: accent border alpha (hover) */
+    /* ES: Texto de acento: el acento algo oscurecido para asegurar AA sobre blanco.
+       EN: Accent text: the accent slightly darkened to ensure AA on white. */
+    --accent-text: color-mix(in srgb, var(--accent) 85%, black);
 
-    /* ES: Acento para OSCURO (mismo morado, resalta sobre fondos oscuros).
-       EN: Accent for DARK (same purple, it pops on dark backgrounds). */
-    --accent-theme: var(--accent);
+    /* ES: Estados (éxito / error) con contraste AA sobre fondo claro.
+       EN: Status colours (success / error) with AA contrast on light. */
+    --success: #15803d;
+    --danger: #b91c1c;
+
+    /* ES: Borde gris neutro de las tarjetas (reposo / hover).
+       EN: Neutral grey card border (rest / hover). */
+    --card-border: #d4d4dc;
+    --card-border-hover: #b4b4c0;
+
+    /* ES: Borde de campos y controles: 3:1 sobre blanco (WCAG 1.4.11).
+       EN: Field and control border: 3:1 on white (WCAG 1.4.11). */
+    --line: #8a8a94;
 }
 
-/* ES: Tema CLARO = profesional y legible (AA). Texto oscuro sobre superficies
-       claras. Edita aquí las superficies/texto CLAROS.
-   EN: LIGHT theme = professional, AA-readable. Dark text on light surfaces.
-       Edit these to tune the LIGHT surfaces/text. */
-[data-theme='light'] {
-    --surface-base: #f7f7fb;    /* ES: fondo (blanco roto) / EN: page background (off-white) */
-    --surface-card: #ffffff;    /* ES: tarjetas (blanco puro) / EN: cards (pure white) */
-    --text-ink: #18181b;        /* ES: texto principal (casi negro, AA) / EN: main text (near-black, AA) */
-    --text-muted: #52525b;      /* ES: texto secundario (AA) / EN: secondary text (AA) */
-    --text-faint: #71717a;      /* ES: ayuda (sigue AA sobre blanco) / EN: hints (still AA on white) */
+/* ES: Tema OSCURO: texto claro sobre superficies oscuras.
+   EN: DARK theme: light text on dark surfaces. */
+[data-theme='dark'] {
+    color-scheme: dark;         /* ES: controles nativos oscuros / EN: dark native controls */
+    --surface-base: #17181c;    /* ES: fondo de página / EN: page background */
+    --surface-card: #22242a;    /* ES: tarjetas / EN: cards */
+    --text-ink: #ececf0;        /* ES: texto principal / EN: main text */
+    --text-muted: #b4b4bc;      /* ES: texto secundario / EN: secondary text */
+    --text-faint: #a0a0aa;      /* ES: textos de ayuda / EN: hints */
 
-    /* ES: El glass en CLARO debe ser más opaco y usar un borde de acento más
-          marcado para no desaparecer sobre fondo pálido.
-       EN: Glass on LIGHT must be more opaque and use a darker accent border so
-          it doesn't vanish over a pale background. */
-    --glass-surface-mix: 88%;   /* ES: tarjetas casi sólidas / EN: cards almost solid */
-    --glass-border-alpha: 28%;  /* ES: alfa borde acento (reposo) / EN: accent border alpha (rest) */
-    --glass-border-hover: 45%;  /* ES: alfa borde acento (hover) / EN: accent border alpha (hover) */
+    /* ES: Texto de acento: la versión clara del acento (--accent-glow).
+       EN: Accent text: the light version of the accent (--accent-glow). */
+    --accent-text: var(--accent-glow);
 
-    /* ES: Acento un pelín más profundo en CLARO para mejor contraste sobre blanco.
-       EN: Slightly deeper accent on LIGHT for better contrast on white text fills. */
-    --accent-theme: #7e22ce;
+    /* ES: Estados con contraste AA sobre fondo oscuro.
+       EN: Status colours with AA contrast on dark. */
+    --success: #4ade80;
+    --danger: #f87171;
+
+    /* ES: Borde gris sutil de las tarjetas (reposo / hover).
+       EN: Subtle grey card border (rest / hover). */
+    --card-border: #3a3c44;
+    --card-border-hover: #50525c;
+
+    /* ES: Borde de campos y controles: 3:1 sobre la tarjeta (WCAG 1.4.11).
+       EN: Field and control border: 3:1 on the card (WCAG 1.4.11). */
+    --line: #75767f;
 }
 
 /*
 | ─────────────────────────────────────────────────────────────────────────
 | 4. THEME TOKENS EN / ES
-| ES: Mapeamos las variables de arriba a nombres de utilidad Tailwind. Las
-|     superficies/texto se alimentan de las vars REACTIVAS AL TEMA de la
-|     sección 3 (vía var()), así cada utilidad (bg-base, surface, text-ink,
-|     text-muted, text-faint) cambia sola con <html data-theme>. El acento
-|     viene de la sección 2. NO edites colores aquí — edita la sección 2
-|     (acento) o la sección 3 (temas).
-| EN: Map the variables above to Tailwind utility names. The surfaces/text are
-|     fed by the THEME-REACTIVE vars from section 3 (via var()), so every
-|     utility (bg-base, surface, text-ink, text-muted, text-faint) switches
-|     automatically with <html data-theme>. The accent comes from section 2.
-|     DO NOT edit colours here — edit section 2 (accent) or section 3 (themes).
+| ES: Mapeamos las variables de arriba a utilidades Tailwind (bg-base,
+|     text-ink, text-brand-glow, text-success, text-danger...). NO edites
+|     colores aquí: el acento sale de la config y los temas de la sección 3.
+| EN: Map the variables above to Tailwind utilities (bg-base, text-ink,
+|     text-brand-glow, text-success, text-danger...). DO NOT edit colours here:
+|     the accent comes from config and the themes from section 3.
 | ─────────────────────────────────────────────────────────────────────────
 */
 @theme {
-    /* ES: Familia de acento, alimentada por las variables :root (re-tematizable).
-       EN: Accent family, fed from the :root variables (re-themable). */
-    --color-brand: var(--accent-theme);
-    --color-brand-glow: var(--accent-glow);
-    --color-brand-bright: var(--accent-bright);
-    --color-term: var(--term);
+    /* ES: Familia de acento. brand = relleno/borde; brand-glow = TEXTO de acento
+          (ya ajustado a cada tema).
+       EN: Accent family. brand = fill/border; brand-glow = accent TEXT
+          (already tuned per theme). */
+    --color-brand: var(--accent);
+    --color-brand-glow: var(--accent-text);
 
-    /* ES: Paleta neutra mapeada a las vars REACTIVAS AL TEMA (sección 3). Siguen
-          el atributo <html data-theme>, así bg-base / text-ink / ... cambian
-          solas entre oscuro y claro.
-       EN: Neutral palette mapped to the THEME-REACTIVE vars (section 3). These
-          follow the <html data-theme> attribute, so bg-base / text-ink / ...
-          change between dark and light on their own. */
+    /* ES: Colores de estado reactivos al tema. EN: Theme-reactive status colours. */
+    --color-success: var(--success);
+    --color-danger: var(--danger);
+
+    /* ES: Borde de campos y controles (utilidad border-line).
+       EN: Field and control border (border-line utility). */
+    --color-line: var(--line);
+
+    /* ES: Paleta neutra reactiva al tema (sección 3).
+       EN: Theme-reactive neutral palette (section 3). */
     --color-base: var(--surface-base);     /* ES: fondo de página / EN: page background */
     --color-surface: var(--surface-card);  /* ES: tarjetas / EN: cards */
     --color-ink: var(--text-ink);          /* ES: texto principal / EN: main text */
     --color-muted: var(--text-muted);      /* ES: texto secundario / EN: secondary text */
     --color-faint: var(--text-faint);      /* ES: textos de ayuda / EN: hints */
 
-    /* ES: Fuentes. Sans = UI, Mono = el toque terminal. Ambas se cargan con un
-          <link> de Bunny Fonts en los layouts; las pilas degradan con gracia.
-       EN: Fonts. Sans = UI, Mono = the terminal flavour. Both are loaded via a
-          Bunny Fonts <link> in the layouts; the stacks fall back gracefully. */
-    --font-sans: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+    /* ES: Fuentes del sistema: no se descarga ninguna (la CSP solo permite
+          font-src 'self') y cada visitante ve la tipografía de su equipo.
+       EN: System fonts: nothing is downloaded (the CSP only allows
+          font-src 'self') and each visitor sees their device's typeface. */
+    --font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
 
-    /* ES: Sombra de brillo de acento (botones / foco). Acento del tema a baja opacidad.
-       EN: Accent glow shadow (buttons / focus). Uses the theme accent at low alpha. */
-    --shadow-glow-brand: 0 0 24px color-mix(in srgb, var(--accent-theme) 35%, transparent);
+    /* ES: Sombra suave de acento para el hover del botón principal.
+       EN: Soft accent shadow for the primary button hover. */
+    --shadow-glow-brand: 0 4px 14px color-mix(in srgb, var(--accent) 30%, transparent);
 }
 
 /* ── 5. BASE EN / ES ─────────────────────────────────────────────────────── */
-/* ES: El fondo del documento sigue --color-base (reactivo al tema), así el
-       body se pone oscuro o claro con el tema elegido. Una transición corta
-       suaviza el cambio.
-   EN: Document background follows the theme-reactive --color-base, so the body
-       turns dark or light with the chosen theme. A short transition softens the
-       toggle. */
+/* ES: El fondo del documento sigue --color-base (reactivo al tema). El
+       color-scheme de los controles nativos lo fija cada tema en la sección 3.
+       Una transición corta suaviza el cambio.
+   EN: Document background follows the theme-reactive --color-base. The native
+       controls' color-scheme is set by each theme in section 3. A short
+       transition softens the toggle. */
 body {
     background-color: var(--color-base);
-    color-scheme: light dark; /* ES: tema nativo de formularios/scroll / EN: native form/scrollbar theming */
     transition: background-color 0.25s ease, color 0.25s ease;
 }
 
@@ -202,20 +205,18 @@ body {
 | ─────────────────────────────────────────────────────────────────────────
 */
 @layer components {
-    /* ES: Tarjeta translúcida con borde de acento tenue (la superficie estrella).
-          El % de tinte y las alfas del borde vienen de las vars del tema
-          (sección 3), así la tarjeta es legible en AMBOS fondos, oscuro y claro.
-       EN: Translucent card with a faint accent border (the signature surface).
-          Tint % and border alphas come from the theme vars (section 3), so the
-          card stays legible on BOTH dark and light backgrounds. */
+    /* ES: Tarjeta principal: superficie sólida con borde gris neutro. Sin
+          transparencia ni desenfoque, así el contraste del texto es fijo y
+          medible en AMBOS temas.
+       EN: Main card: solid surface with a neutral grey border. No transparency
+          or blur, so text contrast is fixed and measurable in BOTH themes. */
     .glass {
-        background: color-mix(in srgb, var(--color-surface) var(--glass-surface-mix), transparent);
-        border: 1px solid color-mix(in srgb, var(--accent-theme) var(--glass-border-alpha), transparent);
-        backdrop-filter: blur(12px);
+        background: var(--color-surface);
+        border: 1px solid var(--card-border);
         border-radius: 0.75rem;
     }
     .glass:hover {
-        border-color: color-mix(in srgb, var(--accent-theme) var(--glass-border-hover), transparent);
+        border-color: var(--card-border-hover);
     }
 
     /* ES: Acabado del botón primario (elevación + brillo al hover). El color

@@ -3,10 +3,10 @@
   PanelCitas view — appointments table for the owner
   Vista PanelCitas — tabla de citas para el dueño
   ============================================================================
-  ES: Tema oscuro neutro + acento. Todas las etiquetas pasan por __('citas.*')
+  ES: Tema claro u oscuro con el acento de config. Todas las etiquetas pasan por __('citas.*')
       para que el panel también sea bilingüe. El div raíz único es obligatorio
       en Livewire.
-  EN: Neutral dark + accent theme. All labels go through __('citas.*') so the
+  EN: Light or dark theme with the config accent. All labels go through __('citas.*') so the
       panel is bilingual too. The single root div is mandatory in Livewire.
   ============================================================================
 --}}
@@ -18,19 +18,19 @@
     {{-- ES: Error controlado de una acción (p. ej. confirmar una cita que no está pendiente).
          EN: Handled action error (e.g. confirming a booking that is not pending). --}}
     @error('accion')
-      <div role="alert" class="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2 text-sm text-red-400">{{ $message }}</div>
+      <div role="alert" class="mb-4 rounded-lg border border-danger/40 bg-danger/10 px-4 py-2 text-sm text-danger">{{ $message }}</div>
     @enderror
 
     @if($citas->isEmpty())
       {{-- No appointments yet / Sin citas todavía --}}
-      <div class="rounded-lg border border-brand/15 bg-base/60 p-8 text-center">
-        <p class="font-mono text-sm text-muted">// {{ __('citas.panel_empty') }}</p>
+      <div class="rounded-lg border border-[var(--card-border)] bg-base p-8 text-center">
+        <p class="text-sm text-muted">{{ __('citas.panel_empty') }}</p>
       </div>
     @else
       <table class="w-full text-left border-collapse">
         {{-- Table header / Cabecera de la tabla --}}
         <thead>
-          <tr class="font-mono text-[0.7rem] uppercase tracking-wide text-faint border-b border-brand/20">
+          <tr class="text-xs uppercase tracking-wide text-faint border-b border-[var(--card-border)]">
             <th class="py-3 px-2">{{ __('citas.col_ref') }}</th>
             <th class="py-3 px-2">{{ __('citas.col_date') }}</th>
             <th class="py-3 px-2">{{ __('citas.col_time') }}</th>
@@ -48,36 +48,36 @@
 
         <tbody class="text-sm text-ink">
           @foreach($citas as $cita)
-            <tr class="border-b border-brand/10 hover:bg-brand/5 transition-colors align-top">
+            <tr class="border-b border-[var(--card-border)] hover:bg-brand/5 transition-colors align-top">
               {{-- Booking reference / Nº de cita (identificador público) --}}
               <td class="py-3 px-2 font-mono text-xs whitespace-nowrap font-bold text-brand-glow">{{ $cita->reference ?: '—' }}</td>
               {{-- Date / Fecha --}}
-              <td class="py-3 px-2 font-mono text-xs whitespace-nowrap">
+              <td class="py-3 px-2 text-xs whitespace-nowrap">
                 {{ $cita->date->locale(app()->getLocale())->isoFormat('ddd D MMM YYYY') }}
               </td>
               {{-- Time / Hora --}}
-              <td class="py-3 px-2 font-mono text-xs whitespace-nowrap text-brand-glow">{{ $cita->time }}</td>
+              <td class="py-3 px-2 text-xs whitespace-nowrap text-brand-glow">{{ $cita->time }}</td>
               {{-- Duration / Duración --}}
-              <td class="py-3 px-2 font-mono text-xs whitespace-nowrap">
+              <td class="py-3 px-2 text-xs whitespace-nowrap">
                 {{ $cita->duration == 60 ? __('citas.dur_1hour') : $cita->duration . ' ' . __('citas.dur_min_unit') }}
               </td>
               {{-- Modality: online (with Meet link if it exists) or in person.
                    Modalidad: online (con enlace de Meet si existe) o presencial. --}}
-              <td class="py-3 px-2 font-mono text-xs whitespace-nowrap">
+              <td class="py-3 px-2 text-xs whitespace-nowrap">
                 @if($cita->modality === 'presencial')
                   {{-- In person: accent badge / Presencial: badge de acento --}}
                   <span class="inline-block rounded-full border border-brand/40 bg-brand/10 px-2 py-0.5 text-brand-glow">{{ __('citas.modality_inperson') }}</span>
                 @else
-                  {{-- Online: term badge + Meet link if generated. Only render
+                  {{-- Online: success badge + Meet link if generated. Only render
                        the link if the URL starts with https:// (avoids unsafe
                        schemes like javascript:/data: if the data were tampered).
-                       Online: badge term + enlace Meet si se generó. Solo lo
+                       Online: badge verde + enlace Meet si se generó. Solo lo
                        renderizamos si la URL empieza por https:// (evita esquemas
                        peligrosos si el dato viniera manipulado). --}}
-                  <span class="inline-block rounded-full border border-term/40 bg-term/10 px-2 py-0.5 text-term">{{ __('citas.modality_online') }}</span>
+                  <span class="inline-block rounded-full border border-success/40 bg-success/10 px-2 py-0.5 text-success">{{ __('citas.modality_online') }}</span>
                   @if($cita->google_meet_url && \Illuminate\Support\Str::startsWith($cita->google_meet_url, 'https://'))
                     <a href="{{ $cita->google_meet_url }}" target="_blank" rel="noopener"
-                       class="block mt-1 text-term underline decoration-dotted hover:text-brand-glow">{{ __('citas.meet_link') }} ↗</a>
+                       class="block mt-1 text-success underline decoration-dotted hover:text-brand-glow">{{ __('citas.meet_link') }} ↗</a>
                   @endif
                 @endif
               </td>
@@ -99,8 +99,8 @@
                   // ES: Color del badge + etiqueta traducida según el estado.
                   // EN: Badge colour + localised label by status.
                   $style = match($cita->status) {
-                    'confirmada' => 'border-term/40 bg-term/10 text-term',
-                    'cancelada'  => 'border-red-500/40 bg-red-500/10 text-red-400',
+                    'confirmada' => 'border-success/40 bg-success/10 text-success',
+                    'cancelada'  => 'border-danger/40 bg-danger/10 text-danger',
                     default      => 'border-brand/40 bg-brand/10 text-brand-glow',
                   };
                   $statusLabel = match($cita->status) {
@@ -109,7 +109,7 @@
                     default      => __('citas.status_pending'),
                   };
                 @endphp
-                <span class="inline-block rounded-full border px-2.5 py-0.5 font-mono text-[0.65rem] uppercase {{ $style }}">
+                <span class="inline-block rounded-full border px-2.5 py-0.5 text-xs uppercase {{ $style }}">
                   {{ $statusLabel }}
                 </span>
               </td>
@@ -119,7 +119,7 @@
                   {{-- ES: Confirmar (solo si está pendiente) / EN: Confirm (only if pending) --}}
                   @if($cita->status === 'pendiente')
                     <button type="button" wire:click="confirmar({{ $cita->id }})"
-                            class="rounded-md border border-term/40 px-2 py-1 font-mono text-[0.65rem] text-term hover:bg-term/10 transition-colors">
+                            class="rounded-md border border-success/40 px-2 py-1 text-xs text-success hover:bg-success/10 transition-colors">
                       ✓ {{ __('citas.action_confirm') }}
                     </button>
                   @endif
@@ -127,7 +127,7 @@
                        EN: Cancel (hidden if already cancelled): opens the reason form. --}}
                   @if($cita->status !== 'cancelada')
                     <button type="button" wire:click="pedirCancelacion({{ $cita->id }})"
-                            class="rounded-md border border-red-500/40 px-2 py-1 font-mono text-[0.65rem] text-red-400 hover:bg-red-500/10 transition-colors">
+                            class="rounded-md border border-danger/40 px-2 py-1 text-xs text-danger hover:bg-danger/10 transition-colors">
                       ✕ {{ __('citas.action_cancel') }}
                     </button>
                   @endif
@@ -137,23 +137,23 @@
             {{-- ES: Formulario de cancelación con motivo opcional (se envía por email al cliente).
                  EN: Cancellation form with an optional reason (emailed to the client). --}}
             @if($cancelandoId === $cita->id)
-              <tr class="border-b border-brand/10 bg-red-500/5">
+              <tr class="border-b border-[var(--card-border)] bg-danger/5">
                 <td colspan="12" class="py-3 px-2">
                   <form wire:submit="cancelar({{ $cita->id }})" class="flex flex-col gap-2 sm:flex-row sm:items-end">
                     <label class="flex-1 text-xs text-muted">
                       {{ __('citas.cancel_reason_label') }}
                       <textarea wire:model="motivoCancelacion" rows="2" maxlength="1000"
                                 placeholder="{{ __('citas.cancel_reason_placeholder') }}"
-                                class="mt-1 w-full rounded-md border border-brand/20 bg-base/60 px-2 py-1 text-sm text-ink"></textarea>
-                      @error('motivoCancelacion') <span class="text-red-400">{{ $message }}</span> @enderror
+                                class="mt-1 w-full rounded-md border border-[var(--card-border)] bg-base px-2 py-1 text-sm text-ink"></textarea>
+                      @error('motivoCancelacion') <span class="text-danger">{{ $message }}</span> @enderror
                     </label>
                     <div class="inline-flex gap-1">
                       <button type="submit"
-                              class="rounded-md border border-red-500/40 px-2 py-1 font-mono text-[0.65rem] text-red-400 hover:bg-red-500/10 transition-colors">
+                              class="rounded-md border border-danger/40 px-2 py-1 text-xs text-danger hover:bg-danger/10 transition-colors">
                         ✕ {{ __('citas.cancel_submit') }}
                       </button>
                       <button type="button" wire:click="cerrarCancelacion"
-                              class="rounded-md border border-brand/30 px-2 py-1 font-mono text-[0.65rem] text-muted hover:bg-brand/10 transition-colors">
+                              class="rounded-md border border-brand/30 px-2 py-1 text-xs text-muted hover:bg-brand/10 transition-colors">
                         {{ __('citas.cancel_back') }}
                       </button>
                     </div>
