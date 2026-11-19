@@ -21,7 +21,10 @@ use Livewire\Component;
 |     Livewire (POST), así que los escáneres de correo que abren el enlace no
 |     cambian nada. El id de la cita se fija en mount() (petición ya firmada)
 |     y es #[Locked]: el navegador no puede apuntar a otra cita. Cada acción
-|     relee la cita y vuelve a comprobar estado y plazo (GestionCitas).
+|     relee la cita y vuelve a comprobar estado y plazo (GestionCitas), y
+|     cada petición (acciones y repintados) exige que el token del enlace
+|     siga siendo el de la cita: si se canceló o reprogramó desde otro sitio,
+|     esta página deja de servir (403).
 |     Vistas: 'ver' (datos + botones), 'reprogramar' (días y horas libres),
 |     'cancelar' (confirmación).
 | EN: Lives on the SIGNED-link page (GestionarCitaController). The GET load
@@ -29,7 +32,10 @@ use Livewire\Component;
 |     (POST), so email scanners opening the link change nothing. The booking
 |     id is set in mount() (an already signed request) and is #[Locked]: the
 |     browser can't point at another booking. Every action re-reads the
-|     booking and re-checks state and notice (GestionCitas).
+|     booking and re-checks state and notice (GestionCitas), and every
+|     request (actions and re-renders) requires the link's token to still be
+|     the booking's: if it was cancelled or rescheduled elsewhere, this page
+|     stops working (403).
 |     Views: 'ver' (details + buttons), 'reprogramar' (free days and times),
 |     'cancelar' (confirmation).
 |
@@ -49,6 +55,11 @@ class GestionarCita extends Component
     // EN: Booking being managed (set by the server in mount()).
     #[Locked]
     public int $citaId;
+
+    // ES: Token del enlace con el que se abrió la página (fijado por el servidor).
+    // EN: Token of the link the page was opened with (set by the server).
+    #[Locked]
+    public string $token = '';
 
     // ES: Vista actual: 'ver' | 'reprogramar' | 'cancelar'.
     // EN: Current view: 'ver' | 'reprogramar' | 'cancelar'.
@@ -72,21 +83,40 @@ class GestionarCita extends Component
     public bool $avisoOk = false;
 
     /**
-     * ES: Recibe el id de la cita desde la página firmada.
-     * EN: Receives the booking id from the signed page.
+     * ES: Recibe el id de la cita y el token del enlace desde la página firmada.
+     * EN: Receives the booking id and the link token from the signed page.
      */
-    public function mount(int $citaId): void
+    public function mount(int $citaId, string $token = ''): void
     {
         $this->citaId = $citaId;
+        $this->token = $token;
     }
 
     /**
-     * ES: Relee la cita en cada petición (estado y fecha siempre al día).
-     * EN: Re-reads the booking on every request (state and date always fresh).
+     * ES: Relee la cita en cada petición (estado y fecha siempre al día) y
+     *     comprueba que el token del enlace sigue vigente (403 si no).
+     * EN: Re-reads the booking on every request (state and date always
+     *     fresh) and checks the link token is still current (403 if not).
      */
     protected function cita(): Appointment
     {
-        return Appointment::findOrFail($this->citaId);
+        $cita = Appointment::findOrFail($this->citaId);
+        abort_unless($cita->tokenGestionValido($this->token), 403);
+
+        return $cita;
+    }
+
+    /**
+     * ES: Tras cancelar o reprogramar desde ESTA página, el token de la cita
+     *     cambia: la página se queda con el nuevo para poder mostrar el
+     *     resultado (quien la usa ya demostró tener el enlace válido).
+     * EN: After cancelling or rescheduling from THIS page, the booking's
+     *     token changes: the page keeps the new one so it can show the result
+     *     (whoever uses it already proved to hold the valid link).
+     */
+    protected function seguirConElTokenNuevo(): void
+    {
+        $this->token = (string) Appointment::whereKey($this->citaId)->value('manage_token');
     }
 
     // ── 2. VIEWS ─────────────────────────────────────────────────────────
@@ -190,6 +220,9 @@ class GestionarCita extends Component
         RateLimiter::hit($clave, 3600);
 
         $resultado = app(GestionCitas::class)->reprogramar($this->cita(), $this->nuevaFecha, $this->nuevaHora);
+        if ($resultado === GestionCitas::OK) {
+            $this->seguirConElTokenNuevo();
+        }
 
         match ($resultado) {
             GestionCitas::OK => $this->terminar('citas.manage_rescheduled_done'),
@@ -209,6 +242,9 @@ class GestionarCita extends Component
     public function cancelar(): void
     {
         $resultado = app(GestionCitas::class)->cancelarPorCliente($this->cita());
+        if ($resultado === GestionCitas::OK) {
+            $this->seguirConElTokenNuevo();
+        }
 
         $resultado === GestionCitas::OK
             ? $this->terminar('citas.manage_cancelled_done')

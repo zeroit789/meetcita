@@ -111,7 +111,7 @@ class RecordatorioTest extends TestCase
         $html = (new AppointmentReminder($cita))->locale('en')->render();
         $this->assertStringContainsString(__('emails.reminder_heading', [], 'en'), $html);
         $this->assertStringContainsString('Tuesday', $html);
-        $this->assertStringContainsString('/gestionar?signature=', $html);
+        $this->assertStringContainsString('/gestionar?expires=', $html);
         $this->assertStringContainsString('/calendario.ics?signature=', $html);
 
         $es = (new AppointmentReminder($cita))->locale('es')->render();

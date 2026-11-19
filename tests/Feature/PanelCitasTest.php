@@ -134,6 +134,19 @@ class PanelCitasTest extends TestCase
         });
     }
 
+    public function test_cancelar_en_el_panel_revoca_el_enlace_de_gestionar_del_cliente(): void
+    {
+        Mail::fake();
+        $cita = Appointment::factory()->confirmada()->create(['date' => '2026-09-23', 'time' => '10:00']);
+        $enlace = $cita->urlGestionar();
+        $this->get($enlace)->assertOk();
+
+        $this->entrarAlPanel();
+        Livewire::test(PanelCitas::class)->call('cancelar', $cita->id);
+
+        $this->get($enlace)->assertForbidden();
+    }
+
     public function test_cancelar_sin_motivo_tambien_avisa_al_cliente(): void
     {
         Mail::fake();

@@ -111,7 +111,7 @@ class GestionCitas
             $filas = Appointment::whereKey($actual->id)
                 ->where('status', '!=', 'cancelada')
                 ->where('revision', $actual->revision)
-                ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
+                ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente(), 'manage_token' => Appointment::nuevoTokenGestion()]);
 
             return $filas === 1 ? self::OK : self::NO_VALIDO;
         });
@@ -226,6 +226,11 @@ class GestionCitas
                     // ES: Nueva revisión: los botones del panel y de Telegram de la hora vieja dejan de valer.
                     // EN: New revision: the panel and Telegram buttons of the old time stop working.
                     $actual->revision = $actual->revision + 1;
+                    // ES: Token nuevo: el enlace de la hora vieja deja de valer; el cliente
+                    //     recibe el nuevo en el correo de la cita cambiada.
+                    // EN: New token: the old time's link stops working; the client gets
+                    //     the new one in the changed-booking email.
+                    $actual->manage_token = Appointment::nuevoTokenGestion();
                     $eventoViejo = $actual->google_event_id;
                     $actual->google_event_id = null;
                     $actual->google_meet_url = null;

@@ -247,10 +247,12 @@ class TelegramWebhookController extends Controller
                         //     'pendiente' -> 'cancelada' via conditional UPDATE. If
                         //     it affects 0 rows, the booking wasn't pending anymore:
                         //     don't touch Google nor resend email.
+                        //     Cambia también el token: el enlace de gestionar deja de valer.
+                        //     It also changes the token: the manage link stops working.
                         $n = Appointment::where('id', $cita->id)
                             ->where('status', 'pendiente')
                             ->where('revision', $cita->revision)
-                            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
+                            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente(), 'manage_token' => Appointment::nuevoTokenGestion()]);
 
                         if ($n === 1) {
                             // ES: La cancelamos nosotros. Recargamos con el estado nuevo.

@@ -24,8 +24,8 @@
     <h1 class="font-sans font-bold text-3xl sm:text-[2rem] text-ink mb-2">{{ __('citas.manage_title') }}</h1>
     <p class="text-muted mb-10 max-w-2xl" style="line-height:1.7;">{{ __('citas.manage_intro') }}</p>
 
-    {{-- ES: El id lo fija el servidor tras validar la firma (#[Locked] en el componente).
-         EN: The id is set by the server after validating the signature (#[Locked] in the component). --}}
-    <livewire:gestionar-cita :cita-id="$cita->id" />
+    {{-- ES: El id y el token los fija el servidor tras validar la firma (#[Locked] en el componente).
+         EN: The id and token are set by the server after validating the signature (#[Locked] in the component). --}}
+    <livewire:gestionar-cita :cita-id="$cita->id" :token="$token" />
   </section>
 @endsection

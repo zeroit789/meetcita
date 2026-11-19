@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 /*
 |==============================================================================
@@ -50,6 +51,7 @@ use Illuminate\Support\Facades\URL;
 | @property string|null $google_meet_url  Google Meet link (online only) / enlace Meet
 | @property \Carbon\Carbon|null $reminded_at  Day-before reminder sent at / recordatorio enviado
 | @property int         $revision         Change counter (version of buttons) / contador de cambios
+| @property string|null $manage_token     Revocable token of the manage link / token revocable del enlace
 */
 class Appointment extends Model
 {
@@ -88,6 +90,14 @@ class Appointment extends Model
         'modality',         // ES: 'online' (Meet) o 'presencial' · EN: 'online' (Meet) or 'presencial'
         'locale',           // ES: idioma del cliente para los emails · EN: client language for emails
     ];
+
+    /**
+     * ES: El token del enlace de gestionar no sale nunca al serializar la cita
+     *     (JSON, toArray, logs): solo viaja dentro del enlace firmado.
+     * EN: The manage-link token never leaves when serializing the booking
+     *     (JSON, toArray, logs): it only travels inside the signed link.
+     */
+    protected $hidden = ['manage_token'];
 
     /**
      * ES: Valores por defecto. Garantiza 'status' = 'pendiente' también en el
@@ -155,6 +165,34 @@ class Appointment extends Model
         return DB::raw('revision + 1');
     }
 
+    /**
+     * ES: Token nuevo para el enlace de gestionar. Se pone al crear la cita y
+     *     se cambia en cada cancelación y reprogramación ('manage_token' =>
+     *     Appointment::nuevoTokenGestion() en el mismo UPDATE): así los enlaces
+     *     ya enviados dejan de valer.
+     * EN: New token for the manage link. Set when the booking is created and
+     *     changed on every cancellation and reschedule ('manage_token' =>
+     *     Appointment::nuevoTokenGestion() in the same UPDATE): links already
+     *     sent stop working.
+     */
+    public static function nuevoTokenGestion(): string
+    {
+        return Str::random(40);
+    }
+
+    /**
+     * ES: ¿Es $token el token vigente del enlace de gestionar? (comparación en
+     *     tiempo constante; un token vacío nunca vale).
+     * EN: Is $token the current manage-link token? (constant-time comparison;
+     *     an empty token never matches).
+     */
+    public function tokenGestionValido(?string $token): bool
+    {
+        return (string) $token !== ''
+            && (string) $this->manage_token !== ''
+            && hash_equals((string) $this->manage_token, (string) $token);
+    }
+
     // ── 2. Reference — código público único de la cita ──────────────────────
 
     /**
@@ -166,6 +204,11 @@ class Appointment extends Model
         static::creating(function (Appointment $cita) {
             if (empty($cita->reference)) {
                 $cita->reference = self::generarReferencia();
+            }
+            // ES: Token del enlace de gestionar (cambia al cancelar o reprogramar).
+            // EN: Manage-link token (changes on cancel or reschedule).
+            if (empty($cita->manage_token)) {
+                $cita->manage_token = self::nuevoTokenGestion();
             }
         });
     }
@@ -286,15 +329,27 @@ class Appointment extends Model
 
     /**
      * ES: Enlace FIRMADO a la página «gestionar mi cita» (cancelar o cambiar
-     *     día y hora sin cuenta). Igual que el del .ics: firma sobre la ruta
-     *     relativa y sin caducidad (la referencia no cambia al reprogramar, así
-     *     que los enlaces ya enviados siguen valiendo); las acciones respetan
-     *     el plazo mínimo. Null si la autogestión está desactivada.
+     *     día y hora sin cuenta). Firma sobre la ruta relativa (como el .ics),
+     *     con dos límites:
+     *       - caduca a la hora de inicio de la cita (después no hay nada que
+     *         gestionar);
+     *       - lleva el token revocable de la cita, que cambia al cancelarla o
+     *         reprogramarla: los enlaces ya enviados (también uno reenviado a
+     *         otra persona) dejan de valer y el cliente recibe uno nuevo con
+     *         la cita nueva.
+     *     Las acciones respetan además el plazo mínimo. Null si la
+     *     autogestión está desactivada o la cita ya empezó.
      * EN: SIGNED link to the "manage my booking" page (cancel or change day
-     *     and time without an account). Like the .ics one: signature over the
-     *     relative path and no expiry (the reference doesn't change on
-     *     reschedule, so links already sent keep working); the actions honour
-     *     the minimum notice. Null if self-service is disabled.
+     *     and time without an account). Signature over the relative path
+     *     (like the .ics), with two limits:
+     *       - it expires at the booking's start time (after that there is
+     *         nothing to manage);
+     *       - it carries the booking's revocable token, which changes when it
+     *         is cancelled or rescheduled: links already sent (also one
+     *         forwarded to someone else) stop working and the client gets a
+     *         new one with the new booking.
+     *     The actions also honour the minimum notice. Null if self-service is
+     *     disabled or the booking has already started.
      */
     public function urlGestionar(): ?string
     {
@@ -302,7 +357,24 @@ class Appointment extends Model
             return null;
         }
 
-        return url(URL::signedRoute('cita.gestionar', ['reference' => $this->reference], absolute: false));
+        $caduca = $this->inicioLocal();
+        if ($caduca->isPast()) {
+            return null;
+        }
+
+        // ES: Citas antiguas sin token (no debería pasar tras la migración): se
+        //     le da uno sin pisar otro que se haya puesto a la vez.
+        // EN: Old bookings without a token (shouldn't happen after the
+        //     migration): one is set without overwriting a concurrent one.
+        if (empty($this->manage_token)) {
+            self::whereKey($this->id)->whereNull('manage_token')->update(['manage_token' => self::nuevoTokenGestion()]);
+            $this->manage_token = self::whereKey($this->id)->value('manage_token');
+        }
+
+        return url(URL::temporarySignedRoute('cita.gestionar', $caduca, [
+            'reference' => $this->reference,
+            'token' => $this->manage_token,
+        ], absolute: false));
     }
 
     /**

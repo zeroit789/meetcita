@@ -99,7 +99,7 @@ class EmailsTest extends TestCase
         $html = (new AppointmentConfirmationToClient($cita, reprogramada: true))->locale('en')->render();
 
         $this->assertStringContainsString(__('emails.client_rescheduled_heading', [], 'en'), $html);
-        $this->assertStringContainsString('/gestionar?signature=', $html);
+        $this->assertStringContainsString('/gestionar?expires=', $html);
     }
 
     public function test_un_correo_en_cola_de_antes_de_actualizar_no_falla_sin_reprogramada(): void

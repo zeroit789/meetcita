@@ -216,9 +216,13 @@ class PanelCitas extends Component
         //     cancelada, así no se reenvía el email.
         // EN: ATOMIC transition to cancelled: 0 rows = missing or already
         //     cancelled, so the email is not sent again.
+        //     Sube la revisión y cambia el token: el enlace de gestionar del
+        //     cliente deja de valer.
+        //     Bumps the revision and changes the token: the client's manage
+        //     link stops working.
         $filas = Appointment::whereKey($id)
             ->where('status', '!=', 'cancelada')
-            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
+            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente(), 'manage_token' => Appointment::nuevoTokenGestion()]);
 
         if ($filas === 0) {
             $this->addError('accion', __('citas.panel_err_already_cancelled'));

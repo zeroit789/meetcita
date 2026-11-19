@@ -11,6 +11,7 @@ use App\Models\Appointment;
 use App\Services\AvailabilityService;
 use App\Services\GestionCitas;
 use App\Services\GoogleCalendarService;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
@@ -62,12 +63,12 @@ class AutogestionTest extends TestCase
     }
 
     /**
-     * ES: Ruta relativa firmada de la página de gestionar (como la del correo).
-     * EN: Signed relative path of the manage page (like the one in the email).
+     * ES: Enlace firmado de la página de gestionar (el mismo del correo).
+     * EN: Signed link of the manage page (the same one as in the email).
      */
     private function enlace(Appointment $cita): string
     {
-        return URL::signedRoute('cita.gestionar', ['reference' => $cita->reference], absolute: false);
+        return (string) $cita->urlGestionar();
     }
 
     // ── Página GET ───────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ class AutogestionTest extends TestCase
 
         $html = (new AppointmentConfirmationToClient($cita))->locale('es')->render();
 
-        $this->assertStringContainsString('/cita/'.$cita->reference.'/gestionar?signature=', $html);
+        $this->assertStringContainsString('/cita/'.$cita->reference.'/gestionar?expires=', $html);
         $this->assertStringContainsString($cita->urlGestionar(), str_replace('&amp;', '&', $html));
     }
 
@@ -118,10 +119,13 @@ class AutogestionTest extends TestCase
 
     public function test_con_la_autogestion_desactivada_no_hay_pagina_ni_enlace(): void
     {
-        config(['appointments.self_service.enabled' => false]);
         $cita = $this->cita();
+        // ES: Enlace enviado cuando aún estaba activada. EN: Link sent while it was still on.
+        $enlace = $this->enlace($cita);
+        config(['appointments.self_service.enabled' => false]);
 
-        $this->get($this->enlace($cita))->assertNotFound();
+        $this->assertNull($cita->urlGestionar());
+        $this->get($enlace)->assertNotFound();
         $html = (new AppointmentConfirmationToClient($cita))->locale('es')->render();
         $this->assertStringNotContainsString('/gestionar', $html);
     }
@@ -133,7 +137,60 @@ class AutogestionTest extends TestCase
 
         $this->expectException(CannotUpdateLockedPropertyException::class);
 
-        Livewire::test(GestionarCita::class, ['citaId' => $cita->id])->set('citaId', $otra->id);
+        Livewire::test(GestionarCita::class, ['citaId' => $cita->id, 'token' => $cita->manage_token])->set('citaId', $otra->id);
+    }
+
+    // ── Caducidad y revocación del enlace ────────────────────────────────
+
+    public function test_el_enlace_deja_de_valer_cuando_la_cita_se_cancela(): void
+    {
+        $cita = $this->cita();
+        $url = $cita->urlGestionar();
+        $this->get($url)->assertOk();
+
+        $this->assertSame(GestionCitas::OK, app(GestionCitas::class)->cancelarPorCliente($cita));
+
+        $this->get($url)->assertForbidden();
+    }
+
+    public function test_el_enlace_viejo_deja_de_valer_al_reprogramar_y_el_nuevo_si(): void
+    {
+        $cita = $this->cita();
+        $vieja = $cita->urlGestionar();
+
+        $this->assertSame(GestionCitas::OK, app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00'));
+
+        $this->get($vieja)->assertForbidden();
+        $this->get($cita->fresh()->urlGestionar())->assertOk();
+    }
+
+    public function test_el_enlace_caduca_a_la_hora_de_la_cita(): void
+    {
+        $cita = $this->cita();
+        $url = $cita->urlGestionar();
+
+        // ES: Miércoles 23-09 a las 10:01, ya empezada la cita.
+        // EN: Wednesday 23-09 at 10:01, the booking has already started.
+        $this->travelTo(Carbon::parse('2026-09-23 10:01', 'Europe/Madrid'));
+
+        $this->get($url)->assertForbidden();
+    }
+
+    public function test_una_accion_con_un_enlace_ya_revocado_no_hace_nada(): void
+    {
+        $cita = $this->cita();
+        $token = $cita->fresh()->manage_token;
+
+        // ES: La página se abrió con el enlace viejo y después se reprogramó (por
+        //     ejemplo, desde otra pestaña): esta pestaña ya no puede cancelar.
+        // EN: The page was opened with the old link and then rescheduled (e.g.
+        //     from another tab): this tab can no longer cancel.
+        $pagina = Livewire::test(GestionarCita::class, ['citaId' => $cita->id, 'token' => $token]);
+        app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '12:00');
+
+        $pagina->call('cancelar')->assertForbidden();
+
+        $this->assertSame('pendiente', $cita->fresh()->status);
     }
 
     // ── Cancelar ─────────────────────────────────────────────────────────
@@ -145,7 +202,7 @@ class AutogestionTest extends TestCase
         $google->shouldReceive('borrarEvento')->once();
         $this->app->instance(GoogleCalendarService::class, $google);
 
-        Livewire::test(GestionarCita::class, ['citaId' => $cita->id])
+        Livewire::test(GestionarCita::class, ['citaId' => $cita->id, 'token' => $cita->manage_token])
             ->call('abrirCancelar')
             ->call('cancelar')
             ->assertSee(__('citas.manage_cancelled_done'));
@@ -165,7 +222,7 @@ class AutogestionTest extends TestCase
 
         $this->assertSame(GestionCitas::FUERA_DE_PLAZO, app(GestionCitas::class)->cancelarPorCliente($cita));
         $this->assertSame(GestionCitas::FUERA_DE_PLAZO, app(GestionCitas::class)->reprogramar($cita, '2026-09-24', '10:00'));
-        Livewire::test(GestionarCita::class, ['citaId' => $cita->id])->call('cancelar');
+        Livewire::test(GestionarCita::class, ['citaId' => $cita->id, 'token' => $cita->manage_token])->call('cancelar');
 
         $this->assertSame('confirmada', $cita->fresh()->status);
         Mail::assertNothingQueued();
@@ -211,7 +268,7 @@ class AutogestionTest extends TestCase
         $google->shouldReceive('borrarEventoPorId')->once()->with('evento-viejo');
         $this->app->instance(GoogleCalendarService::class, $google);
 
-        Livewire::test(GestionarCita::class, ['citaId' => $cita->id])
+        Livewire::test(GestionarCita::class, ['citaId' => $cita->id, 'token' => $cita->manage_token])
             ->call('abrirReprogramar')
             ->call('elegirDia', '2026-09-24')
             ->call('elegirHora', '12:00')
@@ -305,7 +362,7 @@ class AutogestionTest extends TestCase
         $cita = $this->cita();
         $this->cita(['date' => '2026-09-24', 'time' => '12:00', 'email' => 'otra@example.com']);
 
-        Livewire::test(GestionarCita::class, ['citaId' => $cita->id])
+        Livewire::test(GestionarCita::class, ['citaId' => $cita->id, 'token' => $cita->manage_token])
             ->call('abrirReprogramar')
             ->call('elegirDia', '2026-09-26')          // ES: sábado · EN: Saturday
             ->assertSet('nuevaFecha', '')
