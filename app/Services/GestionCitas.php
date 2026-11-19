@@ -87,16 +87,37 @@ class GestionCitas
      */
     public function cancelarPorCliente(Appointment $cita): string
     {
-        if (! $cita->puedeAutogestionarse()) {
-            return $cita->status === 'cancelada' ? self::NO_VALIDO : self::FUERA_DE_PLAZO;
-        }
+        // ES: El estado y el plazo se miran sobre la cita RELEÍDA con la fila
+        //     bloqueada, no sobre la copia que trae quien llama: una
+        //     reprogramación a la vez pudo moverla dentro del plazo. El UPDATE
+        //     exige además la misma revisión leída, así que en motores que no
+        //     respetan lockForUpdate (SQLite) un cambio entre medias también
+        //     deja 0 filas.
+        // EN: State and notice are checked on the booking RE-READ with the row
+        //     locked, not on the copy the caller brings: a concurrent
+        //     reschedule may have moved it inside the notice period. The
+        //     UPDATE also requires the same revision just read, so on engines
+        //     that ignore lockForUpdate (SQLite) a change in between also
+        //     leaves 0 rows.
+        $resultado = DB::transaction(function () use ($cita) {
+            $actual = Appointment::whereKey($cita->id)->lockForUpdate()->first();
+            if (! $actual || $actual->status === 'cancelada') {
+                return self::NO_VALIDO;
+            }
+            if (! $actual->puedeAutogestionarse()) {
+                return self::FUERA_DE_PLAZO;
+            }
 
-        $filas = Appointment::whereKey($cita->id)
-            ->where('status', '!=', 'cancelada')
-            ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
+            $filas = Appointment::whereKey($actual->id)
+                ->where('status', '!=', 'cancelada')
+                ->where('revision', $actual->revision)
+                ->update(['status' => 'cancelada', 'revision' => Appointment::revisionSiguiente()]);
 
-        if ($filas === 0) {
-            return self::NO_VALIDO;
+            return $filas === 1 ? self::OK : self::NO_VALIDO;
+        });
+
+        if ($resultado !== self::OK) {
+            return $resultado;
         }
 
         $cita->refresh();

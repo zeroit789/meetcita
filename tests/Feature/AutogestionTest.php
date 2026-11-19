@@ -172,6 +172,22 @@ class AutogestionTest extends TestCase
         Event::assertNotDispatched(AppointmentCancelled::class);
     }
 
+    public function test_cancelar_mira_el_plazo_con_la_cita_releida_y_no_con_una_copia_vieja(): void
+    {
+        // ES: Copia en memoria de cuando aún había plazo (miércoles 10:00).
+        // EN: In-memory copy from when there was still notice (Wednesday 10:00).
+        $vieja = $this->cita();
+
+        // ES: Entre medias la cita pasa a mañana a las 07:30 (menos de 24 h).
+        // EN: Meanwhile the booking moves to tomorrow at 07:30 (under 24 h).
+        Appointment::whereKey($vieja->id)->update(['date' => '2026-09-22', 'time' => '07:30', 'revision' => 1]);
+
+        $this->assertSame(GestionCitas::FUERA_DE_PLAZO, app(GestionCitas::class)->cancelarPorCliente($vieja));
+
+        $this->assertSame('confirmada', $vieja->fresh()->status);
+        Event::assertNotDispatched(AppointmentCancelled::class);
+    }
+
     public function test_una_cita_cancelada_no_se_vuelve_a_cancelar_ni_se_reprograma(): void
     {
         $cita = Appointment::factory()->cancelada()->create(['date' => '2026-09-23', 'time' => '10:00']);
