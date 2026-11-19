@@ -178,6 +178,22 @@ return [
     ],
 
     // ──────────────────────────────────────────────────────────────────────
+    // 4b3. REMINDERS / RECORDATORIOS
+    // ES: Correo al cliente la víspera de su cita CONFIRMADA (orden
+    //     citas:recordar, cada 15 min con el programador). 'from' = hora local
+    //     a partir de la que se envía (para no escribir de madrugada). Para que
+    //     no acabe en spam, configura SPF, DKIM y DMARC (ver README).
+    // EN: Email to the client the day before their CONFIRMED booking
+    //     (citas:recordar command, every 15 min with the scheduler). 'from' =
+    //     local time from which it is sent (so as not to write at night). To
+    //     keep it out of spam, set up SPF, DKIM and DMARC (see README).
+    // ──────────────────────────────────────────────────────────────────────
+    'reminders' => [
+        'enabled' => (bool) env('APPOINTMENTS_REMINDERS', true),
+        'from' => env('APPOINTMENTS_REMINDERS_FROM', '09:00'),
+    ],
+
+    // ──────────────────────────────────────────────────────────────────────
     // 4c. PRIVACY / PRIVACIDAD (RGPD / GDPR)
     // ES: Primera capa de información junto al botón de reservar y plazo de
     //     conservación. El texto legal lo pone el negocio: rellena el

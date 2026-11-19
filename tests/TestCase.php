@@ -56,6 +56,9 @@ abstract class TestCase extends BaseTestCase
             'appointments.self_service.enabled' => true,
             'appointments.self_service.hours_before' => 24,
             'appointments.brand.phone' => '',
+            // ES: Recordatorios activos desde las 09:00. EN: Reminders on from 09:00.
+            'appointments.reminders.enabled' => true,
+            'appointments.reminders.from' => '09:00',
             // ES: Integraciones externas apagadas: ningún test llama a Google ni a Telegram.
             // EN: External integrations off: no test calls Google or Telegram.
             'services.google.client_id' => null,

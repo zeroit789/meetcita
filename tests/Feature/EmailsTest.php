@@ -6,6 +6,7 @@ use App\Mail\AppointmentChangedToOwner;
 use App\Mail\AppointmentConfirmationToClient;
 use App\Mail\AppointmentConfirmed;
 use App\Mail\AppointmentRejected;
+use App\Mail\AppointmentReminder;
 use App\Mail\AppointmentRequestedToOwner;
 use App\Models\Appointment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -34,6 +35,7 @@ class EmailsTest extends TestCase
             'cliente / client' => [AppointmentConfirmationToClient::class],
             'confirmada / confirmed' => [AppointmentConfirmed::class],
             'rechazada / rejected' => [AppointmentRejected::class],
+            'recordatorio / reminder' => [AppointmentReminder::class],
         ];
     }
 

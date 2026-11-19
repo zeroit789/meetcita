@@ -56,6 +56,21 @@ Schedule::command('citas:demo')
     ->when(fn () => (bool) config('appointments.demo.enabled'))
     ->withoutOverlapping();
 
+// ES: Recordatorio por correo la víspera de cada cita confirmada. Cada 15
+//     minutos (no sale antes de APPOINTMENTS_REMINDERS_FROM, 09:00 por
+//     defecto) y sin solaparse; la orden reclama cada cita antes de enviar,
+//     así nunca se manda dos veces. APPOINTMENTS_REMINDERS=false lo apaga.
+//     Ver app/Console/Commands/SendReminders.php.
+// EN: Email reminder the day before each confirmed booking. Every 15 minutes
+//     (never before APPOINTMENTS_REMINDERS_FROM, 09:00 by default) and without
+//     overlapping; the command claims each booking before sending, so it is
+//     never sent twice. APPOINTMENTS_REMINDERS=false turns it off.
+//     See app/Console/Commands/SendReminders.php.
+Schedule::command('citas:recordar')
+    ->everyFifteenMinutes()
+    ->when(fn () => (bool) config('appointments.reminders.enabled', true))
+    ->withoutOverlapping();
+
 Schedule::command('citas:purgar')
     ->dailyAt('03:30')
     ->withoutOverlapping();
