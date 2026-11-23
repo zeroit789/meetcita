@@ -5,6 +5,11 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 ## [Sin publicar · Unreleased]
 
+### Cambiado · Changed
+
+- **ES:** CI: `shivammathur/setup-php` 2.40.0, `pnpm/action-setup` v6.1.1 y `actions/setup-node` v7.1.0, fijadas por SHA completo.
+  **EN:** CI: `shivammathur/setup-php` 2.40.0, `pnpm/action-setup` v6.1.1 and `actions/setup-node` v7.1.0, pinned by full SHA.
+
 ### Arreglado · Fixed
 
 - **ES:** `compose.yaml`: el servicio `scheduler` desactiva el healthcheck heredado de la imagen (no sirve HTTP y salía «unhealthy»). El README ya no marca Docker como «pendiente de probar»: probado con la v1.0.0.
