@@ -3,6 +3,13 @@
 El formato sigue [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y las versiones siguen [SemVer](https://semver.org/lang/es/).
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [SemVer](https://semver.org/).
 
+## [Sin publicar · Unreleased]
+
+### Arreglado · Fixed
+
+- **ES:** `compose.yaml`: el servicio `scheduler` desactiva el healthcheck heredado de la imagen (no sirve HTTP y salía «unhealthy»). El README ya no marca Docker como «pendiente de probar»: probado con la v1.0.0.
+  **EN:** `compose.yaml`: the `scheduler` service disables the healthcheck inherited from the image (it serves no HTTP and showed as unhealthy). The README no longer flags Docker as "not yet tested": tested with v1.0.0.
+
 ## [1.0.0] — 2026-11-19
 
 ### Seguridad · Security

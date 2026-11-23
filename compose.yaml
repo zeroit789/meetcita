@@ -47,6 +47,10 @@ services:
       DB_DATABASE: /data/database.sqlite
       MEETCITA_MIGRATE: "false"
     command: ["php", "artisan", "schedule:work"]
+    # ES: El scheduler no sirve HTTP: sin esto heredaría el HEALTHCHECK de la imagen (curl a :8080) y saldría «unhealthy».
+    # EN: The scheduler serves no HTTP: without this it would inherit the image HEALTHCHECK (curl to :8080) and show as unhealthy.
+    healthcheck:
+      disable: true
     volumes:
       - datos:/data
       - almacen:/app/storage

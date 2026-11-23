@@ -32,7 +32,7 @@
 - [Configuración (.env)](#configuración-env)
 - [Despliegue en producción](#despliegue-en-producción)
 - [Que los correos no acaben en spam: SPF, DKIM y DMARC](#que-los-correos-no-acaben-en-spam-spf-dkim-y-dmarc)
-- [Docker (pendiente de probar)](#docker-pendiente-de-probar)
+- [Docker](#docker)
 - [Google Calendar + Meet (opcional)](#google-calendar--meet-opcional)
 - [Bot de Telegram (opcional)](#bot-de-telegram-opcional)
 - [Personalización](#personalización)
@@ -321,9 +321,9 @@ _dmarc.example.com.                TXT  "v=DMARC1; p=none; rua=mailto:dmarc@exam
 
 Cuando lleves unas semanas con todo en `pass` en los informes de DMARC, cambia `p=none` por `p=quarantine` (y más adelante `p=reject`) para que nadie pueda enviar correos falsos con tu dominio.
 
-### Docker (pendiente de probar)
+### Docker
 
-> ⚠️ **Pendiente de probar.** El `Dockerfile` y el `compose.yaml` aún no se han construido ni se prueban en la integración continua. Úsalos como punto de partida y revisa el resultado antes de llevarlos a producción.
+> Probado el 23-11-2026 con la v1.0.0 en Ubuntu 24.04: la imagen se construye, la web arranca sana (`/up`), corre como `www-data` y el scheduler ejecuta las tareas. No se construye en la integración continua: revisa el resultado antes de llevarlo a producción.
 
 El `Dockerfile` tiene tres etapas: compila el CSS y el JS con pnpm, instala las dependencias de PHP sin las de desarrollo y monta la imagen final con FrankenPHP (`dunglas/frankenphp:1.13.4-php8.5`, fijada por digest).
 
@@ -537,7 +537,7 @@ Buenas prácticas al instalar: las de [SECURITY.md](SECURITY.md#buenas-práctica
 - El correo de «cita confirmada» comprueba, justo antes de salir de la cola, que la cita sigue confirmada y sin cambios. Si el cliente la cancela o la cambia en el instante exacto entre esa comprobación y el envío, el correo puede salir igualmente; después le llega el aviso del cambio.
 - Los eventos de tu Google Calendar se redondean a la rejilla de huecos (cada 30 minutos desde las 00:00). Con tramos que no empiezan en un múltiplo del hueco (por ejemplo, 09:15), un evento corto puede bloquear también el hueco vecino.
 - El uso único de cada solución del captcha depende de la caché compartida: con varios servidores, usa una caché común (`database`, que es la de por defecto, o `redis`).
-- Docker: ver el aviso de [Docker (pendiente de probar)](#docker-pendiente-de-probar).
+- Docker: probado con la v1.0.0 (ver [Docker](#docker)); no se construye en la integración continua.
 
 ### Licencia y créditos
 
@@ -564,7 +564,7 @@ Buenas prácticas al instalar: las de [SECURITY.md](SECURITY.md#buenas-práctica
 - [Configuration (.env)](#configuration-env)
 - [Production deployment](#production-deployment)
 - [Keeping emails out of spam: SPF, DKIM and DMARC](#keeping-emails-out-of-spam-spf-dkim-and-dmarc)
-- [Docker (not yet tested)](#docker-not-yet-tested)
+- [Docker](#docker-1)
 - [Google Calendar + Meet (optional)](#google-calendar--meet-optional)
 - [Telegram bot (optional)](#telegram-bot-optional)
 - [Customization](#customization)
@@ -855,9 +855,9 @@ _dmarc.example.com.                TXT  "v=DMARC1; p=none; rua=mailto:dmarc@exam
 
 After a few weeks with everything at `pass` in the DMARC reports, change `p=none` to `p=quarantine` (and later `p=reject`) so nobody can send fake emails with your domain.
 
-### Docker (not yet tested)
+### Docker
 
-> ⚠️ **Not yet tested.** The `Dockerfile` and `compose.yaml` have not been built yet and are not tested in CI. Use them as a starting point and check the result before taking them to production.
+> Tested on 2026-11-23 with v1.0.0 on Ubuntu 24.04: the image builds, the site starts healthy (`/up`), runs as `www-data` and the scheduler runs its tasks. It isn't built in CI: check the result before taking it to production.
 
 The `Dockerfile` has three stages: it builds the CSS and JS with pnpm, installs the PHP dependencies without the dev ones, and assembles the final image with FrankenPHP (`dunglas/frankenphp:1.13.4-php8.5`, pinned by digest).
 
@@ -1071,7 +1071,7 @@ Good practices when installing: see [SECURITY.md](SECURITY.md#good-practices-whe
 - The "booking confirmed" email checks, right before it leaves the queue, that the booking is still confirmed and unchanged. If the client cancels or changes it in the exact instant between that check and the send, the email may still go out; the change notice follows.
 - Your Google Calendar events are rounded to the slot grid (every 30 minutes from 00:00). With ranges that don't start on a slot multiple (e.g. 09:15), a short event may also block the neighbouring slot.
 - Single use of each captcha solution relies on the shared cache: with several servers, use a common cache (`database`, the default, or `redis`).
-- Docker: see the note in [Docker (not yet tested)](#docker-not-yet-tested).
+- Docker: tested with v1.0.0 (see [Docker](#docker-1)); it isn't built in CI.
 
 ### License and credits
 
