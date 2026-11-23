@@ -4,7 +4,7 @@
     "type": "module",
     "packageManager": "pnpm@12.5.1",
     "engines": {
-        "node": "^20.19 || >=22.12"
+        "node": ">=22.12"
     },
     "scripts": {
         "build": "vite build",
@@ -12,7 +12,7 @@
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.5",
-        "concurrently": "^9.2.5",
+        "concurrently": "^10.0.7",
         "laravel-vite-plugin": "^3.2.1",
         "tailwindcss": "^4.3.5",
         "vite": "^8.3.8"

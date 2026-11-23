@@ -9,6 +9,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
 
 - **ES:** CI: `shivammathur/setup-php` 2.40.0, `pnpm/action-setup` v6.1.1 y `actions/setup-node` v7.1.0, fijadas por SHA completo.
   **EN:** CI: `shivammathur/setup-php` 2.40.0, `pnpm/action-setup` v6.1.1 and `actions/setup-node` v7.1.0, pinned by full SHA.
+- **ES:** ⚠️ `concurrently` 10.0.7 (dev), que ya no funciona en Node 20: el proyecto pide ahora **Node.js 22.12+** (`engines` de `package.json` y README). `composer dev` sigue igual.
+  **EN:** ⚠️ `concurrently` 10.0.7 (dev), which no longer runs on Node 20: the project now requires **Node.js 22.12+** (`package.json` `engines` and README). `composer dev` is unchanged.
 
 ### Arreglado · Fixed
 

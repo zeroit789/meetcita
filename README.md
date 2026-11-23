@@ -142,7 +142,7 @@ Versiones exactas de `composer.lock` y `pnpm-lock.yaml`:
 | tailwindcss / @tailwindcss/vite | 4.3.5 |
 | vite | 8.3.8 |
 | laravel-vite-plugin | 3.2.1 |
-| concurrently (dev) | 9.2.5 |
+| concurrently (dev) | 10.0.7 |
 | pnpm (`packageManager`) | 12.5.1 |
 
 Base de datos: SQLite por defecto. También funciona con PostgreSQL y MySQL/MariaDB (ver [Limitaciones conocidas](#limitaciones-conocidas)).
@@ -151,7 +151,7 @@ Base de datos: SQLite por defecto. También funciona con PostgreSQL y MySQL/Mari
 
 - **PHP 8.4.1 o superior**, con las extensiones habituales de Laravel y el driver PDO de tu base de datos (`pdo_sqlite` en la configuración por defecto).
 - **Composer 2**.
-- **Node.js 20.19+ o 22.12+** (lo pide Vite 8) y **pnpm** (la versión está fijada en `packageManager` de `package.json`; con Corepack basta `corepack enable`).
+- **Node.js 22.12+** (lo piden Vite 8 y concurrently 10) y **pnpm** (la versión está fijada en `packageManager` de `package.json`; con Corepack basta `corepack enable`).
 - Opcional: un proyecto de **Google Cloud** (Calendar + Meet) y un **bot de Telegram**.
 
 ### Instalación en local
@@ -676,7 +676,7 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 | tailwindcss / @tailwindcss/vite | 4.3.5 |
 | vite | 8.3.8 |
 | laravel-vite-plugin | 3.2.1 |
-| concurrently (dev) | 9.2.5 |
+| concurrently (dev) | 10.0.7 |
 | pnpm (`packageManager`) | 12.5.1 |
 
 Database: SQLite by default. PostgreSQL and MySQL/MariaDB also work (see [Known limitations](#known-limitations)).
@@ -685,7 +685,7 @@ Database: SQLite by default. PostgreSQL and MySQL/MariaDB also work (see [Known 
 
 - **PHP 8.4.1 or later**, with the usual Laravel extensions and the PDO driver for your database (`pdo_sqlite` for the default setup).
 - **Composer 2**.
-- **Node.js 20.19+ or 22.12+** (required by Vite 8) and **pnpm** (the version is pinned in `packageManager` in `package.json`; with Corepack, `corepack enable` is enough).
+- **Node.js 22.12+** (required by Vite 8 and concurrently 10) and **pnpm** (the version is pinned in `packageManager` in `package.json`; with Corepack, `corepack enable` is enough).
 - Optional: a **Google Cloud** project (Calendar + Meet) and a **Telegram bot**.
 
 ### Local installation
