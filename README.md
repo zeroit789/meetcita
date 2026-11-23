@@ -137,7 +137,7 @@ Versiones exactas de `composer.lock` y `pnpm-lock.yaml`:
 | altcha (captcha, navegador) | 3.6.0 |
 | laravel/tinker | 3.2.0 |
 | laravel/pint (dev) | 1.32.3 |
-| phpunit/phpunit (dev) | 12.5.44 |
+| phpunit/phpunit (dev) | 13.4.8 |
 | laravel/pail (dev) | 1.3.0 |
 | tailwindcss / @tailwindcss/vite | 4.3.5 |
 | vite | 8.3.8 |
@@ -671,7 +671,7 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 | altcha (captcha, browser) | 3.6.0 |
 | laravel/tinker | 3.2.0 |
 | laravel/pint (dev) | 1.32.3 |
-| phpunit/phpunit (dev) | 12.5.44 |
+| phpunit/phpunit (dev) | 13.4.8 |
 | laravel/pail (dev) | 1.3.0 |
 | tailwindcss / @tailwindcss/vite | 4.3.5 |
 | vite | 8.3.8 |
