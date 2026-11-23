@@ -134,7 +134,7 @@ Versiones exactas de `composer.lock` y `pnpm-lock.yaml`:
 | livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.1 |
 | altcha-org/altcha (captcha, servidor) | 2.4.0 |
-| altcha (captcha, navegador) | 3.6.0 |
+| altcha (captcha, navegador) | 3.7.0 |
 | laravel/tinker | 3.2.0 |
 | laravel/pint (dev) | 1.32.3 |
 | phpunit/phpunit (dev) | 13.4.8 |
@@ -668,7 +668,7 @@ Exact versions from `composer.lock` and `pnpm-lock.yaml`:
 | livewire/livewire | 4.4.8 |
 | google/apiclient | 2.20.1 |
 | altcha-org/altcha (captcha, server) | 2.4.0 |
-| altcha (captcha, browser) | 3.6.0 |
+| altcha (captcha, browser) | 3.7.0 |
 | laravel/tinker | 3.2.0 |
 | laravel/pint (dev) | 1.32.3 |
 | phpunit/phpunit (dev) | 13.4.8 |
