@@ -15,6 +15,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and 
   **EN:** `phpunit/phpunit` 13.4.8 (dev). All 240 tests pass with no changes and no warnings.
 - **ES:** `altcha` 3.7.0 (captcha del navegador). Su único cambio de comportamiento afecta a `serverVerificationFields`, que aquí no se usa. Probado en el navegador con la CSP con nonce: verifica sin violaciones.
   **EN:** `altcha` 3.7.0 (browser captcha). Its only behaviour change affects `serverVerificationFields`, which isn't used here. Tested in the browser under the nonce CSP: it verifies with no violations.
+- **ES:** `laravel/pao` 1.1.6 (dev), con arreglos para PHPUnit 13.4.
+  **EN:** `laravel/pao` 1.1.6 (dev), with fixes for PHPUnit 13.4.
 
 ### Arreglado · Fixed
 
